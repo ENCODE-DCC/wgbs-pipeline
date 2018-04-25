@@ -1,0 +1,373 @@
+#!+PERLPROG+
+#
+# Script to extract columns from loki.out
+#
+# Should work with output from all versions of Loki (up to loki_2.3)
+# 
+# Simon Heath - September 2000
+#
+use Getopt::Std;
+use IO::File;
+use POSIX qw(tmpnam);
+use strict;
+my($i,$j,$k,%opt,$file,$hi,$lo,$flag,$out_type,$version,$link_fg,$start,$stop);
+my($lg,%chrom,@map_start,@map_end,@map_length,$sex_map,$model);
+my(@mkchrom,@mkpos,@mkname,$nmk,@col,$n_cov,$max_col,$ngroup);
+my($it_col,$tv_col,$resvar_col,$mean_col,$addvar_col);
+my($mean_set,$mean,$resvar_set,$resvar,$max_col1,$tau_col,$tau_beta,$tau,$tau_mode);
+my($nc,$nqtl,$nqtl1,$line,$iter,$tv,$tv1,$sz,$nrand,@rand_col,@rand_fg,$tmp);
+my(@no_output,$out_col_flag,$adj);
+my($x1,$x2);
+# Chromsome extracted defaults to the first one
+$opt{c}=1;
+getopts('xc:CDf:r:o:i:',\%opt);
+# -r option sets a range of positions on the chromosome to look at
+if($opt{r}) {
+  $tmp=$opt{r};
+  if($tmp=~/^([+-]?(?:(?:[0-9]*\.[0-9]+)|(?:[0-9]+))(?:[eE][-+]?[0-9]+)?)(.*)/) {
+    $lo=$1;
+	 $tmp=$2;
+  }
+  if($tmp=~/^[,-:](.*)/) {
+    $tmp=$1;
+	 if($tmp=~/^([+-]?(?:(?:[0-9]*\.[0-9]+)|(?:[0-9]+))(?:[eE][-+]?[0-9]+)?)/) {
+	   $hi=$1;
+	 }
+  }
+  die "Bad -r option\n" if(!defined($hi) && !defined($lo));
+  if(defined($lo) && defined($hi) && $lo>$hi) {
+    $tmp=$lo;
+	 $lo=$hi;
+	 $hi=$tmp;
+  }
+}
+# -i option sets a range of iterations to consider
+if($opt{i}) {
+  $tmp=$opt{i};
+  if($tmp=~/^([1-9][0-9]*)(.*)/) {
+    $start=$1;
+	 $tmp=$2;
+  }
+  if($tmp=~/^[,-:](.*)/) {
+    $tmp=$1;
+	 if($tmp=~/^([1-9][0-9]*)/) {
+	   $stop=$1;
+	 }
+  }
+  die "Bad -i option\n" if(!defined($start) && !defined($stop));
+  if(defined($start) && defined($stop) && $start>$stop) {
+    $tmp=$start;
+	 $start=$stop;
+	 $stop=$tmp;
+  }
+  $start=1 if(!defined($start));
+}
+
+# Set default number of genetic groups
+$ngroup=1;
+# Used to store columns where to find interesting quantitities
+# -1 means not known
+$it_col=-1; # Iteration count
+$tv_col=-1; # Total genetic variance
+$resvar_col=-1; # Residual variance
+$mean_col=-1; # Grand mean
+$max_col=-1; # No. fixed output columns
+$n_cov=-1; # No. covariate columns
+$ngroup=1; # No. genetic groups
+$tau_col=-1;
+$tau_mode=-1;
+$out_type=-1; # Output type
+# Open output file if specified, otherwise we use STDOUT
+if($opt{o}) {
+  open OFILE,">".$opt{o} or die "Couldn't open output file ",$opt{o},"\n";
+} else {
+  open OFILE,">&STDOUT" or die "Couldn't dup STDOUT\n";
+}
+$sex_map=0;
+$i=$opt{x}+$opt{C}+$opt{D};
+die "Can not specify more that 1 of the options C,D,x at once.\n" if($i>1);
+$opt{x}=1 unless $i;
+$file=$opt{f}?$opt{f}:"loki.out";
+open FILE,$file or die "Could not open file '$file'\n";
+# Go though file
+while(<FILE>) {
+  $line++;
+  if($flag) { # Parse the data portion of the file
+    split;
+	 # Iteration number
+	 $iter=$_[0];
+	 if($opt{i}) {
+	   next if($iter<$start);
+		last if(defined($stop) && $iter>$stop);
+	 }
+	 $nc=@_;
+	 next if($nc<$max_col);
+	 if($version==-1) {
+	   $i=$max_col+$_[6];
+		last if($nc<$max_col);
+		$ngroup=$_[7];
+	 } else {$i=$max_col;}
+	 $max_col1=$i;
+	 if($opt{C}) {
+	   for($i=0;$i<$max_col1;$i++) {print OFILE " $_[$i]";}
+		print OFILE "\n";
+		next;
+	 }
+	 # Total variance
+	 $tv1=0; #first get non-genetic variance
+	 for($j=0;$j<$nrand;$j++) {
+	   if($rand_fg[$j]==2) {
+		  $sz=$_[$rand_col[$j]];
+		  $tv1+=$sz;
+	   }
+	 }
+	 # Now get genetic variance
+	 if($tv_col>=0) {$tv=$_[$tv_col];}
+	 else { # Not specified, must calculate
+	   $tv=0;
+		for($j=0;$j<$nrand;$j++) {
+		  $sz=$_[$rand_col[$j]];
+		  $sz*=$sz if($rand_fg[$j]==1);
+		  if($rand_fg[$j]!=2) {$tv+=$sz;}
+		}
+	 }
+	 # Count QTL's
+	 $nqtl=0;
+	 $nqtl1=0;
+	 while($i<$nc) {
+	   $lg=$_[$i];
+		die "Illegal linkage group $lg at line $line column ",$i+1,"\n" if($lg && !$chrom{$lg});
+		$i+=1+$sex_map if($lg || !$out_type);
+		$i+=4+$ngroup;
+		if($tv_col<0) {
+		  $sz=$_[$i-1];
+		  $tv+=$sz*$sz;
+		}
+		$nqtl++;
+		if($lg) {
+		  $nqtl1++;
+		}
+	 }
+	 # If QTL numbers are given, check against what we found
+	 if($out_type<2) {
+	   die "Mismatch in QTL numbers ($nqtl,$_[1]) at line $line\n" if($nqtl!=$_[1]);
+	   die "Mismatch in linked QTL numbers ($nqtl1,$_[2]) at line $line\n" if($nqtl1!=$_[2]);
+	 }
+	 # Get residual variance
+	 if(!$resvar_set) {
+	   # Do we know where it is ?
+		if($resvar_col>=0) {$resvar=$_[$resvar_col];}
+		# if not, guess
+		elsif($out_type<2) {$resvar=$_[4];}
+		else {$resvar=$_[2];}
+	 }
+	 # Total non-genetic variance
+	 $tv1+=$resvar; 
+	 # Print out a 'standard' (across output types) set of columns
+	 if($opt{D}) {
+		# Get Mean
+		if(!$mean_set) {
+		  if($mean_col>=0) {$mean=$_[$mean_col];}
+		  elsif($out_type<2) {$mean=$_[3];}
+		  else {$mean=$_[1];}
+	   }
+		# get Tau
+		if($tau_col>=0) {$tau=$_[$tau_col];}
+		elsif($tau_mode>=0) {
+		  if($tau_mode==2) {$tau=$resvar*$tau_beta;}
+		  else {$tau=$tau_beta;}
+		} else {
+		  # Must be a very early version, assume that we know where tau is...
+		  $tau=$_[5];
+		}
+		print OFILE "$iter $nqtl $nqtl1 $mean $resvar $tau ";
+		printf OFILE "%g",$tv;
+		# Are we on a recent version with all column info?
+		if($out_col_flag) {
+		  for($i=1;$i<$max_col1;$i++) {
+		    print OFILE " $_[$i]" if(!$no_output[$i]);
+		  }
+		# This is more complicated
+		} else {
+		  if(!$out_type) {$i=8;}
+		  elsif($out_type<2) {$i=6;}
+		  else {$i=3};
+		  for(;$i<$max_col1;$i++) {
+		    print OFILE " $_[$i]";
+		  }
+		}
+		print OFILE "\n";
+		# Extract information about linked QTL's
+	 } elsif($opt{x} && $nqtl) {
+	   # Go through QTL's
+		$i=$max_col1;
+		while($i<$nc) {
+	     $lg=$_[$i];
+		  if($lg eq $opt{c}) {
+			 $j=$i+1;
+		    if($lg) {
+		      $x1=$_[$j++];
+			   $x2=$_[$j++] if($sex_map);
+			 }
+			 # Select QTL based on linkage group and range
+			 if(!$lg || !$opt{r} || ((!defined($lo) || $x1>=$lo) && (!defined($hi) || $x1<=$hi))) {
+		      print OFILE $iter;
+			   # Print position if linked
+			   if($lg) {
+				  print OFILE " $x1";
+				  print OFILE " $x2" if($sex_map);
+				}
+				for($k=0;$k<2+$ngroup;$k++) {print OFILE " ",$_[$j++];}
+				$sz=$_[$j];
+				print OFILE " $sz";
+				$sz*=$sz;
+				if($tv>0.0) {printf OFILE " %g",$sz/$tv;}
+				else {print OFILE " 0.0";}
+				if(($tv1+$tv)>0.0) {printf OFILE " %g\n",$sz/($tv+$tv1)}
+				else {print OFILE " 0.0\n";}
+			 }
+		  }
+		  $i+=1+$sex_map if($lg || !$out_type);
+		  $i+=4+$ngroup;
+		}
+    }
+  # We've reached the end of the header
+  } elsif(/^--*/) {
+    $flag=1;
+	 # $max_col will not be set if working with an earlier version
+	 if($max_col<0) {
+	   # but $n_cov should be set unless ...
+	   if($n_cov>=0) {
+		  if($out_type<0) {$out_type=1;}
+	     $max_col=3+$n_cov;
+		  $version=1;
+		  if(!$out_type) {$max_col+=5;}
+		  elsif($out_type==1) {$max_col+=3;}
+		} else { # ... we are working with a genuine v2.0 copy
+		  $out_type=0;
+	     $max_col=8;
+		  $version=-1;
+	   }
+	 }
+  } elsif(!$flag) { # First parse the header
+    if(/^Output format: (\d+)/) {
+	   $out_type=$1;
+		next;
+	 }
+	 if(/^Created by loki (\d+).(\d+).(\d+).*:/) {
+		$version=2 if($1>2 || ($1==2 && $2>=3));
+		next;
+	 }
+	 # Pull out linkage group information if it is there
+	 if(/^Linkage groups:$/) {
+      $link_fg=1;
+	   next;
+    }
+	 if($link_fg==1) {
+      # Check for linkage group names and map lengths
+      if(/(\d+): (.*)$/) {
+	     $lg=$1;
+		  if($2=~/^(.*) Map range: (.*)/) {
+		    $chrom{$lg}=$1;
+		    if($2=~/\((-?[0-9.]+)cM to (-?[0-9.]+)cM\)(.*)/) {
+		      $map_start[$lg][0]=$1;
+		      $map_end[$lg][0]=$1;
+			   if($3=~/\((-?[0-9.]+)cM to (-?[0-9.]+)cM\)/) {
+		        $map_start[$lg][1]=$1;
+		        $map_end[$lg][1]=$1;
+				  $sex_map=1;
+			   }
+		    } else { die "Error reading linkage group map range\n"; }
+		  } else {$chrom{$lg}=$1;}
+		} elsif(/^\s+(.+) - ([\d\.]+)\s*([\d\.]*)/) {
+		  if(!$opt{c} || $lg eq $opt{c}) {
+	       $mkchrom[$nmk]=$lg;
+			 $mkpos[$nmk][0]=$2;
+			 $mkpos[$nmk][1]=$3;
+			 $mkname[$nmk++]=$1;
+		  }
+	   } else {
+	     # Check for total map length
+        if(/^Total Map Length: (.*)$/) {
+		    if($1=~/(\d\d*\.?\d*)cM(.*)/) {
+		      $map_length[0]=$1;
+			   if($2=~/(\d\d*\.?\d*)cM$/) {
+			     $map_length[1]=$1;
+			     $sex_map=1;
+			   }
+		    } else { die "Error reading map lengths\n"; }	
+		    $link_fg=2;
+	       next;
+	     }
+	   } 
+	 }
+	 $model=$1 if(/^Model: (.+)/);
+	 if($link_fg<3) {
+	   if(/^Output columns:$/) {
+		  $link_fg=3;
+		  $out_col_flag=1;
+		  next;
+		} elsif(/Output covariate data:$/) {
+		  $link_fg=4;
+		}
+	 } elsif($link_fg>2) {
+	   if(/(\d+): (.*)/) {
+		  $col[$1]=$2;
+		  $tmp=$1-1;
+		  if($link_fg==4) {
+		    $link_fg=3;
+			 if(!$tmp) {$adj=6;}
+		  }
+		  $tmp+=$adj;
+		  if($2 eq "Total genetic variance") {
+		    $tv_col=$tmp;
+			 $no_output[$tmp]=1;
+		  } elsif($2 eq "Additive variance") {
+		    $rand_fg[$nrand]=0;
+			 $rand_col[$nrand++]=$tmp;
+		  } elsif($2=~/^Additional random variance for/) {
+		    $rand_fg[$nrand]=2;
+			 $rand_col[$nrand++]=$tmp;
+		  } elsif($2=~/\S+ size$/) {
+		    $rand_fg[$nrand]=1;
+			 $rand_col[$nrand++]=$tmp;
+		  } elsif($2 eq "Residual variance") {
+		    $resvar_col=$tmp;
+			 $no_output[$tmp]=1;
+		  } elsif($2 eq "Grand mean") {
+		    $mean_col=$tmp;
+			 $no_output[$tmp]=1;
+		  } elsif($2 eq "Tau") {
+		    $tau_col=$tmp;
+			 $no_output[$tmp]=1;
+		  } elsif($2 eq "No. QTL's in model") {
+		    $no_output[$tmp]=1;
+		  } elsif($2 eq "No. linked QTL's") {
+		    $no_output[$tmp]=1;
+		  } elsif($2 eq "No. covariate columns") {
+		    $no_output[$tmp]=1;
+		  } elsif($2 eq "No. genetic groups") {
+		    $no_output[$tmp]=1;
+		  }
+		} elsif(/No. covariate columns: (\d+)/) {
+		  $n_cov=$1; 
+		} elsif(/No. fixed output columns: (\d+)/) {
+		  $max_col=$1; 
+		} elsif(/No. genetic groups: (\d+)/) {
+		  $ngroup=$1;
+		} elsif(/^Sex specific map$/) {
+		  $sex_map=1;
+		} elsif(/^Residual variance: ([0-9-.]+)/) {
+		  $resvar_set=1;
+		  $resvar=$1;
+		} elsif(/^Grand mean: ([0-9-.]+)/) {
+		  $mean_set=1;
+		  $mean=$1;
+		} elsif(/^Tau Mode: ([0-9]+)/) {
+		  $tau_mode=$1;
+		} elsif(/^Tau Beta: ([0-9.]+)/) {
+		  $tau_beta=$1;
+		}
+	 }
+  }
+}

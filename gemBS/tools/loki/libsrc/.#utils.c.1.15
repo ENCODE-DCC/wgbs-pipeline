@@ -1,0 +1,539 @@
+/****************************************************************************
+ *                                                                          *
+ *     Loki - Programs for genetic analysis of complex traits using MCMC    *
+ *                                                                          *
+ *             Simon Heath - University of Washington                       *
+ *                                                                          *
+ *                       March 1997                                         *
+ *                                                                          *
+ * utils.c:                                                                 *
+ *                                                                          *
+ * Small utility routines used by both prep and loki                        *
+ *                                                                          *
+ * Copyright (C) Simon C. Heath 1997, 2000, 2002                            *
+ * This is free software.  You can distribute it and/or modify it           *
+ * under the terms of the Modified BSD license, see the file COPYING        *
+ *                                                                          *
+ ****************************************************************************/
+
+#include <config.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <signal.h>
+#include <sys/times.h>
+#include <sys/stat.h>
+#include <errno.h>
+#ifdef HAVE_SYS_SYSTEMINFO_H
+#include <sys/systeminfo.h>
+#endif
+
+#include "ranlib.h"
+#include "utils.h"
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 64
+#endif
+
+const char *FMsg="File Error - aborting\n";
+const char *IntErr="Fatal Internal Error - aborting\n";
+const char *MMsg="Out of Memory Error - aborting\n";
+const char *AbMsg="Aborting\n";
+int from_abt;
+static char *file_prefix,*file_dir;
+
+static char *lfile;
+static loki_time *ltime;
+static const struct loki *loki;
+static int set_exit;
+
+void init_lib_utils(const struct loki *lk)
+{
+	loki=lk;
+	set_strcmpfunc(lk->sys.strcmpfunc);
+	return;
+}
+
+int check_output(const int level) 
+{
+	int i;
+	static int mask[4]={3,7,2,0};
+	
+	i=loki->params.verbose_level&VERBOSE_LEVELS_MASK;
+	return (mask[i]&level);
+}
+
+void message(const int level, const char *fmt, ...)
+{
+	va_list args;
+	
+	if(check_output(level)) {
+		va_start(args,fmt);
+		(void)vfprintf(stdout,fmt,args);
+		va_end(args);
+	}
+}
+
+static void free_utils(void) 
+{
+	if(file_prefix) {
+		free(file_prefix);
+		file_prefix=0;
+	}
+	if(file_dir) {
+		free(file_dir);
+		file_dir=0;
+	}
+}
+
+char *add_file_dir(const char *p)
+{
+	char *p1=0,*s2;
+	const char *s1;
+	size_t s;
+	
+	if(p) {
+		if(file_dir) {
+			s=strlen(p)+2+strlen(file_dir);
+			p1=malloc(s);
+			if(p1) {
+				s1=file_dir;
+				s2=p1-1;
+				while((*++s2=*s1++));
+				if(s2[-1]!='/') *s2='/';
+				else s2--;
+				s1=p;
+				while((*++s2=*s1++));
+			}
+		} else p1=strdup(p);
+	}
+	return p1;
+}
+
+int set_file_prefix(const char *p)
+{
+	int err=0;
+	char *p1;
+	
+	if(*p) {
+		p1=strdup(p);
+		if(p1) {
+			if(file_prefix) free(file_prefix);
+			file_prefix=p1;
+			if(!set_exit) {
+				if(!atexit(free_utils)) set_exit=1;
+			}
+		} else err=2;
+	} else err=1;
+	return err;
+}
+			
+int set_file_dir(const char *p) 
+{
+	int err=0,s;
+	char *p1;
+	struct stat sbuf;
+	
+	if(*p) {
+		p1=strdup(p);
+		if(p1) {
+			s=stat(p,&sbuf);
+			if(!s) {
+				if(sbuf.st_mode&S_IFDIR) {
+					if((sbuf.st_mode&(S_IXUSR|S_IWUSR))==(S_IXUSR|S_IWUSR)) {
+						if(file_dir) free(file_dir);
+						file_dir=p1;
+						if(!set_exit) {
+							if(!atexit(free_utils)) set_exit=1;
+						}
+					} else err=5;
+				} else err=4;
+			} else err=3;
+		} else err=2;
+	} else err=1;
+	return err;
+}
+
+const char *utl_error(int i)
+{
+	static char *errs[]={
+		"No Error",
+		"Out of memory",
+		"Null Pointer",
+		"Couldn't stat() directory",
+		"Not a directory",
+		"Insufficient permissions",
+		"Bad error number"
+	};
+	
+	if(i>UTL_MAX_ERR) i=UTL_MAX_ERR+1;
+	return errs[i];
+}
+
+void abt(const char *file, const int line, const char *fmt, ...)
+{
+	va_list args;
+
+	if(stdout) (void)fflush(stdout);
+	(void)fprintf(stderr,"[%s:%d] ",file,line);
+	va_start(args,fmt);
+	(void)vfprintf(stderr,fmt,args);
+	va_end(args);
+	from_abt=1; /* Avoid certain cleanup routines if aborting */
+	exit(EXIT_FAILURE); 	
+}
+
+struct list {
+	struct list *next;
+};
+
+void *reverse_list(void *s) 
+{
+	struct list *p,*p1,*p2;
+
+	p=s;
+	p2=0;
+	while(p) {
+		p1=p->next;
+		p->next=p2;
+		p2=p;
+		p=p1;
+	}
+	return p2;
+}
+
+void free_list(void *s,void (*f)(void *))
+{
+	struct list *p,*p1;
+	
+	p=s;
+	while(p) {
+		p1=p->next;
+		if(f) f(p);
+		free(p);
+		p=p1;
+	}
+}
+
+int list_length(void *s)
+{
+	int c=0;
+	struct list *p;
+	
+	p=s;
+	while(p) {
+		c++;
+		p=p->next;
+	}
+	return c;
+}
+
+int mystrcmp(const char *p1, const char *p2)
+{
+	if(!p1) {
+		if(!p2) return 0;
+		return 1;
+	}
+	if(!p2) return 1;
+	return strcmp(p1,p2);
+}
+
+void qstrip(char *s1)
+{
+	char *p,*p1;
+	
+	p=s1;
+	p1=s1-1;
+	while(*s1) {
+		if(!isspace((int)*s1)) break;
+		s1++;
+	}
+	while(*s1) {
+		if(!isspace((int)*s1)) p1=p;
+		*(p++)= *(s1++);
+	}
+	*(++p1)='\0';
+}
+
+tokens *tokenize(char *s,const int ch,tokens *tok)
+{
+	int n_toks=0;
+	char **p,*p1;
+	
+	if(!tok) {
+		tok=malloc(sizeof(tokens));
+		tok->size=16;
+		if(tok) {
+			if(!(tok->toks=malloc(sizeof(void *)*tok->size))) {
+				free(tok);
+				tok=0;
+			}
+		}
+	}
+	if(tok) {
+		p=tok->toks;
+		if((p1=s)) {
+			if(!ch) { /* Split on white space */
+				for(;;) {
+					while(*s && isspace((int)*s)) s++;
+					if(!*s) break;
+					if(n_toks==tok->size) {
+						tok->size<<=1;
+						if(!(p=realloc(p,sizeof(void *)*tok->size))) {
+							free_tokens(tok);
+							tok=0;
+							break;
+						}
+						tok->toks=p;
+					}
+					p[n_toks++]=p1;
+					while(*s && !isspace((int)*s)) {
+						if(*s=='\\') {
+							s++;
+							if(!*s) break;
+						}
+						*p1++=*s++;
+					}
+					if(*s) s++;
+					*p1++=0;
+				}
+			} else { /* Split on token */
+				for(;;) {
+					if(!*s) break;
+					if(n_toks==tok->size) {
+						tok->size<<=1;
+						if(!(p=realloc(p,sizeof(void *)*tok->size))) {
+							free_tokens(tok);
+							tok=0;
+							break;
+						}
+						tok->toks=p;
+					}
+					p[n_toks++]=p1;
+					while(*s && (*s!=ch)) {
+						if(*s=='\\') {
+							s++;
+							if(!*s) break;
+						}
+						*p1++=*s++;
+					}
+					if(*s) s++;
+					*p1++=0;
+					qstrip(p[n_toks-1]);
+				}
+			}
+		}
+	}
+	if(tok) {
+		if(n_toks==1 && !*p[0]) n_toks--;
+		tok->n_tok=n_toks;
+	}
+	return tok;
+}
+
+#ifdef FUNC_NAME
+#undef FUNC_NAME
+#endif
+#define FUNC_NAME "make_file_name" 
+char *make_file_name(const char *s)
+{
+	size_t l;
+	char *s1,*s2,*s3;
+	
+	if(!s) ABT_FUNC("Passed zero pointer\n");
+	if(!file_prefix) {
+		if(set_file_prefix(DEFAULT_FILE_PREFIX)) ABT_FUNC("Couldn't set default file name\n");
+	}
+	l=strlen(s)+strlen(file_prefix)+2;
+	if(file_dir) l+=strlen(file_dir)+1;
+	if(!l) ABT_FUNC(IntErr);
+	if(!(s1=malloc(l))) ABT_FUNC(MMsg);
+	s2=s1-1;
+	s3=file_dir;
+	if(s3) {
+		while((*++s2 = *s3++));
+		if(s2[-1]!='/') *s2='/';
+		else s2--;
+	}
+	s3=file_prefix;
+	while((*++s2 = *s3++));
+	while((*s2++ = *s++));
+	return s1;
+}
+
+void print_start_time(const char *progname,const char *mode,char *logfile,loki_time *lt)
+{
+	FILE *flog=0;
+	char *buf;
+	struct stat sbuf;
+	int i,j;
+	
+	ltime=lt;
+	if(logfile) logfile=add_file_dir(logfile);
+	if(logfile && mode[0]=='w') {
+		if(!stat(logfile,&sbuf)) {
+			i=1;
+			j=(int)strlen(logfile);
+			buf=(char *)malloc((size_t)j+2);
+			if(buf) {
+				(void)strcpy(buf,logfile);
+				buf[j]='~';
+				buf[j+1]='\0';
+				i=rename(logfile,buf);
+				free(buf);
+			}
+			if(i) (void)fprintf(stderr,"print_start_time(): Couldn't rename old logfile\n");
+		}
+	}
+	if(logfile) flog=fopen(logfile,mode);
+	else flog=stdout;
+	if(flog) {
+		(void)fprintf(flog,"\n********************** Starting *************************\n\n");
+		(void)fprintf(flog,"     %s: %s",progname,ctime(&lt->start_time));
+		if(logfile) {
+			(void)fclose(flog);
+			lfile=logfile;
+		}
+	} else {
+		(void)fprintf(stderr,"Couldn't write to log file %s\n",logfile?logfile:"<NULL>");
+		if(logfile) free(logfile);
+	}
+}
+
+void print_end_time(void)
+{
+	FILE *flog;
+	time_t end_time;
+	double l;
+	struct tms tbuf;
+	long tps;
+	int t=0,flag=0;
+	char hname[MAXHOSTNAMELEN+1];
+	
+	if(from_abt || !ltime) return;
+	if(lfile) flog=fopen(lfile,"a");
+	else flog=stdout;
+	if(flog)	{
+#ifdef HAVE_SYS_SYSTEMINFO_H
+		if(sysinfo(SI_HOSTNAME,hname,MAXHOSTNAMELEN)<0)
+#else
+		if(gethostname(hname,MAXHOSTNAMELEN)<0)
+#endif
+			 (void)strcpy(hname,"UNKNOWN");
+		
+		(void)fprintf(flog,"\n*********************** Exiting *************************\n\n");
+		(void)fprintf(flog,"     Hostname:     %s\n", hname);
+		tps=sysconf (_SC_CLK_TCK);
+		errno=0;
+		(void)times(&tbuf);
+		if(errno) perror("print_end_time():");
+		else {
+			(void)fprintf (flog,"     System time:  %.4f seconds\n",ltime->extra_stime+(double)tbuf.tms_stime/(double)tps);
+			(void)fprintf (flog,"     User time:    %.4f seconds\n",ltime->extra_utime+(double)tbuf.tms_utime/(double)tps);
+		}
+		end_time=time(0);
+		l=ltime->extra_time+difftime(end_time,ltime->start_time);
+		(void)fputs("     Elapsed time: ",flog);
+		if(l>86400.0) {
+			t=(int)l/86400.0;
+			l-=(double)t*86400.0;
+			(void)fprintf(flog,"%d day%s",t,t!=1?"s, ":", ");
+			flag=1;
+		}
+		if(l>3600.0) {
+			t=(int)(l/3600.0);
+			l-=(double)t*3600.0;
+			flag=1;
+		}
+		if(flag) (void)fprintf(flog,"%d hour%s",t,t!=1?"s, ":", ");
+		if(l>60.0) {
+			t=(int)(l/60.0);
+			l-=(double)t*60.0;
+			flag=1;
+		}
+		if(flag) (void)fprintf(flog,"%d minute%s",t,t!=1?"s, ":", ");
+		(void)fprintf(flog,"%d second%c\n",(int)l,(int)l!=1?'s':' ');
+		if(lfile) (void)fclose(flog);
+	}
+	if(lfile) {
+		free(lfile);
+		lfile=0;
+	}
+}
+
+void gen_perm(int *x,int n)
+{
+	int i,j;
+	
+	while(n) {
+		j=(int)(safe_ranf()*(double)(n--));
+		i=x[j];
+		x[j]=x[n];
+		x[n]=i;
+	}
+}
+
+int txt_print_double(double x,FILE *fptr)
+{
+	int i,er=0;
+	double y,z;
+	static char *hexdigits="0123456789abcdef";
+
+	y=frexp(x,&i);
+	if(fprintf(fptr,"%d:",i)<0) er=1;
+	if(!er && y<0.0) {
+		y=-y;
+		if(fputc('-',fptr)==EOF) er=1;
+	}
+	if(!er) {
+		if(y) {
+			while(y>0.0 && !er) {
+				y=frexp(y,&i);
+				y=ldexp(y,i+4);
+				y=modf(y,&z);
+				if(fputc(hexdigits[(int)z],fptr)==EOF) er=1;
+			}
+		} else if(fputc('0',fptr)==EOF) er=1;
+	}
+	return er;
+}
+
+int txt_get_double(char *p,char **p1,double *x)
+{
+	int j,e,mf=0;
+	char *p2;
+	double y;
+	
+	e=strtol(p,p1,10);
+	p2=*p1;
+	if(*p2++!=':') return 1;
+	if(*p2=='-') {
+		mf=1;
+		p2++;
+	}
+	p=p2;
+	while(isxdigit((int)*p2++));
+	y=0.0;
+	*p1=--p2;
+	while(p2-->p) {
+		j=(int)*p2;
+		if(j>='0'&&j<='9') j-='0';
+		else if(j>='a'&&j<='f') j-='a'-10;
+		else return 1;
+		y+=(double)j;
+		y=frexp(y,&j);
+		y=ldexp(y,j-4);
+	}
+	if(mf) y=-y;
+	*x=ldexp(y,e);
+	return 0;
+}

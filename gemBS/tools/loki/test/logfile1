@@ -1,0 +1,154 @@
+1054026302: 2932: Dmalloc version '4.8.1' from 'http://dmalloc.com/'
+1054026302: 2932: flags = 0x4000503, logfile 'logfile'
+1054026302: 2932: interval = 0, addr = 0, seen # = 0
+1054026302: 2932: starting time = 1054026302
+1054026302: 2932: free bucket count/bits:  119/5 34/6 30/7 32/8 8/9 4/10 1/11 2/12 1/15 1/16
+1054026302: 2932: basic-block 4096 bytes, alignment 8 bytes, heap grows up
+1054026302: 2932: heap: 0x80d3000 to 0x80f6000, size 143360 bytes (35 blocks)
+1054026302: 2932: heap checked 0
+1054026302: 2932: alloc calls: malloc 1498, calloc 13, realloc 18, free 1403
+1054026302: 2932: alloc calls: recalloc 0, memalign 0, valloc 0
+1054026302: 2932:  total memory allocated: 207725 bytes (1529 pnts)
+1054026302: 2932:  max in use at one time: 43927 bytes (238 pnts)
+1054026302: 2932: max alloced with 1 call: 16386 bytes
+1054026302: 2932: max alloc rounding loss: 19241 bytes (30%)
+1054026302: 2932: max memory space wasted: 51600 bytes (44%)
+1054026302: 2932: final user memory space: basic 22, divided 9, 114768 bytes
+1054026302: 2932:  final admin overhead: basic 1, divided 3, 16384 bytes (11%)
+1054026302: 2932:  final external space: 0 bytes (0 blocks)
+1054026302: 2932: top 10 allocations:
+1054026302: 2932:  total-size  count in-use-size  count  source
+1054026302: 2932:      118784      8        4096      1  ra=0x2820739c
+1054026302: 2932:       16426      2           0      0  param_lex.l:975
+1054026302: 2932:       16400      2           0      0  set_recode.c:80
+1054026302: 2932:        8192      1        8192      1  ra=0x80c0392
+1054026302: 2932:        5412    451           0      0  ra=0x80b9974
+1054026302: 2932:        5248      1           0      0  read_xmlfile.c:768
+1054026302: 2932:        3608    451           0      0  ra=0x80b998d
+1054026302: 2932:        2460      1           0      0  read_xmlfile.c:1006
+1054026302: 2932:        1920      3           0      0  get_peelseq.c:234
+1054026302: 2932:      207593   1529       16880    108  Total of 126
+1054026302: 2932: dumping not-freed pointers changed since 0:
+1054026302: 2932:  not freed: '0x80d5808|s1' (1032 bytes) from 'ra=0x80c0b05'
+1054026302: 2932:  not freed: '0x80d8288|s7' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d82c8|s5' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d8308|s5' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8388|s5' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d83c8|s5' (24 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8408|s5' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8448|s5' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8488|s5' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d84c8|s7' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d8508|s3' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8548|s5' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8588|s7' (28 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d85c8|s1' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8608|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8648|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8688|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d86c8|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8708|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8748|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8788|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d87c8|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8808|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8848|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8888|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d88c8|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8908|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8948|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8988|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d89c8|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8a08|s1' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d8a48|s1' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d8a88|s1' (32 bytes) from 'get_peelseq.c:49'
+1054026302: 2932:  not freed: '0x80d8ac8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8b08|s1' (24 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8b48|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8b88|s1' (28 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8bc8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8c08|s1' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8c48|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8c88|s1' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8cc8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8d08|s1' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8d48|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8d88|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8dc8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8e08|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8e48|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8e88|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8ec8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8f08|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8f48|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d8f88|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80d8fc8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80d6008|s1' (4096 bytes) from 'ra=0x2820739c'
+1054026302: 2932:  not freed: '0x80db0c8|s15' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80db148|s25' (8 bytes) from 'get_peelseq.c:226'
+1054026302: 2932:  not freed: '0x80db3a8|s93' (8 bytes) from 'get_peelseq.c:226'
+1054026302: 2932:  not freed: '0x80db408|s77' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80db548|s73' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80db808|s23' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80db8e8|s17' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80db928|s23' (8 bytes) from 'get_peelseq.c:226'
+1054026302: 2932:  not freed: '0x80db9c8|s19' (4 bytes) from 'get_peelseq.c:338'
+1054026302: 2932:  not freed: '0x80e6588|s7' (64 bytes) from 'ra=0x80becfd'
+1054026302: 2932:  not freed: '0x80e6708|s5' (60 bytes) from 'alloc_loki.c:59'
+1054026302: 2932:  not freed: '0x80e4008|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4048|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4088|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e40c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4108|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4148|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4188|s1' (24 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e41c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4208|s1' (24 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4248|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4288|s1' (28 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e42c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4308|s1' (28 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4348|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4388|s1' (32 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e43c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4408|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4448|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4488|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e44c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4508|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4548|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4588|s1' (36 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e45c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4608|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4648|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4688|s1' (40 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e46c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4708|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4748|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4788|s1' (44 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e47c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4808|s1' (44 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4848|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4888|s1' (44 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e48c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4908|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e4948|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4988|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e49c8|s1' (36 bytes) from 'get_peelseq.c:55'
+1054026302: 2932:  not freed: '0x80e4a08|s1' (48 bytes) from 'get_peelseq.c:561'
+1054026302: 2932:  not freed: '0x80e1008|s9' (8192 bytes) from 'ra=0x80c0392'
+1054026302: 2932:  total-size  count  source
+1054026302: 2932:        8192      1  ra=0x80c0392
+1054026302: 2932:        4096      1  ra=0x2820739c
+1054026302: 2932:        1612     44  get_peelseq.c:561
+1054026302: 2932:        1584     44  get_peelseq.c:55
+1054026302: 2932:        1032      1  ra=0x80c0b05
+1054026302: 2932:         192      6  get_peelseq.c:49
+1054026302: 2932:          64      1  ra=0x80becfd
+1054026302: 2932:          60      1  alloc_loki.c:59
+1054026302: 2932:          24      3  get_peelseq.c:226
+1054026302: 2932:          24      6  get_peelseq.c:338
+1054026302: 2932:       16880    108  Total of 10
+1054026302: 2932:  known memory: 104 pointers, 3496 bytes
+1054026302: 2932:  unknown memory: 4 pointers, 13384 bytes
+1054026302: 2932: ending time = 1054026302, elapsed since start = 0:00:00

@@ -1,0 +1,88 @@
+SHELL = /bin/sh
+
+LEX = @LEX@ -I
+YACC = @YACC@
+YFLAGS = -d
+CC = @CC@
+MY_CFLAGS = @CFLAGS@ @extra_cflags@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+CP = @CP@
+MV = @MV@
+RANLIB = @RANLIB@
+AR = @AR@
+CHMOD = @CHMOD@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+INSTALL_PERM = 755
+
+#DMALLOC_INC = @DMALLOC_INC@
+#DMALLOC_LIB = @DMALLOC_LIB@
+#DMALLOC_FLAGS = @DMALLOC_FLAGS@
+
+INCLUDES = -I../include -I../xmlsrc
+CFLAGS = $(MY_CFLAGS) $(INCLUDES) $(DMALLOC_FLAGS)
+ALL_LIBS = -L. -L../libsrc -L../xmlsrc -lloki -lxml -lgen $(DMALLOC_LIB) $(LIBS)
+
+LKLIB_SRC = param_parse.c param_lex.c read_xmlfile.c loki_utils.c kinship.c \
+genedrop.c mat_utils.c seg_pen.c gen_pen.c loki_ibd.c \
+get_founders.c pass_founder_genes.c init_marker.c gen_elim.c ped_utils.c \
+recode_alleles.c process_mark.c process_mark_x.c process_mark_y.c \
+gen_elim_err.c sort_fam_error.c set_recode.c oldpeel_compat.c \
+get_peelseq.c loki_ibs_check.c
+
+LOKI_SRC = loki.c loki_peel.c loki_init.c alloc_loki.c \
+loki_sample.c loki_pen.c loki_tlmoves.c meiosis_scan.c \
+loki_identity.c sample_rand.c sample_effects.c \
+loki_dump.c sample_cens.c handle_res.c print_data.c calc_var_locus.c \
+loki_output.c loki_output_stat5.c sample_nu.c loki_complex_peel.c loki_npl.c \
+loki_simple_sample.c loki_simple_peel.c loki_trait_simple_peel.c \
+loki_trait_simple_sample.c get_par_probs.c read_solar_idfile.c \
+peel_to_par.c update_segs.c calc_nrm.c pseudo_chrom.c write_xml_dump.c
+
+LKLIB_OBJ = ${LKLIB_SRC:.c=.o}
+LOKI_OBJ = ${LOKI_SRC:.c=.o}
+
+PROGS = loki
+
+all: $(PROGS)
+
+.y.c:
+	$(YACC) $(YFLAGS) $<
+	$(MV) $(MVFLAGS) y.tab.c $@
+#	$(MV) $(MVFLAGS) y.tab.h ${@:.c=.h}
+
+param_parse.h: param_parse.c
+
+param_lex.o: param_lex.c
+	$(CC) -c $(CFLAGS) -DYY_NO_UNPUT $<
+
+libloki.a: $(LKLIB_OBJ) ../include/config.h
+	$(AR) cr $@ $(LKLIB_OBJ)
+	$(RANLIB) $@
+
+loki: libloki.a $(LOKI_OBJ) ../libsrc/libgen.a ../xmlsrc/libxml.a ../include/config.h
+	$(CC) $(CFLAGS) -o $@ $(LOKI_OBJ) $(LDFLAGS) $(ALL_LIBS)
+
+../bin:
+	mkdir ../bin
+
+install: $(PROGS) ../bin
+	for file in $(PROGS); do \
+	$(CP) $$file $(bindir)/; \
+	$(CHMOD) $(INSTALL_PERM) $(bindir)/$$file ; \
+	done
+
+clean: 
+	rm -f *~ *.o *.a *.bak a.out core seedfile depend
+
+distclean: clean
+	rm -f $(PROGS) Makefile
+
+depend: $(LOKI_SRC) $(LKLIB_SRC)
+	@MAKEDEPEND@ $(INCLUDES) $(DMALLOC_FLAGS) $(LOKI_SRC) $(LKLIB_SRC)
+	touch depend
+	
+# DO NOT DELETE THIS LINE -- make depend depends on it.

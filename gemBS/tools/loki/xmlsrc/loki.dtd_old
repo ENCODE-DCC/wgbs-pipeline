@@ -1,0 +1,40 @@
+<!DOCTYPE loki [
+ <!ELEMENT loki (log?, (family|group)*, (link|data)*), model*>
+ <!ATTLIST loki program CDATA #IMPLIED>
+ <!ELEMENT log EMPTY>
+ <!ATTLIST log file CDATA #REQUIRED>
+ <!ELEMENT family (comp*)>
+ <!ATTLIST family orig CDATA #IMPLIED>
+ <!ELEMENT comp (ind*)>
+ <!ELEMENT ind EMPTY>
+ <!ATTLIST ind id   CDATA #REQUIRED
+               sex  CDATA #IMPLIED
+					aff  CDATA #IMPLIED
+					group CDATA #IMPLIED
+					father CDATA #IMPLIED
+					mother  CDATA #IMPLIED
+					orig CDATA #IMPLIED
+ >
+ <!ELEMENT link (#PCDATA)>
+ <!ATTLIST link name CDATA #IMPLIED
+                type (autosomal | x | y | unlinked) 'autosomal'
+ >
+ <!ELEMENT group (var*)>
+ <!ATTLIST group name ID #REQUIRED
+                 type (factor | real | integer | microsat | alleles | ind | father | mother | group | sex | affected | ord_alleles | snp | loki_qtl | trait_locus | gen_locus | super_locus) #IMPLIED
+ >
+ <!ELEMENT var (levels?)>
+ <!ATTLIST var name CDATA #REQUIRED
+               type (factor | real | integer | microsat | alleles | ind | father | mother | group | sex | affected | ord_alleles | snp | loki_qtl | trait_locus | gen_locus | super_locus) #IMPLIED
+					parent CDATA #IMPLIED
+ >
+ <!ELEMENT levels (#PCDATA)>
+ <!ELEMENT data (rec*)>
+ <!ATTLIST data group IDREF #REQUIRED>
+ <!ELEMENT rec (#PCDATA)>
+ <!ATTLIST rec id CDATA #REQUIRED>
+ <!ELEMENT model (trait+,term+)>
+ <!ELEMENT trait (#PCDATA)>
+ <!ELEMENT term (#PCDATA)>
+ <!ATTLIST term random (yes | no) 'no'>
+]>

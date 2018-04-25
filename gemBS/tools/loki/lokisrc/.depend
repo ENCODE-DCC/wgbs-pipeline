@@ -1,0 +1,736 @@
+loki.o: loki.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/unistd.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/errno.h /usr/include/sys/errno.h \
+  /usr/include/sys/time.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/version.h ../include/ranlib.h ../include/utils.h \
+  /usr/include/regex.h ../include/libhdr.h ../include/string_utils.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  gen_elim.h locus.h ../include/loki_compress.h loki_tlmoves.h \
+  get_peelseq.h pseudo_chrom.h
+loki_peel.o: loki_peel.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/float.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/ranlib.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  seg_pen.h get_par_probs.h ../include/lk_malloc.h loki_simple_peel.h \
+  loki_trait_simple_peel.h
+loki_init.o: loki_init.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/float.h \
+  /usr/include/limits.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h /usr/include/sys/syslimits.h \
+  ../include/ranlib.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h loki_utils.h ped_utils.h loki_output.h loki_ibd.h \
+  mat_utils.h sample_rand.h
+alloc_loki.o: alloc_loki.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_utils.h \
+  ped_utils.h
+loki_sample.o: loki_sample.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/unistd.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/gcc/darwin/3.3/float.h \
+  /usr/include/errno.h /usr/include/sys/errno.h /usr/include/sys/time.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h /usr/include/sys/times.h ../include/ranlib.h \
+  ../include/utils.h /usr/include/regex.h ../include/libhdr.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  seg_pen.h gen_pen.h loki_ibd.h loki_dump.h loki_tlmoves.h sample_cens.h \
+  handle_res.h sample_effects.h sample_rand.h print_data.h \
+  calc_var_locus.h loki_output.h loki_output_stat5.h kinship.h genedrop.h \
+  sample_nu.h meiosis_scan.h update_segs.h loki_npl.h read_solar_idfile.h \
+  pseudo_chrom.h loki_haplo.h
+loki_pen.o: loki_pen.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/config.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h
+loki_tlmoves.o: loki_tlmoves.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/float.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/ranlib.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  loki_tlmoves.h handle_res.h sample_cens.h ../include/lk_malloc.h
+meiosis_scan.o: meiosis_scan.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/ranlib.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h ../include/lk_malloc.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  seg_pen.h gen_pen.h meiosis_scan.h
+loki_identity.o: loki_identity.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/float.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h loki_ibd.h
+sample_rand.o: sample_rand.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/unistd.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/sys/unistd.h /usr/include/signal.h \
+  /usr/include/sys/signal.h /usr/include/machine/signal.h \
+  /usr/include/ppc/signal.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/gcc/darwin/3.3/float.h /usr/include/errno.h \
+  /usr/include/sys/errno.h ../include/ranlib.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  mat_utils.h ../include/sparse.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_utils.h ped_utils.h sample_rand.h
+sample_effects.o: sample_effects.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/unistd.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/gcc/darwin/3.3/float.h \
+  /usr/include/limits.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h /usr/include/sys/syslimits.h \
+  /usr/include/errno.h /usr/include/sys/errno.h ../include/ranlib.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  ../include/sparse.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_utils.h ped_utils.h sample_rand.h \
+  sample_effects.h ../include/min_deg.h
+loki_dump.o: loki_dump.c ../include/config.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/stdlib.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/unistd.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/sys/times.h /usr/include/errno.h /usr/include/sys/errno.h \
+  /usr/include/sys/wait.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/string_utils.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h ../include/libhdr.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_output.h \
+  sample_rand.h loki_ibd.h loki_dump.h
+sample_cens.o: sample_cens.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/config.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h \
+  ../include/ranlib.h sample_cens.h
+handle_res.o: handle_res.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/float.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h ../include/ranlib.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h handle_res.h
+print_data.o: print_data.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  ../include/version.h print_data.h
+calc_var_locus.o: calc_var_locus.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_utils.h \
+  ped_utils.h mat_utils.h calc_var_locus.h
+loki_output.o: loki_output.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h ../include/version.h loki_ibd.h loki_utils.h \
+  ped_utils.h calc_var_locus.h sample_rand.h mat_utils.h loki_output.h
+loki_output_stat5.o: loki_output_stat5.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  loki_output_stat5.h
+sample_nu.o: sample_nu.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/float.h /usr/include/errno.h \
+  /usr/include/sys/errno.h ../include/config.h ../include/ranlib.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h sample_nu.h
+loki_complex_peel.o: loki_complex_peel.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/float.h \
+  ../include/config.h ../include/ranlib.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h
+loki_npl.o: loki_npl.c /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/config.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h seg_pen.h loki_ibd.h \
+  loki_npl.h
+loki_simple_sample.o: loki_simple_sample.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/ranlib.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h get_par_probs.h loki_simple_peel.h
+loki_simple_peel.o: loki_simple_peel.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/config.h ../include/ranlib.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h get_par_probs.h \
+  loki_simple_peel.h
+loki_trait_simple_peel.o: loki_trait_simple_peel.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/float.h ../include/config.h \
+  ../include/ranlib.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h get_par_probs.h loki_trait_simple_peel.h
+loki_trait_simple_sample.o: loki_trait_simple_sample.c \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/float.h \
+  ../include/config.h ../include/ranlib.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h get_par_probs.h \
+  loki_trait_simple_peel.h
+get_par_probs.o: get_par_probs.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h get_par_probs.h
+read_solar_idfile.o: read_solar_idfile.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/ctype.h /usr/include/runetype.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h \
+  read_solar_idfile.h ../include/bin_tree.h
+peel_to_par.o: peel_to_par.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h
+update_segs.o: update_segs.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h seg_pen.h gen_pen.h \
+  update_segs.h
+calc_nrm.o: calc_nrm.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/libhdr.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_utils.h ped_utils.h ../include/sparse.h
+pseudo_chrom.o: pseudo_chrom.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/unistd.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/gcc/darwin/3.3/stdarg.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/ctype.h /usr/include/runetype.h /usr/include/errno.h \
+  /usr/include/sys/errno.h /usr/include/sys/wait.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/libhdr.h ../include/ranlib.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h ../include/sparse.h ../include/min_deg.h \
+  loki_peel.h ../include/shared_peel.h ../include/bin_tree.h loki_utils.h \
+  ped_utils.h ../include/loki_compress.h loki_tlmoves.h \
+  ../include/lk_malloc.h locus.h seg_pen.h gen_elim.h get_peelseq.h \
+  pseudo_chrom.h
+write_xml_dump.o: write_xml_dump.c ../include/config.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/sys/cdefs.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/stdlib.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/unistd.h /usr/include/sys/unistd.h /usr/include/signal.h \
+  /usr/include/sys/signal.h /usr/include/machine/signal.h \
+  /usr/include/ppc/signal.h /usr/include/sys/times.h /usr/include/errno.h \
+  /usr/include/sys/errno.h /usr/include/sys/wait.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/version.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/string_utils.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h ../include/libhdr.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_output.h \
+  sample_rand.h loki_ibd.h ../include/loki_compress.h loki_dump.h
+param_parse.o: param_parse.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/gcc/darwin/3.3/stdarg.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/sys/time.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h loki_scan.h loki_ibd.h \
+  loki_utils.h ped_utils.h ../include/lk_malloc.h \
+  ../include/shared_peel.h mat_utils.h meiosis_scan.h ../include/ranlib.h
+param_lex.o: param_lex.c /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/sys/cdefs.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/config.h /usr/include/stdlib.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/unistd.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/sys/stat.h /usr/include/sys/time.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  param_parse.h loki_scan.h ../include/utils.h /usr/include/regex.h
+read_xmlfile.o: read_xmlfile.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/unistd.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/unistd.h \
+  /usr/include/signal.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/ppc/signal.h \
+  /usr/include/gcc/darwin/3.3/stdarg.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/ctype.h /usr/include/runetype.h /usr/include/errno.h \
+  /usr/include/sys/errno.h /usr/include/sys/wait.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/libhdr.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h ../include/sparse.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  ../include/loki_compress.h ../include/lk_malloc.h ../xmlsrc/xml.h \
+  ../include/string_utils.h locus.h
+loki_utils.o: loki_utils.c ../include/config.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/stdlib.h /usr/include/alloca.h \
+  /usr/include/strings.h /usr/include/string.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h \
+  /usr/include/gcc/darwin/3.3/stdarg.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h
+kinship.o: kinship.c /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/sys/cdefs.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h kinship.h
+genedrop.o: genedrop.c /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h \
+  ../include/ranlib.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h genedrop.h
+mat_utils.o: mat_utils.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h mat_utils.h
+seg_pen.o: seg_pen.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h \
+  ../include/ranlib.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h handle_res.h seg_pen.h ../include/lk_malloc.h \
+  gen_pen.h
+gen_pen.o: gen_pen.c /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/config.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h \
+  ../include/ranlib.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h seg_pen.h gen_pen.h handle_res.h
+loki_ibd.o: loki_ibd.c /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/sys/wait.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/gcc/darwin/3.3/float.h /usr/include/sys/stat.h \
+  /usr/include/sys/time.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  /usr/include/errno.h /usr/include/sys/errno.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/config.h \
+  ../include/ranlib.h ../include/utils.h /usr/include/regex.h \
+  ../include/string_utils.h ../include/libhdr.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  ../include/loki_compress.h loki_ibd.h ../include/lk_malloc.h seg_pen.h
+get_founders.o: get_founders.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_utils.h \
+  ped_utils.h loki_ibd.h
+pass_founder_genes.o: pass_founder_genes.c /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/stdlib.h /usr/include/alloca.h \
+  ../include/config.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h seg_pen.h
+init_marker.o: init_marker.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/gcc/darwin/3.3/float.h ../include/config.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  ../include/lk_malloc.h locus.h
+gen_elim.o: gen_elim.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  oldpeel_compat.h gen_elim.h
+ped_utils.o: ped_utils.c /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_utils.h \
+  ped_utils.h
+recode_alleles.o: recode_alleles.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_utils.h \
+  ped_utils.h ../include/lk_malloc.h gen_elim.h
+process_mark.o: process_mark.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  gen_elim.h
+process_mark_x.o: process_mark_x.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  gen_elim.h
+process_mark_y.o: process_mark_y.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  ../include/libhdr.h ../include/version.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  gen_elim.h
+gen_elim_err.o: gen_elim_err.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h ../include/libhdr.h ../include/version.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  gen_elim.h
+sort_fam_error.o: sort_fam_error.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_utils.h ped_utils.h gen_elim.h
+set_recode.o: set_recode.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h ../include/utils.h /usr/include/regex.h \
+  /usr/include/time.h /usr/include/gcc/darwin/3.3/machine/limits.h \
+  /usr/include/ppc/limits.h loki.h ../include/loki_struct.h \
+  ../include/lk_long.h loki_peel.h ../include/shared_peel.h \
+  ../include/bin_tree.h loki_utils.h ped_utils.h gen_elim.h
+oldpeel_compat.o: oldpeel_compat.c ../include/config.h \
+  /usr/include/stdlib.h /usr/include/machine/ansi.h \
+  /usr/include/ppc/ansi.h /usr/include/machine/types.h \
+  /usr/include/ppc/types.h /usr/include/sys/cdefs.h /usr/include/alloca.h \
+  /usr/include/string.h /usr/include/math.h \
+  /usr/include/architecture/ppc/math.h /usr/include/stdio.h \
+  /usr/include/sys/types.h /usr/include/sys/appleapiopts.h \
+  /usr/include/machine/endian.h /usr/include/ppc/endian.h \
+  /usr/include/gcc/darwin/3.3/assert.h ../include/utils.h \
+  /usr/include/regex.h /usr/include/time.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  loki.h ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  ../include/lk_malloc.h oldpeel_compat.h
+get_peelseq.o: get_peelseq.c ../include/config.h /usr/include/stdlib.h \
+  /usr/include/machine/ansi.h /usr/include/ppc/ansi.h \
+  /usr/include/machine/types.h /usr/include/ppc/types.h \
+  /usr/include/sys/cdefs.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/math.h /usr/include/architecture/ppc/math.h \
+  /usr/include/stdio.h /usr/include/sys/types.h \
+  /usr/include/sys/appleapiopts.h /usr/include/machine/endian.h \
+  /usr/include/ppc/endian.h /usr/include/limits.h \
+  /usr/include/gcc/darwin/3.3/machine/limits.h /usr/include/ppc/limits.h \
+  /usr/include/sys/syslimits.h /usr/include/gcc/darwin/3.3/assert.h \
+  ../include/utils.h /usr/include/regex.h /usr/include/time.h loki.h \
+  ../include/loki_struct.h ../include/lk_long.h loki_peel.h \
+  ../include/shared_peel.h ../include/bin_tree.h loki_utils.h ped_utils.h \
+  get_peelseq.h ../include/lk_malloc.h ../include/min_deg.h

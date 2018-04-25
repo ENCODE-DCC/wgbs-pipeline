@@ -1,0 +1,107 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(lokisrc/loki.c)
+
+AC_SYS_LARGEFILE
+
+AC_CONFIG_HEADER(include/config.h)
+AC_PROG_MAKE_SET
+
+ac_default_prefix=`pwd`
+
+dm_search="$includedir,$libdir \
+          /usr/local/include,/usr/local/lib \
+			 /usr/include,/usr/lib \
+			 /sw/include,/sw/lib \
+			 /opt/include,/opt/lib \
+			 /opt/local/include,/opt/local/lib \
+			 $HOME/include,$HOME/lib"
+AC_MSG_CHECKING([for dmalloc])
+found=no
+for inclib in $dm_search
+do
+  tst_inc=`echo $inclib | tr ',' ' ' | awk '{print $1}'`
+  tst_lib=`echo $inclib | tr ',' ' ' | awk '{print $2}'`
+  if test -r $tst_inc/dmalloc.h && test -r $tst_lib/libdmalloc.a;
+  then
+	 DMALLOC_INC="-I$tst_inc"
+	 DMALLOC_LIB="-L$tst_lib]"
+	 DMALLOC_FLAGS="-DUSE_DMALLOC \$(DMALLOC_INC)"
+	 found=yes
+	 AC_MSG_RESULT(yes)
+	 break
+  fi
+done
+if test $found = no; then
+AC_MSG_RESULT(no)
+fi
+
+dnl Checks for programs.
+AC_PROG_CC
+if test "x$GCC" = "xyes"; then 
+  extra_cflags='-W -Wall -pedantic -Wno-long-long -ffloat-store'
+else
+  extra_cflags=""
+fi
+
+AC_PATH_PROGS(MAKEDEPEND,makedepend makedep,:,/bin:/usr/bin:/usr/X11/bin:/usr/X11R6/bin:/usr/X11R5/bin:/usr/bin/X11:/usr/openwin/bin)
+AC_SUBST(extra_cflags)
+AC_SUBST(DMALLOC_INC)
+AC_SUBST(DMALLOC_LIB)
+AC_SUBST(DMALLOC_FLAGS)
+AC_PROG_LEX
+AC_PROG_YACC
+AC_PATH_PROG(RANLIB,ranlib,:,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(AR,ar,ar,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(SED,sed,sed,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(CP,cp,cp,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(GREP,grep,grep,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(MV,mv,mv,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(CHMOD,chmod,chmod,$PATH:/bin:/usr/bin:/usr/ccs/bin:/usr/sbin:/etc)
+AC_PATH_PROG(PERL,perl,perl,$PATH:/bin:/usr/bin:/usr/local/bin)
+
+dnl Checks for libraries.
+AC_CHECK_LIB(m, sin)
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h limits.h values.h unistd.h sys/systeminfo.h ieeefp.h alloca.h)
+
+dnl Check for __func__ or __FUNCTION__
+AC_MSG_CHECKING([for __func__])
+funcname=no
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([char *p;],[*p=__func__;])],
+[AC_DEFINE([HAVE___FUNC__]) 
+ AC_MSG_RESULT([yes])
+ funcname=__func__],
+[AC_MSG_RESULT([no])])
+if test $funcname = no; then
+AC_MSG_CHECKING([for __FUNCTION__])
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([char *p;],[*p=__FUNCTION__;])],
+[AC_DEFINE([HAVE___FUNCTION__]) 
+ AC_MSG_RESULT([yes])
+ funcname=__FUNCTION__],
+[AC_MSG_RESULT([no])])
+fi
+
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+dnl Checks for library functions.
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(memcpy regcomp strtod strtol gethostname popen snprintf)
+AC_CHECK_FUNCS(atexit on_exit,break)
+AC_CHECK_FUNCS(memmove bcopy,break)
+AC_CHECK_FUNCS(fpsetmask,break)
+AC_CHECK_FUNCS(isinf fpclass finite,break)
+
+AC_OUTPUT(Makefile libsrc/Makefile xmlsrc/Makefile libparsesrc/Makefile \
+prepsrc/Makefile prepsrc/compat/Makefile lokisrc/Makefile \
+test/Makefile utils/Makefile)
+

@@ -1,0 +1,32 @@
+# Declare "*" as the symbol for a missing record
+missing "*"
+
+# It can be convenient to put directory names into variables so they can be easily changed.
+datadir="../data/"
+
+# The output file
+log "log"
+
+/*
+ * Read in data from "../data/jvped1"
+ * The [RS="\n"] clause tells the program that records are separated by
+ * newline characters (\n).  This allows the handling of short lines, as
+ * are found in jvped1.
+ */
+file [RS="\n"] datadir+"jvped1",id,sire,dam,y,mark1,mark2
+
+# Declare which variables have the pedigree information
+pedigree id,sire,dam
+
+# Declare marker genotypes
+marker locus mark1,mark2
+
+# We have a trait locus (actually this can be multiple trait loci)
+trait locus QTL
+
+# Define the model
+model y=QTL+id
+
+# Set up the linkage group
+link "chromosome 1",mark1,mark2
+

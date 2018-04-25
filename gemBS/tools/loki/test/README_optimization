@@ -1,0 +1,13 @@
+The tests contained in this directory will check the output from Loki with
+that produced on my test machines.  It should be noted that certain compiler
+optimizations can cause non-standard behaviour of the math functions.
+Normally these behaviours have little practical effect, but for MCMC
+samplers they often lead to large differences in output.  These differences
+should not, of course, affect the conclusions drawn from the sampling
+output, but they will cause the tests here to fail.  
+
+Therefore, if you want to be able to run Loki on multiple machine
+architectures and get *exactly* the same results whichever machine you use,
+it is important to select compiler optimizations carefully.  If this is not
+important to you then use the fastest optimization options you have.
+

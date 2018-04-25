@@ -1,0 +1,12 @@
+Iterations 200
+Start Output 1,1
+Output frequency 1,5
+
+Total Map 4.0
+
+Seedfile "test_seedfile",1
+
+Position mark1 0.0
+Position mark2 2.0
+
+Output Haplotypes 

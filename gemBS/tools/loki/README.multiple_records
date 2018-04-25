@@ -1,0 +1,12 @@
+Multiple records in Loki - change in default behaviour
+
+The default for all variables is now CONSTANT.  This means that if multiple
+records (lines) are read in for an individual, checks will be made that they
+match, and all variables will be assumed to form 1 logical record.
+
+If true multiple records are present (i.e., an individual was measured
+multiple times), then sets of variables can be switched using the (new)
+MULTIPLE command.  To revert back to the previous behaviour (when MULTIPLE
+was the default) add the following line to the control file.
+
+set multiple_records 1

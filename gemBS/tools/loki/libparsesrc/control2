@@ -1,0 +1,13 @@
+#y="ad"
+#link ['y'] "chrom1",a,b,c,d
+#link "chrom1",d,e
+#link y,f,g
+#a(35)=2
+#array id(3)
+file "zcat test |" (x(i),i=1,4),id,sex,y,h1,h2
+#sex sex "1","2"
+#pedigree id
+#marker a,b[h1,h2]
+#link "chr1" a,b
+#link a,b
+#link c,a

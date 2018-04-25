@@ -1,0 +1,59 @@
+#!+PERLPROG+ -w
+use strict;
+#
+# Script to read marker error files and count the number of times each
+# nuclear family, and each individual family member, is flagged as
+# having an error. The output has one line per nuclear family, with the
+# first column being the number of errors in that family, the second and
+# third columns being the parents and the subsequenct columns being the
+# family members with their individual error counts.
+#
+# Usage: sort_error.pl [dir]
+#
+# Reads in all *.err files in specified directory (defaults to current)
+#
+# Simon Heath - January 2002
+#
+my($i,$k,@fd,$fam,%cc,%dd,%count,@fi,@ff,$id,$ids,$idd,$td,$file);
+$k=0;
+@ARGV=('.') unless @ARGV;
+while($td=shift) {
+	$td=~s/\/+$//;
+	opendir(DIR,$td) or die "can't opendir $td :$!";
+	while(defined($file=readdir(DIR))) {
+		if($file=~/\.err$/) {
+			$file=$td."/".$file;
+			open FILE,$file or die "can't open $file: $!";
+			while(<FILE>) {
+				@fd=split;
+				$fam=$fd[1]."_#_".$fd[2];
+				$count{$fam}++;
+				$fi[$k]=$fd[0];
+				$ff[$k++]=$fam;
+				$cc{$fd[0]}++;
+			}
+			close FILE;
+		}
+	}
+}
+foreach $fam(keys %count) {
+	 if($fam=~/^(.*)_#_(.*)$/) {
+		 $ids=$1;
+		 $idd=$2;
+	 } else {
+		 $ids="?";
+		 $idd="?";
+	 }
+	 print "$count{$fam}  $ids $idd  ";
+	 undef %dd;
+	 for($i=0;$i<$k;$i++) {
+		  if($ff[$i] eq $fam) {
+				$id=$fi[$i];
+				$dd{$id}++;
+		  }
+	 }
+	 foreach $id(sort {$dd{$b}<=>$dd{$a}} keys %dd) {
+		  print $id,"(",$dd{$id},") ";
+	 }
+	 print "\n";
+}

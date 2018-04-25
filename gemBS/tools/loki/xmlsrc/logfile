@@ -1,0 +1,32 @@
+1043679268: 2858: Dmalloc version '4.8.2' from 'http://dmalloc.com/'
+1043679268: 2858: flags = 0x4f47503, logfile 'logfile'
+1043679268: 2858: interval = 0, addr = 0, seen # = 0
+1043679268: 2858: starting time = 1043679268
+1043679268: 2858: free bucket count/bits:  128/5 64/6 1/14
+1043679268: 2858: basic-block 4096 bytes, alignment 8 bytes, heap grows up
+1043679268: 2858: heap: 0x4b000 to 0x64000, size 102400 bytes (25 blocks)
+1043679268: 2858: heap checked 0
+1043679268: 2858: alloc calls: malloc 1425, calloc 0, realloc 9, free 1424
+1043679268: 2858: alloc calls: recalloc 0, memalign 0, valloc 0
+1043679268: 2858:  total memory allocated: 88366 bytes (1434 pnts)
+1043679268: 2858:  max in use at one time: 74056 bytes (35 pnts)
+1043679268: 2858: max alloced with 1 call: 65536 bytes
+1043679268: 2858: max alloc rounding loss: 8920 bytes (10%)
+1043679268: 2858: max memory space wasted: 3040 bytes (3%)
+1043679268: 2858: final user memory space: basic 20, divided 2, 86016 bytes
+1043679268: 2858:  final admin overhead: basic 1, divided 2, 12288 bytes (12%)
+1043679268: 2858:  final external space: 0 bytes (0 blocks)
+1043679268: 2858: top 10 allocations:
+1043679268: 2858:  total-size  count in-use-size  count  source
+1043679268: 2858:        7728    644           0      0  xml_parse.y:277
+1043679268: 2858:        5152    644           0      0  xml_parse.y:279
+1043679268: 2858:        1548    129           0      0  xml_parse.y:233
+1043679268: 2858:         160      9           0      0  xml_parse.y:272
+1043679268: 2858:          48      4           0      0  xml_parse.y:193
+1043679268: 2858:       14636   1430           0      0  Total of 5
+1043679268: 2858: dumping not-freed pointers changed since 0:
+1043679268: 2858:  not freed: '0x51008|s1' (65536 bytes) from 'unknown'
+1043679268: 2858:  total-size  count  source
+1043679268: 2858:           0      0  Total of 0
+1043679268: 2858:  unknown memory: 1 pointer, 65536 bytes
+1043679268: 2858: ending time = 1043679268, elapsed since start = 0:00:00

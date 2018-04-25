@@ -1,0 +1,22 @@
+This directory contains the original sources for the Mersenne Twister random
+number generator (mt19937.c), and the qsort routine.
+
+Home page for Mersenne Twister: http://www.math.keio.ac.jp/~matumoto/emt.html
+
+The qsort routine came from glibc_2.1.2, the full source of which can be
+obtained from any of the GNU sites.  This is used rather than the built in
+qsort because in the case where the sort index is not unique, different
+qsort routines can return different orders, which will make the answers
+different.
+
+ranlib.c in libsrc/ is from the ranlib.c library which is
+available from netlib (http://www.netlib.org/random/).
+
+getopt_long.c in libsrc is from the OpenBSD C library source
+(http://www.openbsd.org), modified a little to compile on other platforms.
+
+snprintf provides portable snprintf and asprintf functions.  The original
+source code is in this directory, and the homepage is
+http://www.ijs.si/software/snprintf.  The files snprintf.c and snprintf.h
+have been placed in ../libsrc/ and ../include/ respectively, with no changes
+being made to these files.

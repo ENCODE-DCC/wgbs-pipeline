@@ -1,0 +1,29 @@
+Iterations 500
+Start Output 0,0
+Output frequency 5,5
+Output age,ef
+
+Start Residual Variance 80.0
+Start Mean 0.0
+
+Map 'Chromosome 1' 0.0,60.0
+Total Map 360.0
+Trait Loci 0,5
+
+Seedfile "test_seedfile",1
+
+Position D1G(1) 0.0
+Position D1G(2) 2.0
+Position D1G(3) 4.0
+Position D1G(4) 6.0
+Position D1G(5) 8.0
+Position D1G(6) 10.0
+Position D1G(7) 12.0
+Position D1G(8) 14.0
+Position D1G(9) 16.0
+Position D1G(10) 18.0
+Position D1G(11) 20.0
+Position D1G(12) 22.0
+Position D1G(13) 24.0
+Position D1G(14) 26.0
+Position D1G(15) 28.0

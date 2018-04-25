@@ -1,0 +1,113 @@
+Iterations 101000
+#Iterations 900
+Start Output 100,0
+Output frequency 10,1
+Output age,ef
+#Output frequency 'loki.freq'
+
+Start Residual Variance 80.0
+Start Mean 0.0
+
+Map 'Chromosome 1' -10.0,68.0
+Map 'Chromosome 2' -10.0,68.0
+Map 'Chromosome 5' -10.0,68.0
+Total Map 600
+trait Loci 0
+set lm_ratio 0.90
+
+#Seedfile "test_seedfile",1
+
+#Pseudo [start=100 ; freq=100]
+
+Position MARK1(1) 0.0
+Position MARK1(2) 2.0
+Position MARK1(3) 4.0
+Position MARK1(4) 6.0
+Position MARK1(5) 8.0
+Position MARK1(6) 10.0
+Position MARK1(7) 12.0
+Position MARK1(8) 14.0
+Position MARK1(9) 16.0
+Position MARK1(10) 18.0
+Position MARK1(11) 20.0
+Position MARK1(12) 22.0
+Position MARK1(13) 24.0
+Position MARK1(14) 26.0
+Position MARK1(15) 28.0
+Position MARK1(16) 30.0
+Position MARK1(17) 32.0
+Position MARK1(18) 34.0
+Position MARK1(19) 36.0
+Position MARK1(20) 38.0
+Position MARK1(21) 40.0
+Position MARK1(22) 42.0
+Position MARK1(23) 44.0
+Position MARK1(24) 46.0
+Position MARK1(25) 48.0
+Position MARK1(26) 50.0
+Position MARK1(27) 52.0
+Position MARK1(28) 54.0
+Position MARK1(29) 56.0
+Position MARK1(30) 58.0
+
+Position MARK2(1) 0.0
+Position MARK2(2) 2.0
+Position MARK2(3) 4.0
+Position MARK2(4) 6.0
+Position MARK2(5) 8.0
+Position MARK2(6) 10.0
+Position MARK2(7) 12.0
+Position MARK2(8) 14.0
+Position MARK2(9) 16.0
+Position MARK2(10) 18.0
+Position MARK2(11) 20.0
+Position MARK2(12) 22.0
+Position MARK2(13) 24.0
+Position MARK2(14) 26.0
+Position MARK2(15) 28.0
+Position MARK2(16) 30.0
+Position MARK2(17) 32.0
+Position MARK2(18) 34.0
+Position MARK2(19) 36.0
+Position MARK2(20) 38.0
+Position MARK2(21) 40.0
+Position MARK2(22) 42.0
+Position MARK2(23) 44.0
+Position MARK2(24) 46.0
+Position MARK2(25) 48.0
+Position MARK2(26) 50.0
+Position MARK2(27) 52.0
+Position MARK2(28) 54.0
+Position MARK2(29) 56.0
+Position MARK2(30) 58.0
+
+Position MARK5(1) 0.0
+Position MARK5(2) 2.0
+Position MARK5(3) 4.0
+Position MARK5(4) 6.0
+Position MARK5(5) 8.0
+Position MARK5(6) 10.0
+Position MARK5(7) 12.0
+Position MARK5(8) 14.0
+Position MARK5(9) 16.0
+Position MARK5(10) 18.0
+Position MARK5(11) 20.0
+Position MARK5(12) 22.0
+Position MARK5(13) 24.0
+Position MARK5(14) 26.0
+Position MARK5(15) 28.0
+Position MARK5(16) 30.0
+Position MARK5(17) 32.0
+Position MARK5(18) 34.0
+Position MARK5(19) 36.0
+Position MARK5(20) 38.0
+Position MARK5(21) 40.0
+Position MARK5(22) 42.0
+Position MARK5(23) 44.0
+Position MARK5(24) 46.0
+Position MARK5(25) 48.0
+Position MARK5(26) 50.0
+Position MARK5(27) 52.0
+Position MARK5(28) 54.0
+Position MARK5(29) 56.0
+Position MARK5(30) 58.0

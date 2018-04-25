@@ -1,0 +1,3358 @@
+Terminals which are not used
+
+   NORMAL
+   STUDENT_T
+
+
+Grammar
+
+    0 $accept: parmfile $end
+
+    1 @1: /* empty */
+
+    2 parmfile: @1 command1
+    3         | error
+
+    4 @2: /* empty */
+
+    5 parmfile: parmfile @2 command1
+    6         | parmfile error
+
+    7 command1: command
+    8         | command_a
+
+    9 @3: /* empty */
+
+   10 command1: START @3 command
+
+   11 command: resvarcommand
+   12        | addvarcommand
+   13        | positioncommand
+   14        | frequencycommand
+   15        | meancommand
+
+   16 command_a: itercommand
+   17          | samplecommand
+   18          | outputcommand
+   19          | mapcommand
+   20          | seedcommand
+   21          | tlocicommand
+   22          | setcommand
+   23          | ibdcommand
+   24          | groupcommand
+   25          | limitresvarcommand
+   26          | limitaddvarcommand
+   27          | analyzecommand
+   28          | includecommand
+   29          | aff_freqcommand
+   30          | limit_timecommand
+   31          | compresscommand
+   32          | pseudocommand
+
+   33 samplecommand: SAMPLE FROM INTEGER
+   34              | SAMPLE FROM INTEGER opt_comma INTEGER
+   35              | START OUTPUT INTEGER
+   36              | START OUTPUT INTEGER opt_comma INTEGER
+
+   37 setcommand: SET SYSTEM_VAR array
+   38           | SET STRING array
+
+   39 @4: /* empty */
+
+   40 includecommand: INCLUDE @4 STRING
+
+   41 opt_comma: /* empty */
+   42          | ','
+
+   43 pchrom_list_atom: STRING
+
+   44 pchrom_list: pchrom_list_atom
+   45            | pchrom_list ',' pchrom_list_atom
+
+   46 clause_atom: STRING '=' INTEGER
+   47            | START '=' INTEGER
+
+   48 clause: clause_atom
+   49       | clause ';' clause_atom
+
+   50 pseudocommand: PSEUDO
+   51              | PSEUDO pchrom_list
+   52              | PSEUDO '[' clause ']'
+   53              | PSEUDO '[' clause ']' pchrom_list
+
+   54 ibdcommand: ESTIMATE IBD STRING opt_comma ibdlist
+   55           | ESTIMATE IBD ibdlist
+   56           | ESTIMATE IBD MARKERS STRING
+   57           | ESTIMATE IBD MARKERS
+   58           | ESTIMATE IBD GRID STRING opt_comma ibdlist
+   59           | ESTIMATE IBD GRID ibdlist
+
+   60 compresscommand: COMPRESS IBD OUTPUT
+   61                | COMPRESS OUTPUT IBD
+
+   62 aff_freqcommand: ESTIMATE AFFECTED FREQUENCY
+
+   63 analyzecom: STRING
+   64           | AFFECTED
+   65           | IBD
+
+   66 analyzelist: analyzecom
+   67            | analyzelist ',' analyzecom
+
+   68 @5: /* empty */
+
+   69 analyzecommand: ANALYZE @5 analyzelist
+
+   70 limit_timecommand: TIMECOM LIMIT rnum
+   71                  | LIMIT TIMECOM rnum
+   72                  | LIMIT VIRTUAL TIMECOM rnum
+   73                  | VIRTUAL TIMECOM LIMIT rnum
+
+   74 seedcommand: SEEDFILE STRING
+   75            | SEEDFILE STRING ',' INTEGER
+   76            | SEED SFILE STRING
+   77            | SEED SFILE STRING ',' INTEGER
+   78            | SEED INTEGER
+
+   79 mapcommand: MAP STRING rnum ',' rnum
+   80           | MALE MAP STRING rnum ',' rnum
+   81           | FEMALE MAP STRING rnum ',' rnum
+   82           | TOTAL MAP rnum
+   83           | TOTAL MAP rnum ',' rnum
+   84           | TOTAL MALE MAP rnum
+   85           | TOTAL FEMALE MAP rnum
+   86           | MAP TOTAL rnum
+   87           | MAP TOTAL rnum ',' rnum
+   88           | MALE MAP TOTAL rnum
+   89           | FEMALE MAP TOTAL rnum
+   90           | MAP FUNCTION HALDANE
+   91           | MAP FUNCTION KOSAMBI
+
+   92 tlocicommand: TRAIT LOCI INTEGER
+   93             | START TRAIT LOCI INTEGER
+   94             | TRAIT LOCI INTEGER ',' INTEGER
+   95             | TRAIT LOCI MEAN rnum
+
+   96 itercommand: ITERATIONS INTEGER
+
+   97 outputcommand: OUTPUT FREQUENCY INTEGER
+   98              | OUTPUT FREQUENCY INTEGER ',' INTEGER
+   99              | OUTPUT FREQUENCY STRING
+  100              | SAMPLE FREQUENCY INTEGER
+  101              | SAMPLE FREQUENCY INTEGER ',' INTEGER
+  102              | OUTPUT PHENO STRING
+  103              | OUTPUT GENO STRING
+  104              | OUTPUT GENO STRING ',' STRING
+  105              | OUTPUT lkvarlist
+  106              | OUTPUT TYPE INTEGER
+  107              | OUTPUT SFILE STRING
+  108              | OUTPUT POSITION SFILE STRING
+  109              | OUTPUT IBD SFILE STRING
+  110              | OUTPUT IBD DIR STRING
+  111              | DUMP SFILE STRING
+  112              | DUMP FREQUENCY INTEGER
+  113              | OUTPUT HAPLO STRING
+  114              | OUTPUT HAPLO
+  115              | OUTPUT POLYGENIC STRING
+  116              | OUTPUT IBD STRING
+  117              | OUTPUT IBD STRING ',' STRING
+
+  118 resvarcommand: RESIDUAL VARIANCE rnum
+  119              | RESIDUAL VARIANCE trait_var rnum
+
+  120 limitresvarcommand: RESIDUAL VARIANCE LIMIT rnum
+  121                   | RESIDUAL VARIANCE LIMIT trait_var rnum
+  122                   | LIMIT RESIDUAL VARIANCE rnum
+  123                   | LIMIT RESIDUAL VARIANCE trait_var rnum
+
+  124 addvarcommand: GENETIC VARIANCE rnum
+  125              | GENETIC VARIANCE trait_var rnum
+
+  126 limitaddvarcommand: GENETIC VARIANCE LIMIT rnum
+  127                   | GENETIC VARIANCE LIMIT trait_var rnum
+  128                   | LIMIT GENETIC VARIANCE rnum
+  129                   | LIMIT GENETIC VARIANCE trait_var rnum
+
+  130 meancommand: MEAN rnum
+  131            | MEAN trait_var rnum
+
+  132 positioncommand: POSITION lkvar rnum
+  133                | POSITION lkvar rnum ',' rnum
+
+  134 @6: /* empty */
+
+  135 frequencycommand: FREQUENCY @6 lkmarker freqlist
+
+  136 @7: /* empty */
+
+  137 frequencycommand: FREQUENCY @7 COUNTS lkmarker freqlist
+
+  138 @8: /* empty */
+
+  139 frequencycommand: COUNTS @8 lkmarker freqlist
+
+  140 trait_var: lkvar
+
+  141 lkvar: STRING
+  142      | STRING '(' INTEGER ')'
+
+  143 lkvarlist: lkvar
+  144          | lkvarlist ',' lkvar
+
+  145 lkmarker: lkvar
+
+  146 @9: /* empty */
+
+  147 groupcommand: GROUP ORDER @9 grouplist
+
+  148 group: INTEGER
+  149      | REAL
+  150      | STRING
+
+  151 grouplist: group
+  152          | grouplist ',' group
+
+  153 allele: INTEGER
+  154       | REAL
+  155       | STRING
+
+  156 @10: /* empty */
+
+  157 freqlist: allele ',' @10 freqlist1
+
+  158 @11: /* empty */
+
+  159 freqlist: freqlist allele ',' @11 freqlist1
+
+  160 freqlist1: rnum
+  161          | '*'
+  162          | freqlist1 ',' rnum
+  163          | freqlist1 ',' '*'
+
+  164 ibdlist: rnum
+  165        | ibdlist ',' rnum
+
+  166 array: REAL
+  167      | INTEGER
+  168      | array ',' REAL
+  169      | array ',' INTEGER
+
+  170 rnum: REAL
+  171     | INTEGER
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'(' (40) 142
+')' (41) 142
+'*' (42) 161 163
+',' (44) 42 45 67 75 77 79 80 81 83 87 94 98 101 104 117 133 144 152
+    157 159 162 163 165 168 169
+';' (59) 49
+'=' (61) 46 47
+'[' (91) 52 53
+']' (93) 52 53
+error (256) 3 6
+RESIDUAL (258) 118 119 120 121 122 123
+GENETIC (259) 124 125 126 127 128 129
+VARIANCE (260) 118 119 120 121 122 123 124 125 126 127 128 129
+POSITION (261) 108 132 133
+FREQUENCY (262) 62 97 98 99 100 101 112 135 137
+VIRTUAL (263) 72 73
+START (264) 10 35 36 47 93
+MEAN (265) 95 130 131
+ITERATIONS (266) 96
+SAMPLE (267) 33 34 100 101
+FROM (268) 33 34
+OUTPUT (269) 35 36 60 61 97 98 99 102 103 104 105 106 107 108 109 110
+    113 114 115 116 117
+MAP (270) 79 80 81 82 83 84 85 86 87 88 89 90 91
+TOTAL (271) 82 83 84 85 86 87 88 89
+SEED (272) 76 77 78
+SFILE (273) 76 77 107 108 109 111
+SEEDFILE (274) 74 75
+TRAIT (275) 92 93 94 95
+LOCI (276) 92 93 94 95
+SET (277) 37 38
+SYSTEM_VAR (278) 37
+TIMECOM (279) 70 71 72 73
+ESTIMATE (280) 54 55 56 57 58 59 62
+IBD (281) 54 55 56 57 58 59 60 61 65 109 110 116 117
+GROUP (282) 147
+ORDER (283) 147
+MALE (284) 80 84 88
+FEMALE (285) 81 85 89
+LIMIT (286) 70 71 72 73 120 121 122 123 126 127 128 129
+AFFECTED (287) 62 64
+PHENO (288) 102
+GENO (289) 103 104
+COUNTS (290) 137 139
+DUMP (291) 111 112
+TYPE (292) 106
+ANALYZE (293) 69
+NORMAL (294)
+STUDENT_T (295)
+HAPLO (296) 113 114
+INCLUDE (297) 40
+FUNCTION (298) 90 91
+HALDANE (299) 90
+KOSAMBI (300) 91
+POLYGENIC (301) 115
+MARKERS (302) 56 57
+GRID (303) 58 59
+COMPRESS (304) 60 61
+DIR (305) 110
+PSEUDO (306) 50 51 52 53
+STRING (307) 38 40 43 46 54 56 58 63 74 75 76 77 79 80 81 99 102 103
+    104 107 108 109 110 111 113 115 116 117 141 142 150 155
+INTEGER (308) 33 34 35 36 46 47 75 77 78 92 93 94 96 97 98 100 101
+    106 112 142 148 153 167 169 171
+REAL (309) 149 154 166 168 170
+
+
+Nonterminals, with rules where they appear
+
+$accept (63)
+    on left: 0
+parmfile (64)
+    on left: 2 3 5 6, on right: 0 5 6
+@1 (65)
+    on left: 1, on right: 2
+@2 (66)
+    on left: 4, on right: 5
+command1 (67)
+    on left: 7 8 10, on right: 2 5
+@3 (68)
+    on left: 9, on right: 10
+command (69)
+    on left: 11 12 13 14 15, on right: 7 10
+command_a (70)
+    on left: 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32,
+    on right: 8
+samplecommand (71)
+    on left: 33 34 35 36, on right: 17
+setcommand (72)
+    on left: 37 38, on right: 22
+includecommand (73)
+    on left: 40, on right: 28
+@4 (74)
+    on left: 39, on right: 40
+opt_comma (75)
+    on left: 41 42, on right: 34 36 54 58
+pchrom_list_atom (76)
+    on left: 43, on right: 44 45
+pchrom_list (77)
+    on left: 44 45, on right: 45 51 53
+clause_atom (78)
+    on left: 46 47, on right: 48 49
+clause (79)
+    on left: 48 49, on right: 49 52 53
+pseudocommand (80)
+    on left: 50 51 52 53, on right: 32
+ibdcommand (81)
+    on left: 54 55 56 57 58 59, on right: 23
+compresscommand (82)
+    on left: 60 61, on right: 31
+aff_freqcommand (83)
+    on left: 62, on right: 29
+analyzecom (84)
+    on left: 63 64 65, on right: 66 67
+analyzelist (85)
+    on left: 66 67, on right: 67 69
+analyzecommand (86)
+    on left: 69, on right: 27
+@5 (87)
+    on left: 68, on right: 69
+limit_timecommand (88)
+    on left: 70 71 72 73, on right: 30
+seedcommand (89)
+    on left: 74 75 76 77 78, on right: 20
+mapcommand (90)
+    on left: 79 80 81 82 83 84 85 86 87 88 89 90 91,
+    on right: 19
+tlocicommand (91)
+    on left: 92 93 94 95, on right: 21
+itercommand (92)
+    on left: 96, on right: 16
+outputcommand (93)
+    on left: 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111
+    112 113 114 115 116 117, on right: 18
+resvarcommand (94)
+    on left: 118 119, on right: 11
+limitresvarcommand (95)
+    on left: 120 121 122 123, on right: 25
+addvarcommand (96)
+    on left: 124 125, on right: 12
+limitaddvarcommand (97)
+    on left: 126 127 128 129, on right: 26
+meancommand (98)
+    on left: 130 131, on right: 15
+positioncommand (99)
+    on left: 132 133, on right: 13
+frequencycommand (100)
+    on left: 135 137 139, on right: 14
+@6 (101)
+    on left: 134, on right: 135
+@7 (102)
+    on left: 136, on right: 137
+@8 (103)
+    on left: 138, on right: 139
+trait_var (104)
+    on left: 140, on right: 119 121 123 125 127 129 131
+lkvar (105)
+    on left: 141 142, on right: 132 133 140 143 144 145
+lkvarlist (106)
+    on left: 143 144, on right: 105 144
+lkmarker (107)
+    on left: 145, on right: 135 137 139
+groupcommand (108)
+    on left: 147, on right: 24
+@9 (109)
+    on left: 146, on right: 147
+group (110)
+    on left: 148 149 150, on right: 151 152
+grouplist (111)
+    on left: 151 152, on right: 147 152
+allele (112)
+    on left: 153 154 155, on right: 157 159
+freqlist (113)
+    on left: 157 159, on right: 135 137 139 159
+@10 (114)
+    on left: 156, on right: 157
+@11 (115)
+    on left: 158, on right: 159
+freqlist1 (116)
+    on left: 160 161 162 163, on right: 157 159 162 163
+ibdlist (117)
+    on left: 164 165, on right: 54 55 58 59 165
+array (118)
+    on left: 166 167 168 169, on right: 37 38 168 169
+rnum (119)
+    on left: 170 171, on right: 70 71 72 73 79 80 81 82 83 84 85 86
+    87 88 89 95 118 119 120 121 122 123 124 125 126 127 128 129 130
+    131 132 133 160 162 164 165
+
+
+state 0
+
+    0 $accept: . parmfile $end
+
+    error  shift, and go to state 1
+
+    RESIDUAL    reduce using rule 1 (@1)
+    GENETIC     reduce using rule 1 (@1)
+    POSITION    reduce using rule 1 (@1)
+    FREQUENCY   reduce using rule 1 (@1)
+    VIRTUAL     reduce using rule 1 (@1)
+    START       reduce using rule 1 (@1)
+    MEAN        reduce using rule 1 (@1)
+    ITERATIONS  reduce using rule 1 (@1)
+    SAMPLE      reduce using rule 1 (@1)
+    OUTPUT      reduce using rule 1 (@1)
+    MAP         reduce using rule 1 (@1)
+    TOTAL       reduce using rule 1 (@1)
+    SEED        reduce using rule 1 (@1)
+    SEEDFILE    reduce using rule 1 (@1)
+    TRAIT       reduce using rule 1 (@1)
+    SET         reduce using rule 1 (@1)
+    TIMECOM     reduce using rule 1 (@1)
+    ESTIMATE    reduce using rule 1 (@1)
+    GROUP       reduce using rule 1 (@1)
+    MALE        reduce using rule 1 (@1)
+    FEMALE      reduce using rule 1 (@1)
+    LIMIT       reduce using rule 1 (@1)
+    COUNTS      reduce using rule 1 (@1)
+    DUMP        reduce using rule 1 (@1)
+    ANALYZE     reduce using rule 1 (@1)
+    INCLUDE     reduce using rule 1 (@1)
+    COMPRESS    reduce using rule 1 (@1)
+    PSEUDO      reduce using rule 1 (@1)
+
+    parmfile  go to state 2
+    @1        go to state 3
+
+
+state 1
+
+    3 parmfile: error .
+
+    $default  reduce using rule 3 (parmfile)
+
+
+state 2
+
+    0 $accept: parmfile . $end
+    5 parmfile: parmfile . @2 command1
+    6         | parmfile . error
+
+    $end   shift, and go to state 4
+    error  shift, and go to state 5
+
+    RESIDUAL    reduce using rule 4 (@2)
+    GENETIC     reduce using rule 4 (@2)
+    POSITION    reduce using rule 4 (@2)
+    FREQUENCY   reduce using rule 4 (@2)
+    VIRTUAL     reduce using rule 4 (@2)
+    START       reduce using rule 4 (@2)
+    MEAN        reduce using rule 4 (@2)
+    ITERATIONS  reduce using rule 4 (@2)
+    SAMPLE      reduce using rule 4 (@2)
+    OUTPUT      reduce using rule 4 (@2)
+    MAP         reduce using rule 4 (@2)
+    TOTAL       reduce using rule 4 (@2)
+    SEED        reduce using rule 4 (@2)
+    SEEDFILE    reduce using rule 4 (@2)
+    TRAIT       reduce using rule 4 (@2)
+    SET         reduce using rule 4 (@2)
+    TIMECOM     reduce using rule 4 (@2)
+    ESTIMATE    reduce using rule 4 (@2)
+    GROUP       reduce using rule 4 (@2)
+    MALE        reduce using rule 4 (@2)
+    FEMALE      reduce using rule 4 (@2)
+    LIMIT       reduce using rule 4 (@2)
+    COUNTS      reduce using rule 4 (@2)
+    DUMP        reduce using rule 4 (@2)
+    ANALYZE     reduce using rule 4 (@2)
+    INCLUDE     reduce using rule 4 (@2)
+    COMPRESS    reduce using rule 4 (@2)
+    PSEUDO      reduce using rule 4 (@2)
+
+    @2  go to state 6
+
+
+state 3
+
+    2 parmfile: @1 . command1
+
+    RESIDUAL    shift, and go to state 7
+    GENETIC     shift, and go to state 8
+    POSITION    shift, and go to state 9
+    FREQUENCY   shift, and go to state 10
+    VIRTUAL     shift, and go to state 11
+    START       shift, and go to state 12
+    MEAN        shift, and go to state 13
+    ITERATIONS  shift, and go to state 14
+    SAMPLE      shift, and go to state 15
+    OUTPUT      shift, and go to state 16
+    MAP         shift, and go to state 17
+    TOTAL       shift, and go to state 18
+    SEED        shift, and go to state 19
+    SEEDFILE    shift, and go to state 20
+    TRAIT       shift, and go to state 21
+    SET         shift, and go to state 22
+    TIMECOM     shift, and go to state 23
+    ESTIMATE    shift, and go to state 24
+    GROUP       shift, and go to state 25
+    MALE        shift, and go to state 26
+    FEMALE      shift, and go to state 27
+    LIMIT       shift, and go to state 28
+    COUNTS      shift, and go to state 29
+    DUMP        shift, and go to state 30
+    ANALYZE     shift, and go to state 31
+    INCLUDE     shift, and go to state 32
+    COMPRESS    shift, and go to state 33
+    PSEUDO      shift, and go to state 34
+
+    command1            go to state 35
+    command             go to state 36
+    command_a           go to state 37
+    samplecommand       go to state 38
+    setcommand          go to state 39
+    includecommand      go to state 40
+    pseudocommand       go to state 41
+    ibdcommand          go to state 42
+    compresscommand     go to state 43
+    aff_freqcommand     go to state 44
+    analyzecommand      go to state 45
+    limit_timecommand   go to state 46
+    seedcommand         go to state 47
+    mapcommand          go to state 48
+    tlocicommand        go to state 49
+    itercommand         go to state 50
+    outputcommand       go to state 51
+    resvarcommand       go to state 52
+    limitresvarcommand  go to state 53
+    addvarcommand       go to state 54
+    limitaddvarcommand  go to state 55
+    meancommand         go to state 56
+    positioncommand     go to state 57
+    frequencycommand    go to state 58
+    groupcommand        go to state 59
+
+
+state 4
+
+    0 $accept: parmfile $end .
+
+    $default  accept
+
+
+state 5
+
+    6 parmfile: parmfile error .
+
+    $default  reduce using rule 6 (parmfile)
+
+
+state 6
+
+    5 parmfile: parmfile @2 . command1
+
+    RESIDUAL    shift, and go to state 7
+    GENETIC     shift, and go to state 8
+    POSITION    shift, and go to state 9
+    FREQUENCY   shift, and go to state 10
+    VIRTUAL     shift, and go to state 11
+    START       shift, and go to state 12
+    MEAN        shift, and go to state 13
+    ITERATIONS  shift, and go to state 14
+    SAMPLE      shift, and go to state 15
+    OUTPUT      shift, and go to state 16
+    MAP         shift, and go to state 17
+    TOTAL       shift, and go to state 18
+    SEED        shift, and go to state 19
+    SEEDFILE    shift, and go to state 20
+    TRAIT       shift, and go to state 21
+    SET         shift, and go to state 22
+    TIMECOM     shift, and go to state 23
+    ESTIMATE    shift, and go to state 24
+    GROUP       shift, and go to state 25
+    MALE        shift, and go to state 26
+    FEMALE      shift, and go to state 27
+    LIMIT       shift, and go to state 28
+    COUNTS      shift, and go to state 29
+    DUMP        shift, and go to state 30
+    ANALYZE     shift, and go to state 31
+    INCLUDE     shift, and go to state 32
+    COMPRESS    shift, and go to state 33
+    PSEUDO      shift, and go to state 34
+
+    command1            go to state 60
+    command             go to state 36
+    command_a           go to state 37
+    samplecommand       go to state 38
+    setcommand          go to state 39
+    includecommand      go to state 40
+    pseudocommand       go to state 41
+    ibdcommand          go to state 42
+    compresscommand     go to state 43
+    aff_freqcommand     go to state 44
+    analyzecommand      go to state 45
+    limit_timecommand   go to state 46
+    seedcommand         go to state 47
+    mapcommand          go to state 48
+    tlocicommand        go to state 49
+    itercommand         go to state 50
+    outputcommand       go to state 51
+    resvarcommand       go to state 52
+    limitresvarcommand  go to state 53
+    addvarcommand       go to state 54
+    limitaddvarcommand  go to state 55
+    meancommand         go to state 56
+    positioncommand     go to state 57
+    frequencycommand    go to state 58
+    groupcommand        go to state 59
+
+
+state 7
+
+  118 resvarcommand: RESIDUAL . VARIANCE rnum
+  119              | RESIDUAL . VARIANCE trait_var rnum
+  120 limitresvarcommand: RESIDUAL . VARIANCE LIMIT rnum
+  121                   | RESIDUAL . VARIANCE LIMIT trait_var rnum
+
+    VARIANCE  shift, and go to state 61
+
+
+state 8
+
+  124 addvarcommand: GENETIC . VARIANCE rnum
+  125              | GENETIC . VARIANCE trait_var rnum
+  126 limitaddvarcommand: GENETIC . VARIANCE LIMIT rnum
+  127                   | GENETIC . VARIANCE LIMIT trait_var rnum
+
+    VARIANCE  shift, and go to state 62
+
+
+state 9
+
+  132 positioncommand: POSITION . lkvar rnum
+  133                | POSITION . lkvar rnum ',' rnum
+
+    STRING  shift, and go to state 63
+
+    lkvar  go to state 64
+
+
+state 10
+
+  135 frequencycommand: FREQUENCY . @6 lkmarker freqlist
+  137                 | FREQUENCY . @7 COUNTS lkmarker freqlist
+
+    COUNTS    reduce using rule 136 (@7)
+    $default  reduce using rule 134 (@6)
+
+    @6  go to state 65
+    @7  go to state 66
+
+
+state 11
+
+   73 limit_timecommand: VIRTUAL . TIMECOM LIMIT rnum
+
+    TIMECOM  shift, and go to state 67
+
+
+state 12
+
+   10 command1: START . @3 command
+   35 samplecommand: START . OUTPUT INTEGER
+   36              | START . OUTPUT INTEGER opt_comma INTEGER
+   93 tlocicommand: START . TRAIT LOCI INTEGER
+
+    OUTPUT  shift, and go to state 68
+    TRAIT   shift, and go to state 69
+
+    $default  reduce using rule 9 (@3)
+
+    @3  go to state 70
+
+
+state 13
+
+  130 meancommand: MEAN . rnum
+  131            | MEAN . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 73
+    lkvar      go to state 74
+    rnum       go to state 75
+
+
+state 14
+
+   96 itercommand: ITERATIONS . INTEGER
+
+    INTEGER  shift, and go to state 76
+
+
+state 15
+
+   33 samplecommand: SAMPLE . FROM INTEGER
+   34              | SAMPLE . FROM INTEGER opt_comma INTEGER
+  100 outputcommand: SAMPLE . FREQUENCY INTEGER
+  101              | SAMPLE . FREQUENCY INTEGER ',' INTEGER
+
+    FREQUENCY  shift, and go to state 77
+    FROM       shift, and go to state 78
+
+
+state 16
+
+   97 outputcommand: OUTPUT . FREQUENCY INTEGER
+   98              | OUTPUT . FREQUENCY INTEGER ',' INTEGER
+   99              | OUTPUT . FREQUENCY STRING
+  102              | OUTPUT . PHENO STRING
+  103              | OUTPUT . GENO STRING
+  104              | OUTPUT . GENO STRING ',' STRING
+  105              | OUTPUT . lkvarlist
+  106              | OUTPUT . TYPE INTEGER
+  107              | OUTPUT . SFILE STRING
+  108              | OUTPUT . POSITION SFILE STRING
+  109              | OUTPUT . IBD SFILE STRING
+  110              | OUTPUT . IBD DIR STRING
+  113              | OUTPUT . HAPLO STRING
+  114              | OUTPUT . HAPLO
+  115              | OUTPUT . POLYGENIC STRING
+  116              | OUTPUT . IBD STRING
+  117              | OUTPUT . IBD STRING ',' STRING
+
+    POSITION   shift, and go to state 79
+    FREQUENCY  shift, and go to state 80
+    SFILE      shift, and go to state 81
+    IBD        shift, and go to state 82
+    PHENO      shift, and go to state 83
+    GENO       shift, and go to state 84
+    TYPE       shift, and go to state 85
+    HAPLO      shift, and go to state 86
+    POLYGENIC  shift, and go to state 87
+    STRING     shift, and go to state 63
+
+    lkvar      go to state 88
+    lkvarlist  go to state 89
+
+
+state 17
+
+   79 mapcommand: MAP . STRING rnum ',' rnum
+   86           | MAP . TOTAL rnum
+   87           | MAP . TOTAL rnum ',' rnum
+   90           | MAP . FUNCTION HALDANE
+   91           | MAP . FUNCTION KOSAMBI
+
+    TOTAL     shift, and go to state 90
+    FUNCTION  shift, and go to state 91
+    STRING    shift, and go to state 92
+
+
+state 18
+
+   82 mapcommand: TOTAL . MAP rnum
+   83           | TOTAL . MAP rnum ',' rnum
+   84           | TOTAL . MALE MAP rnum
+   85           | TOTAL . FEMALE MAP rnum
+
+    MAP     shift, and go to state 93
+    MALE    shift, and go to state 94
+    FEMALE  shift, and go to state 95
+
+
+state 19
+
+   76 seedcommand: SEED . SFILE STRING
+   77            | SEED . SFILE STRING ',' INTEGER
+   78            | SEED . INTEGER
+
+    SFILE    shift, and go to state 96
+    INTEGER  shift, and go to state 97
+
+
+state 20
+
+   74 seedcommand: SEEDFILE . STRING
+   75            | SEEDFILE . STRING ',' INTEGER
+
+    STRING  shift, and go to state 98
+
+
+state 21
+
+   92 tlocicommand: TRAIT . LOCI INTEGER
+   94             | TRAIT . LOCI INTEGER ',' INTEGER
+   95             | TRAIT . LOCI MEAN rnum
+
+    LOCI  shift, and go to state 99
+
+
+state 22
+
+   37 setcommand: SET . SYSTEM_VAR array
+   38           | SET . STRING array
+
+    SYSTEM_VAR  shift, and go to state 100
+    STRING      shift, and go to state 101
+
+
+state 23
+
+   70 limit_timecommand: TIMECOM . LIMIT rnum
+
+    LIMIT  shift, and go to state 102
+
+
+state 24
+
+   54 ibdcommand: ESTIMATE . IBD STRING opt_comma ibdlist
+   55           | ESTIMATE . IBD ibdlist
+   56           | ESTIMATE . IBD MARKERS STRING
+   57           | ESTIMATE . IBD MARKERS
+   58           | ESTIMATE . IBD GRID STRING opt_comma ibdlist
+   59           | ESTIMATE . IBD GRID ibdlist
+   62 aff_freqcommand: ESTIMATE . AFFECTED FREQUENCY
+
+    IBD       shift, and go to state 103
+    AFFECTED  shift, and go to state 104
+
+
+state 25
+
+  147 groupcommand: GROUP . ORDER @9 grouplist
+
+    ORDER  shift, and go to state 105
+
+
+state 26
+
+   80 mapcommand: MALE . MAP STRING rnum ',' rnum
+   88           | MALE . MAP TOTAL rnum
+
+    MAP  shift, and go to state 106
+
+
+state 27
+
+   81 mapcommand: FEMALE . MAP STRING rnum ',' rnum
+   89           | FEMALE . MAP TOTAL rnum
+
+    MAP  shift, and go to state 107
+
+
+state 28
+
+   71 limit_timecommand: LIMIT . TIMECOM rnum
+   72                  | LIMIT . VIRTUAL TIMECOM rnum
+  122 limitresvarcommand: LIMIT . RESIDUAL VARIANCE rnum
+  123                   | LIMIT . RESIDUAL VARIANCE trait_var rnum
+  128 limitaddvarcommand: LIMIT . GENETIC VARIANCE rnum
+  129                   | LIMIT . GENETIC VARIANCE trait_var rnum
+
+    RESIDUAL  shift, and go to state 108
+    GENETIC   shift, and go to state 109
+    VIRTUAL   shift, and go to state 110
+    TIMECOM   shift, and go to state 111
+
+
+state 29
+
+  139 frequencycommand: COUNTS . @8 lkmarker freqlist
+
+    $default  reduce using rule 138 (@8)
+
+    @8  go to state 112
+
+
+state 30
+
+  111 outputcommand: DUMP . SFILE STRING
+  112              | DUMP . FREQUENCY INTEGER
+
+    FREQUENCY  shift, and go to state 113
+    SFILE      shift, and go to state 114
+
+
+state 31
+
+   69 analyzecommand: ANALYZE . @5 analyzelist
+
+    $default  reduce using rule 68 (@5)
+
+    @5  go to state 115
+
+
+state 32
+
+   40 includecommand: INCLUDE . @4 STRING
+
+    $default  reduce using rule 39 (@4)
+
+    @4  go to state 116
+
+
+state 33
+
+   60 compresscommand: COMPRESS . IBD OUTPUT
+   61                | COMPRESS . OUTPUT IBD
+
+    OUTPUT  shift, and go to state 117
+    IBD     shift, and go to state 118
+
+
+state 34
+
+   50 pseudocommand: PSEUDO .
+   51              | PSEUDO . pchrom_list
+   52              | PSEUDO . '[' clause ']'
+   53              | PSEUDO . '[' clause ']' pchrom_list
+
+    STRING  shift, and go to state 119
+    '['     shift, and go to state 120
+
+    $default  reduce using rule 50 (pseudocommand)
+
+    pchrom_list_atom  go to state 121
+    pchrom_list       go to state 122
+
+
+state 35
+
+    2 parmfile: @1 command1 .
+
+    $default  reduce using rule 2 (parmfile)
+
+
+state 36
+
+    7 command1: command .
+
+    $default  reduce using rule 7 (command1)
+
+
+state 37
+
+    8 command1: command_a .
+
+    $default  reduce using rule 8 (command1)
+
+
+state 38
+
+   17 command_a: samplecommand .
+
+    $default  reduce using rule 17 (command_a)
+
+
+state 39
+
+   22 command_a: setcommand .
+
+    $default  reduce using rule 22 (command_a)
+
+
+state 40
+
+   28 command_a: includecommand .
+
+    $default  reduce using rule 28 (command_a)
+
+
+state 41
+
+   32 command_a: pseudocommand .
+
+    $default  reduce using rule 32 (command_a)
+
+
+state 42
+
+   23 command_a: ibdcommand .
+
+    $default  reduce using rule 23 (command_a)
+
+
+state 43
+
+   31 command_a: compresscommand .
+
+    $default  reduce using rule 31 (command_a)
+
+
+state 44
+
+   29 command_a: aff_freqcommand .
+
+    $default  reduce using rule 29 (command_a)
+
+
+state 45
+
+   27 command_a: analyzecommand .
+
+    $default  reduce using rule 27 (command_a)
+
+
+state 46
+
+   30 command_a: limit_timecommand .
+
+    $default  reduce using rule 30 (command_a)
+
+
+state 47
+
+   20 command_a: seedcommand .
+
+    $default  reduce using rule 20 (command_a)
+
+
+state 48
+
+   19 command_a: mapcommand .
+
+    $default  reduce using rule 19 (command_a)
+
+
+state 49
+
+   21 command_a: tlocicommand .
+
+    $default  reduce using rule 21 (command_a)
+
+
+state 50
+
+   16 command_a: itercommand .
+
+    $default  reduce using rule 16 (command_a)
+
+
+state 51
+
+   18 command_a: outputcommand .
+
+    $default  reduce using rule 18 (command_a)
+
+
+state 52
+
+   11 command: resvarcommand .
+
+    $default  reduce using rule 11 (command)
+
+
+state 53
+
+   25 command_a: limitresvarcommand .
+
+    $default  reduce using rule 25 (command_a)
+
+
+state 54
+
+   12 command: addvarcommand .
+
+    $default  reduce using rule 12 (command)
+
+
+state 55
+
+   26 command_a: limitaddvarcommand .
+
+    $default  reduce using rule 26 (command_a)
+
+
+state 56
+
+   15 command: meancommand .
+
+    $default  reduce using rule 15 (command)
+
+
+state 57
+
+   13 command: positioncommand .
+
+    $default  reduce using rule 13 (command)
+
+
+state 58
+
+   14 command: frequencycommand .
+
+    $default  reduce using rule 14 (command)
+
+
+state 59
+
+   24 command_a: groupcommand .
+
+    $default  reduce using rule 24 (command_a)
+
+
+state 60
+
+    5 parmfile: parmfile @2 command1 .
+
+    $default  reduce using rule 5 (parmfile)
+
+
+state 61
+
+  118 resvarcommand: RESIDUAL VARIANCE . rnum
+  119              | RESIDUAL VARIANCE . trait_var rnum
+  120 limitresvarcommand: RESIDUAL VARIANCE . LIMIT rnum
+  121                   | RESIDUAL VARIANCE . LIMIT trait_var rnum
+
+    LIMIT    shift, and go to state 123
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 124
+    lkvar      go to state 74
+    rnum       go to state 125
+
+
+state 62
+
+  124 addvarcommand: GENETIC VARIANCE . rnum
+  125              | GENETIC VARIANCE . trait_var rnum
+  126 limitaddvarcommand: GENETIC VARIANCE . LIMIT rnum
+  127                   | GENETIC VARIANCE . LIMIT trait_var rnum
+
+    LIMIT    shift, and go to state 126
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 127
+    lkvar      go to state 74
+    rnum       go to state 128
+
+
+state 63
+
+  141 lkvar: STRING .
+  142      | STRING . '(' INTEGER ')'
+
+    '('  shift, and go to state 129
+
+    $default  reduce using rule 141 (lkvar)
+
+
+state 64
+
+  132 positioncommand: POSITION lkvar . rnum
+  133                | POSITION lkvar . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 130
+
+
+state 65
+
+  135 frequencycommand: FREQUENCY @6 . lkmarker freqlist
+
+    STRING  shift, and go to state 63
+
+    lkvar     go to state 131
+    lkmarker  go to state 132
+
+
+state 66
+
+  137 frequencycommand: FREQUENCY @7 . COUNTS lkmarker freqlist
+
+    COUNTS  shift, and go to state 133
+
+
+state 67
+
+   73 limit_timecommand: VIRTUAL TIMECOM . LIMIT rnum
+
+    LIMIT  shift, and go to state 134
+
+
+state 68
+
+   35 samplecommand: START OUTPUT . INTEGER
+   36              | START OUTPUT . INTEGER opt_comma INTEGER
+
+    INTEGER  shift, and go to state 135
+
+
+state 69
+
+   93 tlocicommand: START TRAIT . LOCI INTEGER
+
+    LOCI  shift, and go to state 136
+
+
+state 70
+
+   10 command1: START @3 . command
+
+    RESIDUAL   shift, and go to state 137
+    GENETIC    shift, and go to state 138
+    POSITION   shift, and go to state 9
+    FREQUENCY  shift, and go to state 10
+    MEAN       shift, and go to state 13
+    COUNTS     shift, and go to state 29
+
+    command           go to state 139
+    resvarcommand     go to state 52
+    addvarcommand     go to state 54
+    meancommand       go to state 56
+    positioncommand   go to state 57
+    frequencycommand  go to state 58
+
+
+state 71
+
+  171 rnum: INTEGER .
+
+    $default  reduce using rule 171 (rnum)
+
+
+state 72
+
+  170 rnum: REAL .
+
+    $default  reduce using rule 170 (rnum)
+
+
+state 73
+
+  131 meancommand: MEAN trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 140
+
+
+state 74
+
+  140 trait_var: lkvar .
+
+    $default  reduce using rule 140 (trait_var)
+
+
+state 75
+
+  130 meancommand: MEAN rnum .
+
+    $default  reduce using rule 130 (meancommand)
+
+
+state 76
+
+   96 itercommand: ITERATIONS INTEGER .
+
+    $default  reduce using rule 96 (itercommand)
+
+
+state 77
+
+  100 outputcommand: SAMPLE FREQUENCY . INTEGER
+  101              | SAMPLE FREQUENCY . INTEGER ',' INTEGER
+
+    INTEGER  shift, and go to state 141
+
+
+state 78
+
+   33 samplecommand: SAMPLE FROM . INTEGER
+   34              | SAMPLE FROM . INTEGER opt_comma INTEGER
+
+    INTEGER  shift, and go to state 142
+
+
+state 79
+
+  108 outputcommand: OUTPUT POSITION . SFILE STRING
+
+    SFILE  shift, and go to state 143
+
+
+state 80
+
+   97 outputcommand: OUTPUT FREQUENCY . INTEGER
+   98              | OUTPUT FREQUENCY . INTEGER ',' INTEGER
+   99              | OUTPUT FREQUENCY . STRING
+
+    STRING   shift, and go to state 144
+    INTEGER  shift, and go to state 145
+
+
+state 81
+
+  107 outputcommand: OUTPUT SFILE . STRING
+
+    STRING  shift, and go to state 146
+
+
+state 82
+
+  109 outputcommand: OUTPUT IBD . SFILE STRING
+  110              | OUTPUT IBD . DIR STRING
+  116              | OUTPUT IBD . STRING
+  117              | OUTPUT IBD . STRING ',' STRING
+
+    SFILE   shift, and go to state 147
+    DIR     shift, and go to state 148
+    STRING  shift, and go to state 149
+
+
+state 83
+
+  102 outputcommand: OUTPUT PHENO . STRING
+
+    STRING  shift, and go to state 150
+
+
+state 84
+
+  103 outputcommand: OUTPUT GENO . STRING
+  104              | OUTPUT GENO . STRING ',' STRING
+
+    STRING  shift, and go to state 151
+
+
+state 85
+
+  106 outputcommand: OUTPUT TYPE . INTEGER
+
+    INTEGER  shift, and go to state 152
+
+
+state 86
+
+  113 outputcommand: OUTPUT HAPLO . STRING
+  114              | OUTPUT HAPLO .
+
+    STRING  shift, and go to state 153
+
+    $default  reduce using rule 114 (outputcommand)
+
+
+state 87
+
+  115 outputcommand: OUTPUT POLYGENIC . STRING
+
+    STRING  shift, and go to state 154
+
+
+state 88
+
+  143 lkvarlist: lkvar .
+
+    $default  reduce using rule 143 (lkvarlist)
+
+
+state 89
+
+  105 outputcommand: OUTPUT lkvarlist .
+  144 lkvarlist: lkvarlist . ',' lkvar
+
+    ','  shift, and go to state 155
+
+    $default  reduce using rule 105 (outputcommand)
+
+
+state 90
+
+   86 mapcommand: MAP TOTAL . rnum
+   87           | MAP TOTAL . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 156
+
+
+state 91
+
+   90 mapcommand: MAP FUNCTION . HALDANE
+   91           | MAP FUNCTION . KOSAMBI
+
+    HALDANE  shift, and go to state 157
+    KOSAMBI  shift, and go to state 158
+
+
+state 92
+
+   79 mapcommand: MAP STRING . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 159
+
+
+state 93
+
+   82 mapcommand: TOTAL MAP . rnum
+   83           | TOTAL MAP . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 160
+
+
+state 94
+
+   84 mapcommand: TOTAL MALE . MAP rnum
+
+    MAP  shift, and go to state 161
+
+
+state 95
+
+   85 mapcommand: TOTAL FEMALE . MAP rnum
+
+    MAP  shift, and go to state 162
+
+
+state 96
+
+   76 seedcommand: SEED SFILE . STRING
+   77            | SEED SFILE . STRING ',' INTEGER
+
+    STRING  shift, and go to state 163
+
+
+state 97
+
+   78 seedcommand: SEED INTEGER .
+
+    $default  reduce using rule 78 (seedcommand)
+
+
+state 98
+
+   74 seedcommand: SEEDFILE STRING .
+   75            | SEEDFILE STRING . ',' INTEGER
+
+    ','  shift, and go to state 164
+
+    $default  reduce using rule 74 (seedcommand)
+
+
+state 99
+
+   92 tlocicommand: TRAIT LOCI . INTEGER
+   94             | TRAIT LOCI . INTEGER ',' INTEGER
+   95             | TRAIT LOCI . MEAN rnum
+
+    MEAN     shift, and go to state 165
+    INTEGER  shift, and go to state 166
+
+
+state 100
+
+   37 setcommand: SET SYSTEM_VAR . array
+
+    INTEGER  shift, and go to state 167
+    REAL     shift, and go to state 168
+
+    array  go to state 169
+
+
+state 101
+
+   38 setcommand: SET STRING . array
+
+    INTEGER  shift, and go to state 167
+    REAL     shift, and go to state 168
+
+    array  go to state 170
+
+
+state 102
+
+   70 limit_timecommand: TIMECOM LIMIT . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 171
+
+
+state 103
+
+   54 ibdcommand: ESTIMATE IBD . STRING opt_comma ibdlist
+   55           | ESTIMATE IBD . ibdlist
+   56           | ESTIMATE IBD . MARKERS STRING
+   57           | ESTIMATE IBD . MARKERS
+   58           | ESTIMATE IBD . GRID STRING opt_comma ibdlist
+   59           | ESTIMATE IBD . GRID ibdlist
+
+    MARKERS  shift, and go to state 172
+    GRID     shift, and go to state 173
+    STRING   shift, and go to state 174
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    ibdlist  go to state 175
+    rnum     go to state 176
+
+
+state 104
+
+   62 aff_freqcommand: ESTIMATE AFFECTED . FREQUENCY
+
+    FREQUENCY  shift, and go to state 177
+
+
+state 105
+
+  147 groupcommand: GROUP ORDER . @9 grouplist
+
+    $default  reduce using rule 146 (@9)
+
+    @9  go to state 178
+
+
+state 106
+
+   80 mapcommand: MALE MAP . STRING rnum ',' rnum
+   88           | MALE MAP . TOTAL rnum
+
+    TOTAL   shift, and go to state 179
+    STRING  shift, and go to state 180
+
+
+state 107
+
+   81 mapcommand: FEMALE MAP . STRING rnum ',' rnum
+   89           | FEMALE MAP . TOTAL rnum
+
+    TOTAL   shift, and go to state 181
+    STRING  shift, and go to state 182
+
+
+state 108
+
+  122 limitresvarcommand: LIMIT RESIDUAL . VARIANCE rnum
+  123                   | LIMIT RESIDUAL . VARIANCE trait_var rnum
+
+    VARIANCE  shift, and go to state 183
+
+
+state 109
+
+  128 limitaddvarcommand: LIMIT GENETIC . VARIANCE rnum
+  129                   | LIMIT GENETIC . VARIANCE trait_var rnum
+
+    VARIANCE  shift, and go to state 184
+
+
+state 110
+
+   72 limit_timecommand: LIMIT VIRTUAL . TIMECOM rnum
+
+    TIMECOM  shift, and go to state 185
+
+
+state 111
+
+   71 limit_timecommand: LIMIT TIMECOM . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 186
+
+
+state 112
+
+  139 frequencycommand: COUNTS @8 . lkmarker freqlist
+
+    STRING  shift, and go to state 63
+
+    lkvar     go to state 131
+    lkmarker  go to state 187
+
+
+state 113
+
+  112 outputcommand: DUMP FREQUENCY . INTEGER
+
+    INTEGER  shift, and go to state 188
+
+
+state 114
+
+  111 outputcommand: DUMP SFILE . STRING
+
+    STRING  shift, and go to state 189
+
+
+state 115
+
+   69 analyzecommand: ANALYZE @5 . analyzelist
+
+    IBD       shift, and go to state 190
+    AFFECTED  shift, and go to state 191
+    STRING    shift, and go to state 192
+
+    analyzecom   go to state 193
+    analyzelist  go to state 194
+
+
+state 116
+
+   40 includecommand: INCLUDE @4 . STRING
+
+    STRING  shift, and go to state 195
+
+
+state 117
+
+   61 compresscommand: COMPRESS OUTPUT . IBD
+
+    IBD  shift, and go to state 196
+
+
+state 118
+
+   60 compresscommand: COMPRESS IBD . OUTPUT
+
+    OUTPUT  shift, and go to state 197
+
+
+state 119
+
+   43 pchrom_list_atom: STRING .
+
+    $default  reduce using rule 43 (pchrom_list_atom)
+
+
+state 120
+
+   52 pseudocommand: PSEUDO '[' . clause ']'
+   53              | PSEUDO '[' . clause ']' pchrom_list
+
+    START   shift, and go to state 198
+    STRING  shift, and go to state 199
+
+    clause_atom  go to state 200
+    clause       go to state 201
+
+
+state 121
+
+   44 pchrom_list: pchrom_list_atom .
+
+    $default  reduce using rule 44 (pchrom_list)
+
+
+state 122
+
+   45 pchrom_list: pchrom_list . ',' pchrom_list_atom
+   51 pseudocommand: PSEUDO pchrom_list .
+
+    ','  shift, and go to state 202
+
+    $default  reduce using rule 51 (pseudocommand)
+
+
+state 123
+
+  120 limitresvarcommand: RESIDUAL VARIANCE LIMIT . rnum
+  121                   | RESIDUAL VARIANCE LIMIT . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 203
+    lkvar      go to state 74
+    rnum       go to state 204
+
+
+state 124
+
+  119 resvarcommand: RESIDUAL VARIANCE trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 205
+
+
+state 125
+
+  118 resvarcommand: RESIDUAL VARIANCE rnum .
+
+    $default  reduce using rule 118 (resvarcommand)
+
+
+state 126
+
+  126 limitaddvarcommand: GENETIC VARIANCE LIMIT . rnum
+  127                   | GENETIC VARIANCE LIMIT . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 206
+    lkvar      go to state 74
+    rnum       go to state 207
+
+
+state 127
+
+  125 addvarcommand: GENETIC VARIANCE trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 208
+
+
+state 128
+
+  124 addvarcommand: GENETIC VARIANCE rnum .
+
+    $default  reduce using rule 124 (addvarcommand)
+
+
+state 129
+
+  142 lkvar: STRING '(' . INTEGER ')'
+
+    INTEGER  shift, and go to state 209
+
+
+state 130
+
+  132 positioncommand: POSITION lkvar rnum .
+  133                | POSITION lkvar rnum . ',' rnum
+
+    ','  shift, and go to state 210
+
+    $default  reduce using rule 132 (positioncommand)
+
+
+state 131
+
+  145 lkmarker: lkvar .
+
+    $default  reduce using rule 145 (lkmarker)
+
+
+state 132
+
+  135 frequencycommand: FREQUENCY @6 lkmarker . freqlist
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    allele    go to state 214
+    freqlist  go to state 215
+
+
+state 133
+
+  137 frequencycommand: FREQUENCY @7 COUNTS . lkmarker freqlist
+
+    STRING  shift, and go to state 63
+
+    lkvar     go to state 131
+    lkmarker  go to state 216
+
+
+state 134
+
+   73 limit_timecommand: VIRTUAL TIMECOM LIMIT . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 217
+
+
+state 135
+
+   35 samplecommand: START OUTPUT INTEGER .
+   36              | START OUTPUT INTEGER . opt_comma INTEGER
+
+    ','  shift, and go to state 218
+
+    INTEGER   reduce using rule 41 (opt_comma)
+    $default  reduce using rule 35 (samplecommand)
+
+    opt_comma  go to state 219
+
+
+state 136
+
+   93 tlocicommand: START TRAIT LOCI . INTEGER
+
+    INTEGER  shift, and go to state 220
+
+
+state 137
+
+  118 resvarcommand: RESIDUAL . VARIANCE rnum
+  119              | RESIDUAL . VARIANCE trait_var rnum
+
+    VARIANCE  shift, and go to state 221
+
+
+state 138
+
+  124 addvarcommand: GENETIC . VARIANCE rnum
+  125              | GENETIC . VARIANCE trait_var rnum
+
+    VARIANCE  shift, and go to state 222
+
+
+state 139
+
+   10 command1: START @3 command .
+
+    $default  reduce using rule 10 (command1)
+
+
+state 140
+
+  131 meancommand: MEAN trait_var rnum .
+
+    $default  reduce using rule 131 (meancommand)
+
+
+state 141
+
+  100 outputcommand: SAMPLE FREQUENCY INTEGER .
+  101              | SAMPLE FREQUENCY INTEGER . ',' INTEGER
+
+    ','  shift, and go to state 223
+
+    $default  reduce using rule 100 (outputcommand)
+
+
+state 142
+
+   33 samplecommand: SAMPLE FROM INTEGER .
+   34              | SAMPLE FROM INTEGER . opt_comma INTEGER
+
+    ','  shift, and go to state 218
+
+    INTEGER   reduce using rule 41 (opt_comma)
+    $default  reduce using rule 33 (samplecommand)
+
+    opt_comma  go to state 224
+
+
+state 143
+
+  108 outputcommand: OUTPUT POSITION SFILE . STRING
+
+    STRING  shift, and go to state 225
+
+
+state 144
+
+   99 outputcommand: OUTPUT FREQUENCY STRING .
+
+    $default  reduce using rule 99 (outputcommand)
+
+
+state 145
+
+   97 outputcommand: OUTPUT FREQUENCY INTEGER .
+   98              | OUTPUT FREQUENCY INTEGER . ',' INTEGER
+
+    ','  shift, and go to state 226
+
+    $default  reduce using rule 97 (outputcommand)
+
+
+state 146
+
+  107 outputcommand: OUTPUT SFILE STRING .
+
+    $default  reduce using rule 107 (outputcommand)
+
+
+state 147
+
+  109 outputcommand: OUTPUT IBD SFILE . STRING
+
+    STRING  shift, and go to state 227
+
+
+state 148
+
+  110 outputcommand: OUTPUT IBD DIR . STRING
+
+    STRING  shift, and go to state 228
+
+
+state 149
+
+  116 outputcommand: OUTPUT IBD STRING .
+  117              | OUTPUT IBD STRING . ',' STRING
+
+    ','  shift, and go to state 229
+
+    $default  reduce using rule 116 (outputcommand)
+
+
+state 150
+
+  102 outputcommand: OUTPUT PHENO STRING .
+
+    $default  reduce using rule 102 (outputcommand)
+
+
+state 151
+
+  103 outputcommand: OUTPUT GENO STRING .
+  104              | OUTPUT GENO STRING . ',' STRING
+
+    ','  shift, and go to state 230
+
+    $default  reduce using rule 103 (outputcommand)
+
+
+state 152
+
+  106 outputcommand: OUTPUT TYPE INTEGER .
+
+    $default  reduce using rule 106 (outputcommand)
+
+
+state 153
+
+  113 outputcommand: OUTPUT HAPLO STRING .
+
+    $default  reduce using rule 113 (outputcommand)
+
+
+state 154
+
+  115 outputcommand: OUTPUT POLYGENIC STRING .
+
+    $default  reduce using rule 115 (outputcommand)
+
+
+state 155
+
+  144 lkvarlist: lkvarlist ',' . lkvar
+
+    STRING  shift, and go to state 63
+
+    lkvar  go to state 231
+
+
+state 156
+
+   86 mapcommand: MAP TOTAL rnum .
+   87           | MAP TOTAL rnum . ',' rnum
+
+    ','  shift, and go to state 232
+
+    $default  reduce using rule 86 (mapcommand)
+
+
+state 157
+
+   90 mapcommand: MAP FUNCTION HALDANE .
+
+    $default  reduce using rule 90 (mapcommand)
+
+
+state 158
+
+   91 mapcommand: MAP FUNCTION KOSAMBI .
+
+    $default  reduce using rule 91 (mapcommand)
+
+
+state 159
+
+   79 mapcommand: MAP STRING rnum . ',' rnum
+
+    ','  shift, and go to state 233
+
+
+state 160
+
+   82 mapcommand: TOTAL MAP rnum .
+   83           | TOTAL MAP rnum . ',' rnum
+
+    ','  shift, and go to state 234
+
+    $default  reduce using rule 82 (mapcommand)
+
+
+state 161
+
+   84 mapcommand: TOTAL MALE MAP . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 235
+
+
+state 162
+
+   85 mapcommand: TOTAL FEMALE MAP . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 236
+
+
+state 163
+
+   76 seedcommand: SEED SFILE STRING .
+   77            | SEED SFILE STRING . ',' INTEGER
+
+    ','  shift, and go to state 237
+
+    $default  reduce using rule 76 (seedcommand)
+
+
+state 164
+
+   75 seedcommand: SEEDFILE STRING ',' . INTEGER
+
+    INTEGER  shift, and go to state 238
+
+
+state 165
+
+   95 tlocicommand: TRAIT LOCI MEAN . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 239
+
+
+state 166
+
+   92 tlocicommand: TRAIT LOCI INTEGER .
+   94             | TRAIT LOCI INTEGER . ',' INTEGER
+
+    ','  shift, and go to state 240
+
+    $default  reduce using rule 92 (tlocicommand)
+
+
+state 167
+
+  167 array: INTEGER .
+
+    $default  reduce using rule 167 (array)
+
+
+state 168
+
+  166 array: REAL .
+
+    $default  reduce using rule 166 (array)
+
+
+state 169
+
+   37 setcommand: SET SYSTEM_VAR array .
+  168 array: array . ',' REAL
+  169      | array . ',' INTEGER
+
+    ','  shift, and go to state 241
+
+    $default  reduce using rule 37 (setcommand)
+
+
+state 170
+
+   38 setcommand: SET STRING array .
+  168 array: array . ',' REAL
+  169      | array . ',' INTEGER
+
+    ','  shift, and go to state 241
+
+    $default  reduce using rule 38 (setcommand)
+
+
+state 171
+
+   70 limit_timecommand: TIMECOM LIMIT rnum .
+
+    $default  reduce using rule 70 (limit_timecommand)
+
+
+state 172
+
+   56 ibdcommand: ESTIMATE IBD MARKERS . STRING
+   57           | ESTIMATE IBD MARKERS .
+
+    STRING  shift, and go to state 242
+
+    $default  reduce using rule 57 (ibdcommand)
+
+
+state 173
+
+   58 ibdcommand: ESTIMATE IBD GRID . STRING opt_comma ibdlist
+   59           | ESTIMATE IBD GRID . ibdlist
+
+    STRING   shift, and go to state 243
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    ibdlist  go to state 244
+    rnum     go to state 176
+
+
+state 174
+
+   54 ibdcommand: ESTIMATE IBD STRING . opt_comma ibdlist
+
+    ','  shift, and go to state 218
+
+    $default  reduce using rule 41 (opt_comma)
+
+    opt_comma  go to state 245
+
+
+state 175
+
+   55 ibdcommand: ESTIMATE IBD ibdlist .
+  165 ibdlist: ibdlist . ',' rnum
+
+    ','  shift, and go to state 246
+
+    $default  reduce using rule 55 (ibdcommand)
+
+
+state 176
+
+  164 ibdlist: rnum .
+
+    $default  reduce using rule 164 (ibdlist)
+
+
+state 177
+
+   62 aff_freqcommand: ESTIMATE AFFECTED FREQUENCY .
+
+    $default  reduce using rule 62 (aff_freqcommand)
+
+
+state 178
+
+  147 groupcommand: GROUP ORDER @9 . grouplist
+
+    STRING   shift, and go to state 247
+    INTEGER  shift, and go to state 248
+    REAL     shift, and go to state 249
+
+    group      go to state 250
+    grouplist  go to state 251
+
+
+state 179
+
+   88 mapcommand: MALE MAP TOTAL . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 252
+
+
+state 180
+
+   80 mapcommand: MALE MAP STRING . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 253
+
+
+state 181
+
+   89 mapcommand: FEMALE MAP TOTAL . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 254
+
+
+state 182
+
+   81 mapcommand: FEMALE MAP STRING . rnum ',' rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 255
+
+
+state 183
+
+  122 limitresvarcommand: LIMIT RESIDUAL VARIANCE . rnum
+  123                   | LIMIT RESIDUAL VARIANCE . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 256
+    lkvar      go to state 74
+    rnum       go to state 257
+
+
+state 184
+
+  128 limitaddvarcommand: LIMIT GENETIC VARIANCE . rnum
+  129                   | LIMIT GENETIC VARIANCE . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 258
+    lkvar      go to state 74
+    rnum       go to state 259
+
+
+state 185
+
+   72 limit_timecommand: LIMIT VIRTUAL TIMECOM . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 260
+
+
+state 186
+
+   71 limit_timecommand: LIMIT TIMECOM rnum .
+
+    $default  reduce using rule 71 (limit_timecommand)
+
+
+state 187
+
+  139 frequencycommand: COUNTS @8 lkmarker . freqlist
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    allele    go to state 214
+    freqlist  go to state 261
+
+
+state 188
+
+  112 outputcommand: DUMP FREQUENCY INTEGER .
+
+    $default  reduce using rule 112 (outputcommand)
+
+
+state 189
+
+  111 outputcommand: DUMP SFILE STRING .
+
+    $default  reduce using rule 111 (outputcommand)
+
+
+state 190
+
+   65 analyzecom: IBD .
+
+    $default  reduce using rule 65 (analyzecom)
+
+
+state 191
+
+   64 analyzecom: AFFECTED .
+
+    $default  reduce using rule 64 (analyzecom)
+
+
+state 192
+
+   63 analyzecom: STRING .
+
+    $default  reduce using rule 63 (analyzecom)
+
+
+state 193
+
+   66 analyzelist: analyzecom .
+
+    $default  reduce using rule 66 (analyzelist)
+
+
+state 194
+
+   67 analyzelist: analyzelist . ',' analyzecom
+   69 analyzecommand: ANALYZE @5 analyzelist .
+
+    ','  shift, and go to state 262
+
+    $default  reduce using rule 69 (analyzecommand)
+
+
+state 195
+
+   40 includecommand: INCLUDE @4 STRING .
+
+    $default  reduce using rule 40 (includecommand)
+
+
+state 196
+
+   61 compresscommand: COMPRESS OUTPUT IBD .
+
+    $default  reduce using rule 61 (compresscommand)
+
+
+state 197
+
+   60 compresscommand: COMPRESS IBD OUTPUT .
+
+    $default  reduce using rule 60 (compresscommand)
+
+
+state 198
+
+   47 clause_atom: START . '=' INTEGER
+
+    '='  shift, and go to state 263
+
+
+state 199
+
+   46 clause_atom: STRING . '=' INTEGER
+
+    '='  shift, and go to state 264
+
+
+state 200
+
+   48 clause: clause_atom .
+
+    $default  reduce using rule 48 (clause)
+
+
+state 201
+
+   49 clause: clause . ';' clause_atom
+   52 pseudocommand: PSEUDO '[' clause . ']'
+   53              | PSEUDO '[' clause . ']' pchrom_list
+
+    ';'  shift, and go to state 265
+    ']'  shift, and go to state 266
+
+
+state 202
+
+   45 pchrom_list: pchrom_list ',' . pchrom_list_atom
+
+    STRING  shift, and go to state 119
+
+    pchrom_list_atom  go to state 267
+
+
+state 203
+
+  121 limitresvarcommand: RESIDUAL VARIANCE LIMIT trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 268
+
+
+state 204
+
+  120 limitresvarcommand: RESIDUAL VARIANCE LIMIT rnum .
+
+    $default  reduce using rule 120 (limitresvarcommand)
+
+
+state 205
+
+  119 resvarcommand: RESIDUAL VARIANCE trait_var rnum .
+
+    $default  reduce using rule 119 (resvarcommand)
+
+
+state 206
+
+  127 limitaddvarcommand: GENETIC VARIANCE LIMIT trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 269
+
+
+state 207
+
+  126 limitaddvarcommand: GENETIC VARIANCE LIMIT rnum .
+
+    $default  reduce using rule 126 (limitaddvarcommand)
+
+
+state 208
+
+  125 addvarcommand: GENETIC VARIANCE trait_var rnum .
+
+    $default  reduce using rule 125 (addvarcommand)
+
+
+state 209
+
+  142 lkvar: STRING '(' INTEGER . ')'
+
+    ')'  shift, and go to state 270
+
+
+state 210
+
+  133 positioncommand: POSITION lkvar rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 271
+
+
+state 211
+
+  155 allele: STRING .
+
+    $default  reduce using rule 155 (allele)
+
+
+state 212
+
+  153 allele: INTEGER .
+
+    $default  reduce using rule 153 (allele)
+
+
+state 213
+
+  154 allele: REAL .
+
+    $default  reduce using rule 154 (allele)
+
+
+state 214
+
+  157 freqlist: allele . ',' @10 freqlist1
+
+    ','  shift, and go to state 272
+
+
+state 215
+
+  135 frequencycommand: FREQUENCY @6 lkmarker freqlist .
+  159 freqlist: freqlist . allele ',' @11 freqlist1
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    $default  reduce using rule 135 (frequencycommand)
+
+    allele  go to state 273
+
+
+state 216
+
+  137 frequencycommand: FREQUENCY @7 COUNTS lkmarker . freqlist
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    allele    go to state 214
+    freqlist  go to state 274
+
+
+state 217
+
+   73 limit_timecommand: VIRTUAL TIMECOM LIMIT rnum .
+
+    $default  reduce using rule 73 (limit_timecommand)
+
+
+state 218
+
+   42 opt_comma: ',' .
+
+    $default  reduce using rule 42 (opt_comma)
+
+
+state 219
+
+   36 samplecommand: START OUTPUT INTEGER opt_comma . INTEGER
+
+    INTEGER  shift, and go to state 275
+
+
+state 220
+
+   93 tlocicommand: START TRAIT LOCI INTEGER .
+
+    $default  reduce using rule 93 (tlocicommand)
+
+
+state 221
+
+  118 resvarcommand: RESIDUAL VARIANCE . rnum
+  119              | RESIDUAL VARIANCE . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 124
+    lkvar      go to state 74
+    rnum       go to state 125
+
+
+state 222
+
+  124 addvarcommand: GENETIC VARIANCE . rnum
+  125              | GENETIC VARIANCE . trait_var rnum
+
+    STRING   shift, and go to state 63
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    trait_var  go to state 127
+    lkvar      go to state 74
+    rnum       go to state 128
+
+
+state 223
+
+  101 outputcommand: SAMPLE FREQUENCY INTEGER ',' . INTEGER
+
+    INTEGER  shift, and go to state 276
+
+
+state 224
+
+   34 samplecommand: SAMPLE FROM INTEGER opt_comma . INTEGER
+
+    INTEGER  shift, and go to state 277
+
+
+state 225
+
+  108 outputcommand: OUTPUT POSITION SFILE STRING .
+
+    $default  reduce using rule 108 (outputcommand)
+
+
+state 226
+
+   98 outputcommand: OUTPUT FREQUENCY INTEGER ',' . INTEGER
+
+    INTEGER  shift, and go to state 278
+
+
+state 227
+
+  109 outputcommand: OUTPUT IBD SFILE STRING .
+
+    $default  reduce using rule 109 (outputcommand)
+
+
+state 228
+
+  110 outputcommand: OUTPUT IBD DIR STRING .
+
+    $default  reduce using rule 110 (outputcommand)
+
+
+state 229
+
+  117 outputcommand: OUTPUT IBD STRING ',' . STRING
+
+    STRING  shift, and go to state 279
+
+
+state 230
+
+  104 outputcommand: OUTPUT GENO STRING ',' . STRING
+
+    STRING  shift, and go to state 280
+
+
+state 231
+
+  144 lkvarlist: lkvarlist ',' lkvar .
+
+    $default  reduce using rule 144 (lkvarlist)
+
+
+state 232
+
+   87 mapcommand: MAP TOTAL rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 281
+
+
+state 233
+
+   79 mapcommand: MAP STRING rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 282
+
+
+state 234
+
+   83 mapcommand: TOTAL MAP rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 283
+
+
+state 235
+
+   84 mapcommand: TOTAL MALE MAP rnum .
+
+    $default  reduce using rule 84 (mapcommand)
+
+
+state 236
+
+   85 mapcommand: TOTAL FEMALE MAP rnum .
+
+    $default  reduce using rule 85 (mapcommand)
+
+
+state 237
+
+   77 seedcommand: SEED SFILE STRING ',' . INTEGER
+
+    INTEGER  shift, and go to state 284
+
+
+state 238
+
+   75 seedcommand: SEEDFILE STRING ',' INTEGER .
+
+    $default  reduce using rule 75 (seedcommand)
+
+
+state 239
+
+   95 tlocicommand: TRAIT LOCI MEAN rnum .
+
+    $default  reduce using rule 95 (tlocicommand)
+
+
+state 240
+
+   94 tlocicommand: TRAIT LOCI INTEGER ',' . INTEGER
+
+    INTEGER  shift, and go to state 285
+
+
+state 241
+
+  168 array: array ',' . REAL
+  169      | array ',' . INTEGER
+
+    INTEGER  shift, and go to state 286
+    REAL     shift, and go to state 287
+
+
+state 242
+
+   56 ibdcommand: ESTIMATE IBD MARKERS STRING .
+
+    $default  reduce using rule 56 (ibdcommand)
+
+
+state 243
+
+   58 ibdcommand: ESTIMATE IBD GRID STRING . opt_comma ibdlist
+
+    ','  shift, and go to state 218
+
+    $default  reduce using rule 41 (opt_comma)
+
+    opt_comma  go to state 288
+
+
+state 244
+
+   59 ibdcommand: ESTIMATE IBD GRID ibdlist .
+  165 ibdlist: ibdlist . ',' rnum
+
+    ','  shift, and go to state 246
+
+    $default  reduce using rule 59 (ibdcommand)
+
+
+state 245
+
+   54 ibdcommand: ESTIMATE IBD STRING opt_comma . ibdlist
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    ibdlist  go to state 289
+    rnum     go to state 176
+
+
+state 246
+
+  165 ibdlist: ibdlist ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 290
+
+
+state 247
+
+  150 group: STRING .
+
+    $default  reduce using rule 150 (group)
+
+
+state 248
+
+  148 group: INTEGER .
+
+    $default  reduce using rule 148 (group)
+
+
+state 249
+
+  149 group: REAL .
+
+    $default  reduce using rule 149 (group)
+
+
+state 250
+
+  151 grouplist: group .
+
+    $default  reduce using rule 151 (grouplist)
+
+
+state 251
+
+  147 groupcommand: GROUP ORDER @9 grouplist .
+  152 grouplist: grouplist . ',' group
+
+    ','  shift, and go to state 291
+
+    $default  reduce using rule 147 (groupcommand)
+
+
+state 252
+
+   88 mapcommand: MALE MAP TOTAL rnum .
+
+    $default  reduce using rule 88 (mapcommand)
+
+
+state 253
+
+   80 mapcommand: MALE MAP STRING rnum . ',' rnum
+
+    ','  shift, and go to state 292
+
+
+state 254
+
+   89 mapcommand: FEMALE MAP TOTAL rnum .
+
+    $default  reduce using rule 89 (mapcommand)
+
+
+state 255
+
+   81 mapcommand: FEMALE MAP STRING rnum . ',' rnum
+
+    ','  shift, and go to state 293
+
+
+state 256
+
+  123 limitresvarcommand: LIMIT RESIDUAL VARIANCE trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 294
+
+
+state 257
+
+  122 limitresvarcommand: LIMIT RESIDUAL VARIANCE rnum .
+
+    $default  reduce using rule 122 (limitresvarcommand)
+
+
+state 258
+
+  129 limitaddvarcommand: LIMIT GENETIC VARIANCE trait_var . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 295
+
+
+state 259
+
+  128 limitaddvarcommand: LIMIT GENETIC VARIANCE rnum .
+
+    $default  reduce using rule 128 (limitaddvarcommand)
+
+
+state 260
+
+   72 limit_timecommand: LIMIT VIRTUAL TIMECOM rnum .
+
+    $default  reduce using rule 72 (limit_timecommand)
+
+
+state 261
+
+  139 frequencycommand: COUNTS @8 lkmarker freqlist .
+  159 freqlist: freqlist . allele ',' @11 freqlist1
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    $default  reduce using rule 139 (frequencycommand)
+
+    allele  go to state 273
+
+
+state 262
+
+   67 analyzelist: analyzelist ',' . analyzecom
+
+    IBD       shift, and go to state 190
+    AFFECTED  shift, and go to state 191
+    STRING    shift, and go to state 192
+
+    analyzecom  go to state 296
+
+
+state 263
+
+   47 clause_atom: START '=' . INTEGER
+
+    INTEGER  shift, and go to state 297
+
+
+state 264
+
+   46 clause_atom: STRING '=' . INTEGER
+
+    INTEGER  shift, and go to state 298
+
+
+state 265
+
+   49 clause: clause ';' . clause_atom
+
+    START   shift, and go to state 198
+    STRING  shift, and go to state 199
+
+    clause_atom  go to state 299
+
+
+state 266
+
+   52 pseudocommand: PSEUDO '[' clause ']' .
+   53              | PSEUDO '[' clause ']' . pchrom_list
+
+    STRING  shift, and go to state 119
+
+    $default  reduce using rule 52 (pseudocommand)
+
+    pchrom_list_atom  go to state 121
+    pchrom_list       go to state 300
+
+
+state 267
+
+   45 pchrom_list: pchrom_list ',' pchrom_list_atom .
+
+    $default  reduce using rule 45 (pchrom_list)
+
+
+state 268
+
+  121 limitresvarcommand: RESIDUAL VARIANCE LIMIT trait_var rnum .
+
+    $default  reduce using rule 121 (limitresvarcommand)
+
+
+state 269
+
+  127 limitaddvarcommand: GENETIC VARIANCE LIMIT trait_var rnum .
+
+    $default  reduce using rule 127 (limitaddvarcommand)
+
+
+state 270
+
+  142 lkvar: STRING '(' INTEGER ')' .
+
+    $default  reduce using rule 142 (lkvar)
+
+
+state 271
+
+  133 positioncommand: POSITION lkvar rnum ',' rnum .
+
+    $default  reduce using rule 133 (positioncommand)
+
+
+state 272
+
+  157 freqlist: allele ',' . @10 freqlist1
+
+    $default  reduce using rule 156 (@10)
+
+    @10  go to state 301
+
+
+state 273
+
+  159 freqlist: freqlist allele . ',' @11 freqlist1
+
+    ','  shift, and go to state 302
+
+
+state 274
+
+  137 frequencycommand: FREQUENCY @7 COUNTS lkmarker freqlist .
+  159 freqlist: freqlist . allele ',' @11 freqlist1
+
+    STRING   shift, and go to state 211
+    INTEGER  shift, and go to state 212
+    REAL     shift, and go to state 213
+
+    $default  reduce using rule 137 (frequencycommand)
+
+    allele  go to state 273
+
+
+state 275
+
+   36 samplecommand: START OUTPUT INTEGER opt_comma INTEGER .
+
+    $default  reduce using rule 36 (samplecommand)
+
+
+state 276
+
+  101 outputcommand: SAMPLE FREQUENCY INTEGER ',' INTEGER .
+
+    $default  reduce using rule 101 (outputcommand)
+
+
+state 277
+
+   34 samplecommand: SAMPLE FROM INTEGER opt_comma INTEGER .
+
+    $default  reduce using rule 34 (samplecommand)
+
+
+state 278
+
+   98 outputcommand: OUTPUT FREQUENCY INTEGER ',' INTEGER .
+
+    $default  reduce using rule 98 (outputcommand)
+
+
+state 279
+
+  117 outputcommand: OUTPUT IBD STRING ',' STRING .
+
+    $default  reduce using rule 117 (outputcommand)
+
+
+state 280
+
+  104 outputcommand: OUTPUT GENO STRING ',' STRING .
+
+    $default  reduce using rule 104 (outputcommand)
+
+
+state 281
+
+   87 mapcommand: MAP TOTAL rnum ',' rnum .
+
+    $default  reduce using rule 87 (mapcommand)
+
+
+state 282
+
+   79 mapcommand: MAP STRING rnum ',' rnum .
+
+    $default  reduce using rule 79 (mapcommand)
+
+
+state 283
+
+   83 mapcommand: TOTAL MAP rnum ',' rnum .
+
+    $default  reduce using rule 83 (mapcommand)
+
+
+state 284
+
+   77 seedcommand: SEED SFILE STRING ',' INTEGER .
+
+    $default  reduce using rule 77 (seedcommand)
+
+
+state 285
+
+   94 tlocicommand: TRAIT LOCI INTEGER ',' INTEGER .
+
+    $default  reduce using rule 94 (tlocicommand)
+
+
+state 286
+
+  169 array: array ',' INTEGER .
+
+    $default  reduce using rule 169 (array)
+
+
+state 287
+
+  168 array: array ',' REAL .
+
+    $default  reduce using rule 168 (array)
+
+
+state 288
+
+   58 ibdcommand: ESTIMATE IBD GRID STRING opt_comma . ibdlist
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    ibdlist  go to state 303
+    rnum     go to state 176
+
+
+state 289
+
+   54 ibdcommand: ESTIMATE IBD STRING opt_comma ibdlist .
+  165 ibdlist: ibdlist . ',' rnum
+
+    ','  shift, and go to state 246
+
+    $default  reduce using rule 54 (ibdcommand)
+
+
+state 290
+
+  165 ibdlist: ibdlist ',' rnum .
+
+    $default  reduce using rule 165 (ibdlist)
+
+
+state 291
+
+  152 grouplist: grouplist ',' . group
+
+    STRING   shift, and go to state 247
+    INTEGER  shift, and go to state 248
+    REAL     shift, and go to state 249
+
+    group  go to state 304
+
+
+state 292
+
+   80 mapcommand: MALE MAP STRING rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 305
+
+
+state 293
+
+   81 mapcommand: FEMALE MAP STRING rnum ',' . rnum
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+
+    rnum  go to state 306
+
+
+state 294
+
+  123 limitresvarcommand: LIMIT RESIDUAL VARIANCE trait_var rnum .
+
+    $default  reduce using rule 123 (limitresvarcommand)
+
+
+state 295
+
+  129 limitaddvarcommand: LIMIT GENETIC VARIANCE trait_var rnum .
+
+    $default  reduce using rule 129 (limitaddvarcommand)
+
+
+state 296
+
+   67 analyzelist: analyzelist ',' analyzecom .
+
+    $default  reduce using rule 67 (analyzelist)
+
+
+state 297
+
+   47 clause_atom: START '=' INTEGER .
+
+    $default  reduce using rule 47 (clause_atom)
+
+
+state 298
+
+   46 clause_atom: STRING '=' INTEGER .
+
+    $default  reduce using rule 46 (clause_atom)
+
+
+state 299
+
+   49 clause: clause ';' clause_atom .
+
+    $default  reduce using rule 49 (clause)
+
+
+state 300
+
+   45 pchrom_list: pchrom_list . ',' pchrom_list_atom
+   53 pseudocommand: PSEUDO '[' clause ']' pchrom_list .
+
+    ','  shift, and go to state 202
+
+    $default  reduce using rule 53 (pseudocommand)
+
+
+state 301
+
+  157 freqlist: allele ',' @10 . freqlist1
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+    '*'      shift, and go to state 307
+
+    freqlist1  go to state 308
+    rnum       go to state 309
+
+
+state 302
+
+  159 freqlist: freqlist allele ',' . @11 freqlist1
+
+    $default  reduce using rule 158 (@11)
+
+    @11  go to state 310
+
+
+state 303
+
+   58 ibdcommand: ESTIMATE IBD GRID STRING opt_comma ibdlist .
+  165 ibdlist: ibdlist . ',' rnum
+
+    ','  shift, and go to state 246
+
+    $default  reduce using rule 58 (ibdcommand)
+
+
+state 304
+
+  152 grouplist: grouplist ',' group .
+
+    $default  reduce using rule 152 (grouplist)
+
+
+state 305
+
+   80 mapcommand: MALE MAP STRING rnum ',' rnum .
+
+    $default  reduce using rule 80 (mapcommand)
+
+
+state 306
+
+   81 mapcommand: FEMALE MAP STRING rnum ',' rnum .
+
+    $default  reduce using rule 81 (mapcommand)
+
+
+state 307
+
+  161 freqlist1: '*' .
+
+    $default  reduce using rule 161 (freqlist1)
+
+
+state 308
+
+  157 freqlist: allele ',' @10 freqlist1 .
+  162 freqlist1: freqlist1 . ',' rnum
+  163          | freqlist1 . ',' '*'
+
+    ','  shift, and go to state 311
+
+    $default  reduce using rule 157 (freqlist)
+
+
+state 309
+
+  160 freqlist1: rnum .
+
+    $default  reduce using rule 160 (freqlist1)
+
+
+state 310
+
+  159 freqlist: freqlist allele ',' @11 . freqlist1
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+    '*'      shift, and go to state 307
+
+    freqlist1  go to state 312
+    rnum       go to state 309
+
+
+state 311
+
+  162 freqlist1: freqlist1 ',' . rnum
+  163          | freqlist1 ',' . '*'
+
+    INTEGER  shift, and go to state 71
+    REAL     shift, and go to state 72
+    '*'      shift, and go to state 313
+
+    rnum  go to state 314
+
+
+state 312
+
+  159 freqlist: freqlist allele ',' @11 freqlist1 .
+  162 freqlist1: freqlist1 . ',' rnum
+  163          | freqlist1 . ',' '*'
+
+    ','  shift, and go to state 311
+
+    $default  reduce using rule 159 (freqlist)
+
+
+state 313
+
+  163 freqlist1: freqlist1 ',' '*' .
+
+    $default  reduce using rule 163 (freqlist1)
+
+
+state 314
+
+  162 freqlist1: freqlist1 ',' rnum .
+
+    $default  reduce using rule 162 (freqlist1)

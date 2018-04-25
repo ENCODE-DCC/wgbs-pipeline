@@ -1,0 +1,16 @@
+Estimate IBD grid "chromosome 1",0,4,1
+Iterations 200
+Start Output 10,10
+Output frequency 5,5
+
+Total Map 4.0
+
+Seedfile "test_seedfile",1
+#output ibd solar
+
+Position mark1 0.0
+Position mark2 2.0
+
+Frequency mark1 A,0.2 B,0.2 C,0.4 D,0.2
+Frequency mark2 116,.4 118,.3 112,.3
+	 
