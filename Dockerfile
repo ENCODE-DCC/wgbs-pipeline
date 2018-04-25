@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     r-base \
     pigz \
 	python-pip \
+	python3-dev \
+    python3-pip \
 	git \
 	wget \
 	unzip \
@@ -44,12 +46,15 @@ RUN cd xz-5.2.3 && ./configure && make && make install
 
 # Upgrade pip
 RUN pip install --upgrade pip
+RUN pip3 install --upgrade pip3
 
 # Install setuptools
 RUN pip install -U setuptools
 
+
 # Install basic python2 packages
-RUN pip install common python-dateutil cython 
+RUN pip install common python-dateutil cython
+RUN pip3 install common python-dateutil cython
 
 # Install numpy 1.11.3 (python2/3)
 # RUN git clone --branch v1.11.3 https://github.com/numpy/numpy

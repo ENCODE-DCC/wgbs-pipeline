@@ -1,4 +1,5 @@
-
+# Test files can be large
+test/
 
 # cromwell temp dirs
 cromwell-executions/

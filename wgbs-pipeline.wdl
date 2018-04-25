@@ -22,7 +22,8 @@ task index {
 	}
 
 	output {
-		File reference_gem = glob("*.BS.gem")[0]
-		File reference_info = glob("*.BS.info")[0]
+		#Array[String] reference_bs = read_lines(stdout())
+		File reference_gem = glob("./*.BS.gem")[0]
+		File reference_info = glob("./*.BS.info")[0]
 	}
 }
