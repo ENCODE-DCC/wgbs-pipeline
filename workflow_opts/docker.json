@@ -1,0 +1,7 @@
+{
+    "default_runtime_attributes" : {
+        "docker" : "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "2",
+        "memory": "4 GB"
+    }
+}
