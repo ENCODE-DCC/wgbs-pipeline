@@ -84,12 +84,10 @@ RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig
 RUN chmod +x wigToBigWig
 
 # Install gemBS
-RUN mkdir gemBS
-COPY /gemBS gemBS
+RUN git clone --recursive https://github.com/heathsc/gemBS.git
 RUN sed -i 's+^GSL_LIB =.*+GSL_LIB = -L/usr/lib/x86_64-linux-gnu/+g' /software/gemBS/tools/bs_call/Gsl.mk
 RUN sed -i 's+^GSL_INC =.*+GSL_INC = -I/usr/include/gsl/+g' /software/gemBS/tools/bs_call/Gsl.mk
 RUN cd gemBS && python setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Set up test data
-RUN cd gemBS/test && tar -xvf example.tar.gz 
+ENTRYPOINT ["/bin/bash","-c"]
