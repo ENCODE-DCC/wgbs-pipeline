@@ -1,8 +1,0 @@
-Should prep store real numbers as strings?  Saves space, and avoids
-translation problems.
-
-What if I want to transform variables?  Then this wouldn't work (unless I
-encode the transformation into the file - getting messy.
-
-
-

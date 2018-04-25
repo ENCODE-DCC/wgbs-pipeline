@@ -1,8 +1,0 @@
-#!/bin/sh
-fail="YES"
-if [ "X$fail" != "XYES" ]
-then
-echo "hi"
-else
-echo "ho"
-fi

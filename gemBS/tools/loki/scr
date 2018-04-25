@@ -1,9 +1,0 @@
-#!/bin/bash
-for i in `ls *.c`
-do
-echo $i
-cp $i tmp
-../chk.pl tmp > $i
-done
-rm -f tmp
-

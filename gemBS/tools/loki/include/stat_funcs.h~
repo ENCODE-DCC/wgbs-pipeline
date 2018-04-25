@@ -1,6 +1,0 @@
-double cumchic(double,int);
-double cumchn(double,int,double);
-double critchn(double,int,double);
-double critchi(double,int);
-double betaix(double,double,double,double);
-double betai(double,double,double);

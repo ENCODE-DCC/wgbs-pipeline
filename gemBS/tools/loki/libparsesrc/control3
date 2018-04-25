@@ -1,7 +1,0 @@
-FS="Before"
-RS="what"
-skip=1
-skip1(4)=23
-file [FS="a";GS="plo";skip=2;2x,2,x,3,x,2(4,x)] "test",a,b,(c(i),i=1,2)
-b=FS
-a=skip
