@@ -1,0 +1,15 @@
+Iterations 201
+
+dump frequency 200
+Start Output 1,1
+Output frequency 1,1
+
+Total Map 4.0
+
+Seedfile "test_seedfile",1
+
+Position mark1 0.0
+Position mark2 2.0
+
+set lm_ratio 0.5
+

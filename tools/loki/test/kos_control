@@ -1,0 +1,8 @@
+missing '*'
+file "../../../Asgard/pedsim/kos.dat2",id,sire,dam,fx1,aff,y,age
+pedigree id,sire,dam
+discrete fx1,fx2
+censored age where(aff==1)
+trait locus QTL
+model age=fx1+QTL
+log "log"

@@ -1,0 +1,628 @@
+/****************************************************************************
+ *                                                                          *
+ *     Loki - Programs for genetic analysis of complex traits using MCMC    *
+ *                                                                          *
+ *             Simon Heath - Rockefeller University                         *
+ *                                                                          *
+ *                       October 1997                                       *
+ *                                                                          *
+ * loki_sample.c:                                                           *
+ *                                                                          *
+ * Main sampling loop + small sample routines                               *
+ *                                                                          *
+ ****************************************************************************/
+
+#include <config.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
+#include <math.h>
+#include <stdio.h>
+#include <float.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+#include "ranlib.h"
+#include "utils.h"
+#include "libhdr.h"
+#include "loki.h"
+#include "loki_peel.h"
+#include "seg_pen.h"
+#include "gen_pen.h"
+#include "loki_ibd.h"
+#include "loki_tdt.h"
+#include "loki_dump.h"
+#include "loki_tlmoves.h"
+#include "sample_cens.h"
+#include "handle_res.h"
+#include "sample_effects.h"
+#include "sample_rand.h"
+#include "print_data.h"
+#include "calc_var_locus.h"
+#include "loki_output.h"
+#include "kinship.h"
+#include "genedrop.h"
+#include "sample_nu.h"
+#include "loki_monitor.h"
+#include "meiosis_scan.h"
+#include "count_dbr.h"
+
+double *tau_beta,*tau,lm_ratio;
+int no_overdominant,tau_mode,analysis=DEFAULT_ANALYSIS;
+int max_linked=2,max_linked_set=1;
+struct lmon_param *lpar;
+
+#ifdef FUNC_NAME
+#undef FUNC_NAME
+#endif
+#define FUNC_NAME "update_seg_probs"
+static void update_seg_probs(int fg,int fg1)
+{
+	int i,k,comp;
+	
+	for(k=0;k<n_markers;k++) {
+		if(fg&12) seg_init_freq(k);
+		if(fg1&1) pass_founder_genes(k);
+		for(comp=0;comp<n_comp;comp++) {
+			marker[k].locus.lk_store[comp]=seg_pen(k,comp,&i,fg&~2);
+			if(i) {
+				(void)fprintf(stderr,"seg_pen returned error code %d for marker %s",(int)marker[k].locus.lk_store[comp],marker[k].name);
+				if(marker[k].index) (void)fprintf(stderr,"(%d)",marker[k].index);
+				(void)fprintf(stderr," (comp=%d, fg=%d, fg1=%d)\n",comp,fg,fg1);
+				ABT_FUNC("Illegal segregation pattern\n");
+			}
+		}
+		if(fg&4) seg_sample_freq(k);
+		if(fg&8) seg_update_aff_freq(k);
+		if(fg) marker[k].locus.flag|=LOCUS_SAMPLED;
+	}
+	for(k=0;k<n_tloci;k++) if(tlocus[k].locus.flag) {
+ 		if(fg&4) seg_init_freq(-1-k);
+		if(fg1&2) pass_founder_genes(-1-k);
+		pass_founder_genes(-1-k);
+		for(comp=0;comp<n_comp;comp++) {
+			tlocus[k].locus.lk_store[comp]=gen_pen(k,comp,&i,fg);
+			if(i) {
+				(void)fprintf(stderr,"%d %d %d %d\n",k,comp,i,(int)tlocus[k].locus.lk_store[comp]);
+				ABT_FUNC("Illegal segregation pattern\n");
+			}
+		}
+		if(fg) tlocus[k].locus.flag|=LOCUS_SAMPLED;
+ 		if(fg&4) seg_sample_freq(-1-k);
+	}
+}
+
+void reprune_segs(void)
+{
+	int i,j,k,**seg,*ff;
+	
+	for(j=0;j<n_markers;j++) {
+		seg=marker[j].locus.seg;
+		ff=founder_flag[j];
+		for(i=0;i<ped_size;i++) if(id_array[i].sire) {
+			k=ff[i];
+			if(k==2) seg[0][i]=seg[1][i]=-2;
+			else if(k==1) seg[0][i]=seg[1][i]=-1;
+		}
+	}
+}
+
+#ifdef FUNC_NAME
+#undef FUNC_NAME
+#endif
+#define FUNC_NAME "SampleLoop"
+void SampleLoop(char *peel_work,size_t *peel_ss)
+{
+	int lp,i,j,j1,j2,k,k1,k2,flag,comp,*perm=0,*naffect=0,**affs=0,dumped=0,ibdflag,*gt,*ntl_linked=0,*ntl_linked1=0,lp1;
+	FILE *fptr=0,*fibd=0,*ffreq=0,*fpos=0,*fmpos=0;
+ 	double z,z1,*ss=0,*ss2=0,**pairs=0,*trpos=0,*trpos1=0;
+	struct output_gen *og;
+	double addlog(double x1,double x2);
+	char *mposname=0;
+	int ct1[3],ct2[3],*mpos_perm=0;
+	long old_pos=-1;
+#ifdef USE_MONITOR
+	struct tms tms;
+#endif
+	
+	/* Output copy of phenotype data if required */
+	if(Output_Phen) {
+		Print_Data(Output_Phen);
+		free(Output_Phen);
+	}
+	/* Output copy of genotype data if required */
+	while(Output_Gen)	{
+		Print_Genotypes(Output_Gen);
+		og=Output_Gen->next;
+		free(Output_Gen->file);
+		free(Output_Gen);
+		Output_Gen=og;
+	}
+	/* Check for IBD analysis, and set up memory structures if required */
+	ibdflag=SetupIBD();
+	if(ibdflag) analysis=(IBD_ANALYSIS|ESTIMATE_IBD);
+	(void)printf("Analysis = %d\n",analysis);
+	sort_sex=0;
+	lp=lp1=0;
+	/* Allocate space for trait loci */
+	TL_Alloc();
+	/* If standard (quantative) analysis, define normal constants */
+	if(!analysis) {
+		z=RES_PRIOR_V0*.5;
+		res_prior_konst=log(z)*z-lgamma(z)+log(RES_PRIOR_S0)*z;
+	}
+	if(analysis&NULL_ANALYSIS) est_aff_freq=0;
+#ifdef USE_MONITOR
+	/* Set up shared memory for loki monitor */
+	if(n_markers>2 && lpar->dbr_flag) {
+		if(!(init_dbr_shm()) && !(init_dbr_count())) {
+			zero_dbr_count();
+			fputs("Initialized double recombinant counts\n",stdout);
+		}
+		else lpar->dbr_flag=0;
+	}
+#endif
+	/* Restarting ? */
+	if(read_dump_flag) {
+		/* Yes - read in dump file */
+		(void)fputs("Retrieving program state: ",stdout);
+		(void)fflush(stdout);
+		j=read_dump(&lp,&lp1,&old_pos,&flag);
+		if(j<0) {
+			(void)fputs("FAILED\n",stdout);
+			ABT_FUNC(AbMsg);
+		} else (void)fputs("OK\n",stdout);
+	} else {
+		/* No - Get initial genotype samples for all markers */
+		if(!(analysis&NULL_ANALYSIS)) for(k=0;k<n_links;k++) Sample_LinkageGroup(k,peel_work,peel_ss);
+		if(!analysis) {
+			/* Quantitative analysis */
+			if(!tlocus) start_tloci=0;
+			/* If we have a starting number of QTL, create them now */
+			else for(i=0;i<start_tloci;i++)	{
+				k=get_new_traitlocus(2);
+				tlocus[k].model_flag=1;
+				if(k<0) ABT_FUNC("Internal error - Couldn't get trait locus\n");
+				for(j=0;j<n_genetic_groups;j++) tlocus[k].locus.freq[j][0]=tlocus[k].locus.freq[j][1]=0.5;
+				for(k1=0;k1<n_models;k1++) {
+					tlocus[k].eff[k1][0]=tlocus[k].eff[k1][1]=0.0;
+				}
+				tlocus[k].locus.link_group=get_tl_position(tlocus[k].locus.pos);
+				tlocus[k].locus.flag=tlocus[k].locus.link_group<0?TL_UNLINKED:TL_LINKED;
+				k1=-k-1;
+				(void)peel_locus(&k1,0,1,1,peel_work,peel_ss);
+			}
+			/* Handle weights for t model */
+			if(use_student_t) {
+				init_sample_nu();
+				sample_nu();
+			}
+		} 
+		/* Set up M-Sampler stuff */
+		if((lm_ratio>0.0 || est_aff_freq || (analysis&IBD_ANALYSIS)) && !(analysis&NULL_ANALYSIS)) {
+			sample_segs();
+			for(k=0;k<n_markers;k++) {
+				pass_founder_genes(k);
+				for(comp=0;comp<n_comp;comp++) {
+					marker[k].locus.lk_store[comp]=seg_pen(k,comp,&i,0);
+					if(i) {
+						(void)fprintf(stderr,"seg_pen returned error code %d for marker %s",(int)marker[k].locus.lk_store[comp],marker[k].name);
+						if(marker[k].index) (void)fprintf(stderr,"(%d)",marker[k].index);
+						(void)fprintf(stderr," comp %d\n",comp);
+						ABT_FUNC("Illegal segregation pattern\n");
+					}
+				}
+			}
+			for(k=0;k<n_tloci;k++) if(tlocus[k].locus.flag) {
+				pass_founder_genes(-1-k);
+				for(comp=0;comp<n_comp;comp++) {
+					tlocus[k].locus.lk_store[comp]=gen_pen(k,comp,&i,0);
+				}
+			}
+			flag=(*si_mode)?1:0;
+			if(!(analysis&NULL_ANALYSIS)) {
+				if(analysis&IBD_ANALYSIS) {
+					if(!flag) {
+						sample_segs();
+						flag=1;
+					}
+					for(k=0;k<n_markers;k++) pass_founder_genes(k);
+				}
+			}
+		}
+	}
+	/* Setup outputfiles */
+	if(ibdflag) {
+		if(!OutputIBDfile) OutputIBDfile=make_file_name("ibd");
+	} else {
+		if(!Outputfile) Outputfile=make_file_name("out");
+		if(!(analysis&(IBD_ANALYSIS|IBS_ANALYSIS))) {
+			if(!OutputPosfile) OutputPosfile=make_file_name("pos");
+		}
+	}
+	for(i=0;i<n_markers;i++) if(marker[i].pos_set==2) break;
+	if(i<n_markers) {
+		mposname=make_file_name("mpos");
+		if(!(perm=malloc(sizeof(int)*n_markers))) ABT_FUNC(MMsg);
+		if(!(mpos_perm=malloc(sizeof(int)*n_markers))) ABT_FUNC(MMsg);
+		for(k2=k1=0;k1<n_links;k1++) {
+			get_locuslist(perm,k1,&k,1);
+			gnu_qsort(perm,(size_t)k,sizeof(int),cmp_loci_pos);
+			for(j=0;j<k;j++) mpos_perm[k2++]=perm[j];
+		}
+		free(perm);
+		perm=0;
+	}
+	if(append_output_flag) {
+		if(ibdflag) if(!(fibd=fopen(OutputIBDfile,"a"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,OutputIBDfile);
+		if(mposname) if(!(fmpos=fopen(mposname,"a"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,mposname);
+		if(Freqfile) if(!(ffreq=fopen(Freqfile,"a"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,Freqfile);
+		if(!ibdflag) {
+			if(!(fptr=fopen(Outputfile,"a"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,Outputfile);
+			if(OutputPosfile) if(!(fpos=fopen(OutputPosfile,"r+"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,OutputPosfile);
+		}
+	} else {
+		j=syst_var[SYST_BACKUPS].flag?syst_var[SYST_BACKUPS].data.value:1;
+		if(j) {
+			if(Outputfile) i=mkbackup(Outputfile,j);
+			if(ibdflag) i=mkbackup(OutputIBDfile,j);
+		}
+		if(ibdflag) if(!(fibd=fopen(OutputIBDfile,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,OutputIBDfile);
+		if(mposname) if(!(fmpos=fopen(mposname,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,mposname);
+		if(Freqfile) if(!(ffreq=fopen(Freqfile,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,Freqfile);
+		if(!ibdflag) {
+			if(!(fptr=fopen(Outputfile,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,Outputfile);
+			if(OutputPosfile) if(!(fpos=fopen(OutputPosfile,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,OutputPosfile);
+			OutputHeader(fptr);
+		}
+		if(ffreq) OutputFreqHeader(ffreq);
+	}
+	if(mposname) free(mposname);
+	OutputHeader(stdout);
+	if(analysis&(IBD_ANALYSIS|IBS_ANALYSIS|TDT_ANALYSIS)) {
+		/* Allocate memory for affected only analyses */
+		if(n_markers) {
+			k=2;
+			if(!(ss=malloc(sizeof(double)*n_markers*k))) ABT_FUNC(MMsg);
+			if(!(perm=malloc(sizeof(int)*n_markers))) ABT_FUNC(MMsg);
+			ss2=ss+n_markers;
+		}
+		for(i=0;i<n_markers;i++) ss[i]=ss2[i]=0.0;
+		if(!(naffect=malloc(sizeof(void *)*n_comp))) ABT_FUNC(MMsg);
+		if(!(affs=malloc(sizeof(void *)*n_comp))) ABT_FUNC(MMsg);
+		if(!(pairs=malloc(sizeof(void *)*n_comp))) ABT_FUNC(MMsg);
+		for(i=comp=0;comp<n_comp;comp++) {
+			naffect[comp]=0;
+			for(j=0;j<comp_size[comp];j++) if(id_array[i+j].affected==2) naffect[comp]++;
+			if(naffect[comp]) {
+				j=naffect[comp]*(naffect[comp]+1)/2;
+				if(!(affs[comp]=malloc(sizeof(int)*naffect[comp]))) ABT_FUNC(MMsg);
+				if(!(pairs[comp]=malloc(sizeof(double)*j))) ABT_FUNC(MMsg);
+				k=0;
+				for(j=0;j<comp_size[comp];j++) if(id_array[i+j].affected==2) affs[comp][k++]=i+j;
+				for(k1=j=0;j<naffect[comp];j++) for(k=0;k<=j;k++) {
+					pairs[comp][k1++]=kinship(affs[comp][j]+1,affs[comp][k]+1);
+				}
+			} else {
+				affs[comp]=0;
+				pairs[comp]=0;
+			}
+			i+=comp_size[comp];
+		}
+	} else if(tlocus && max_tloci) {
+		/* Allocate memory for quantitative analyses */
+		if(!(ntl_linked=malloc(sizeof(int)*(n_links+1)*2))) ABT_FUNC(MMsg);
+		ntl_linked1=ntl_linked+n_links+1;
+		for(i=0;i<=n_links;i++) ntl_linked1[i]=-1;
+		if(!(trpos=malloc(sizeof(double)*(1+sex_map)*2*max_tloci))) ABT_FUNC(MMsg);
+		trpos1=trpos+(1+sex_map)*max_tloci;
+		if(read_dump_flag) {
+			for(k=0;k<=n_links;k++) ntl_linked1[k]=0;
+			for(k1=0;k1<n_tloci;k1++) if(tlocus[k1].locus.flag && !(tlocus[k1].locus.flag&TL_LINKED)) ntl_linked1[0]++;
+			for(k2=k=0;k<n_links;k++) {
+				for(k1=0;k1<n_tloci;k1++) if((tlocus[k1].locus.flag&TL_LINKED) && tlocus[k1].locus.link_group==k) {
+				ntl_linked1[k+1]++;
+					trpos1[k2++]=tlocus[k1].locus.pos[0];
+					if(sex_map) trpos1[k2++]=tlocus[k1].locus.pos[1];
+				}
+			}
+		}
+	}
+	catch_sigs=1;
+	lpar->num_iter=num_iter;
+	for(i=0;i<2;i++) {
+		lpar->sample_from[i]=sample_from[i];
+		lpar->sample_freq[i]=sample_freq[i];
+	}
+	lpar->magic=LMON_MAGIC;
+	for(++lp;!sig_caught && (!num_iter || lp<=num_iter);lp++) {
+#ifdef USE_MONITOR
+		if(!child_alive) start_monitor();
+		lpar->extra_time=extra_time;
+		lpar->extra_utime=extra_utime;
+		num_iter=lpar->num_iter;
+		for(i=0;i<2;i++) {
+			sample_from[i]=lpar->sample_from[i];
+			sample_freq[i]=lpar->sample_freq[i];
+		}
+		for(k=k1=i=0;i<n_tloci;i++) if(tlocus[i].locus.flag) {
+			k++;
+			if(tlocus[i].locus.flag&TL_LINKED) k1++;
+		}
+		(void)times(&tms);
+		lpar->it=lp;
+		lpar->nq=k;
+		lpar->nq1=k1;
+		lpar->utime=tms.tms_utime;
+		switch(lpar->command && !lpar->dbr_flag) {
+		 case LMON_START_DBR:
+			if(n_markers>2) {
+				if(!(init_dbr_shm()) && !(init_dbr_count())) {
+					zero_dbr_count();
+					fputs("Initialized double recombinant counts\n",stdout);
+					lpar->dbr_flag=1;
+				}
+			}
+		}
+		lpar->command=0;
+#endif
+#ifdef USE_DMALLOC
+		if(dmalloc_verify(0)==DMALLOC_ERROR) {
+			(void)fprintf(stderr,"[%s:%d] %s(): Error returned from dmalloc_verify().\nAttempting to abort nicely.\n",__FILE__,__LINE__,FUNC_NAME);
+			break;
+		}
+#endif
+		if(!(analysis&NULL_ANALYSIS)) {
+			/* Sample genetic portion of model */
+			if(ranf()<lm_ratio) {
+				/* M sample */
+				if(!(flag&1)) {
+					sample_segs();
+					flag|=1;
+				}
+				if(!(flag&2)) {
+					update_seg_probs(0,(flag&4)?2:3);
+					flag|=6;
+				}
+				for(k=0;k<n_links;k++) meiosis_scan(k);
+				update_seg_probs(5,0);
+				flag&=~2;
+			} else { /* L sample */
+				if(!(*si_mode) && (flag&1)) {
+					update_seg_probs(7,(flag&2)?0:1);
+ 					reprune_segs();
+					flag&=~1;
+				}
+				for(k=0;k<n_links;k++) Sample_LinkageGroup(k,peel_work,peel_ss);
+ 				flag&=(*si_mode)?~6:~7;
+			}
+		}
+		if(est_aff_freq) { /* Estimate allele frequencies in affecteds only */
+			/* Get full segregation pattern and founder gene info */
+			if(!(flag&1)) {
+				sample_segs();
+				flag|=1;
+			}
+			update_seg_probs(8,(flag&4)?2:3);
+			flag|=6;
+		}
+#ifdef USE_MONITOR
+		if(lpar->dbr_flag) {
+			if(!(flag&1)) {
+				sample_segs();
+				flag|=1;
+			}
+			count_dbr();
+		}
+#endif
+		if(analysis&TDT_ANALYSIS) {
+			for(k=0;k<n_markers;k++) Handle_TDT(k);
+		} else if(analysis&ESTIMATE_IBD) {
+ 			Handle_IBD();
+			if(sample_freq[0] && lp>=sample_from[0] && !(lp%sample_freq[0]) && *ibd_mode==DEFAULT_IBD_MODE)
+			  Output_Sample_IBD(fibd,lp); 
+			if(sample_freq[1] && lp>=sample_from[1] && !(lp%sample_freq[1]))
+			  (void)printf("At: %d\n",lp);
+		} else if(analysis&(IBD_ANALYSIS|IBS_ANALYSIS)) {
+			if(analysis&IBD_ANALYSIS) {
+				if(analysis&NULL_ANALYSIS) genedrop(0);
+				for(k=0;k<n_markers;k++) {
+					z=0.0;
+					k2=0;
+					for(comp=0;comp<n_comp;comp++) {
+						if(naffect[comp]>1) {
+							z+=score_ibd(k,&k1,comp,naffect[comp],affs[comp],pairs[comp]);
+							k2+=k1;
+						}
+					}
+					if(k2) z=sqrt(z/(double)k2);
+					ss[k]=z;
+					if(analysis&NULL_ANALYSIS) break;
+				}
+			} else if(analysis&IBS_ANALYSIS) {
+				for(k=0;k<n_markers;k++) {
+					if(analysis&NULL_ANALYSIS) drop_genotypes(k);
+					gt=marker[k].locus.gt;
+					for(j=0;j<3;j++) ct1[j]=ct2[j]=0;
+					for(k1=k2=j=0;j<ped_size;j++) if(id_array[j].affected) {
+						if(id_array[j].affected==1) {
+							ct1[gt[j]-1]++;
+							k1++;
+						} else if(id_array[j].affected==2) {
+							ct2[gt[j]-1]++;
+							k2++;
+						}
+					}
+					z=k1?((double)ct1[0]+.5*(double)ct1[1])/(double)k1:0.0;
+					z1=k2?((double)ct2[0]+.5*(double)ct2[1])/(double)k2:0.0;
+					ss[k]=z;
+					ss2[k]=z1;
+				}
+			}
+			if(sample_freq[0] && lp>=sample_from[0] && !(lp%sample_freq[0])) {
+				(void)fprintf(fptr,"%d",lp);
+				for(k1=0;k1<n_links;k1++) {
+					get_locuslist(perm,k1,&k2,1);	
+					gnu_qsort(perm,(size_t)k2,sizeof(int),cmp_loci_pos);
+					for(k=0;k<k2;k++) (void)fprintf(fptr," %g",ss[perm[k]]);
+				}
+				(void)fputc('\n',fptr);
+			}
+			if(sample_freq[1] && lp>=sample_from[1] && !(lp%sample_freq[1])) {
+				(void)fprintf(stdout,"%d",lp);
+				for(k1=0;k1<n_links;k1++) {
+					get_locuslist(perm,k1,&k2,1);
+					gnu_qsort(perm,(size_t)k2,sizeof(int),cmp_loci_pos);
+					for(k=0;k<k2;k++) (void)fprintf(stdout," %g",ss[perm[k]]);
+				}
+				(void)fputc('\n',stdout);
+			}
+		} else {
+			if(!(*si_mode)) {
+				reprune_segs();
+				flag&=~7;
+			}
+			/* Quantitative analysis */
+			if(tlocus) {
+				TL_Birth_Death(peel_work,peel_ss);
+				for(k=0;k<n_tloci;k++) if(tlocus[k].locus.flag) {
+#ifdef DEBUG
+					if(ranf()<.5) Flip_TL_Alleles(k,peel_work,peel_ss);
+#else
+					if(ranf()<.5) Flip_TL_Alleles(k);
+#endif
+					Sample_TL_Position(k,peel_work,peel_ss);
+				}
+			}
+			if(use_student_t) sample_nu();
+ 			if(censored_flag) Sample_Censored();
+			if(models) {
+ 				sample_effects();
+				if(res_var_set[0]!=1) (void)Sample_ResVar();
+				if(n_random) sample_rand();
+				if(polygenic_flag) sample_additive_var();
+				switch(tau_mode) {
+				 case 0:
+				 case 1:
+					tau[0]=tau_beta[0];
+					break;
+				 case 2:
+					tau[0]=residual_var[0]*tau_beta[0];
+					break;
+				}
+			}
+#ifdef DEBUG
+			if((*debug_level)&4) (void)fputc('\n',stdout);
+			z=Recalc_Res(0);
+			if(z>1.0e-8) printf("Warning: err=%g\n",z);
+#endif
+			k=0;
+			if(sample_freq[0] && lp>=sample_from[0] && !(lp%sample_freq[0])) {
+				for(i=0;i<n_tloci;i++) if(tlocus[i].locus.flag) calc_var_locus(-1-i);
+				OutputSample(fptr,lp);
+				if(Freqfile) OutputFreq(ffreq,lp);
+				k=1;
+			}
+			if(sample_freq[1] && lp>=sample_from[1] && !(lp%sample_freq[1])) {
+				if(!k) for(i=0;i<n_tloci;i++) if(tlocus[i].locus.flag) calc_var_locus(-1-i);
+				OutputSample(stdout,lp);
+			}
+			if(dump_freq && lp && !(lp%dump_freq)) {
+				write_dump(lp,lp1,old_pos,flag);
+				dumped=1;
+			} else dumped=0;
+			if(ntl_linked && fpos && lp>=sample_from[0]) {
+				for(k=0;k<=n_links;k++) ntl_linked[k]=0;
+				for(k1=0;k1<n_tloci;k1++) if(tlocus[k1].locus.flag && !(tlocus[k1].locus.flag&TL_LINKED)) ntl_linked[0]++;
+				for(k2=k=0;k<n_links;k++) {
+					for(k1=0;k1<n_tloci;k1++) if((tlocus[k1].locus.flag&TL_LINKED) && tlocus[k1].locus.link_group==k) {
+						ntl_linked[k+1]++;
+						trpos[k2++]=tlocus[k1].locus.pos[0];
+						if(sex_map) trpos[k2++]=tlocus[k1].locus.pos[1];
+					}
+				}
+				for(j=k=0;k<=n_links;k++) if(ntl_linked[k]!=ntl_linked1[k]) break;
+				if(k==n_links+1) {
+					for(k=0;k<k2;k++) if(trpos[k]!=trpos1[k]) break;
+					if(k==k2) j=1;
+				}
+				if(old_pos>=0) (void)fseek(fpos,old_pos,SEEK_SET);
+				else {
+					(void)fseek(fpos,0,SEEK_END);
+					old_pos=ftell(fpos);
+				}
+				if(lp1) (void)fprintf(fpos,":%d\n",lp-lp1);
+				if(!j) {
+					for(j1=k2=k=0;k<=n_links;k++) {
+						ntl_linked1[k]=ntl_linked[k];
+						if(ntl_linked[k]) {
+							if(j1++) (void)fputc(' ',fpos);
+							(void)fprintf(fpos,"%d %d",k,ntl_linked[k]);
+							if(k) for(k1=0;k1<ntl_linked[k];k1++) {
+								for(j2=0;j2<1+sex_map;j2++) {
+									trpos1[k2]=trpos[k2];
+									(void)fprintf(fpos," %g",trpos[k2++]);
+								}
+							}
+						}
+					}
+					lp1=lp;
+					old_pos=ftell(fpos);
+					(void)fputs(":1\n",fpos);
+				}
+				(void)fflush(fpos);
+			}
+		}
+		if(fmpos && lp>=sample_from[0]) {
+			if(lp==1) {
+				for(k=k1=0;k1<n_markers;k1++) {
+					i=mpos_perm[k1];
+					if(marker[i].pos_set==2) {
+						if(k++) (void)fputc(' ',fmpos);
+						(void)fprintf(fmpos,"%s",marker[i].name);
+						if(marker[i].index) (void)fprintf(fmpos,"(%d)",marker[i].index);
+					}
+				}
+				(void)fputc('\n',fmpos);
+			}
+			(void)fprintf(fmpos,"%d ",lp);
+			for(k=k1=0;k1<n_markers;k1++) {
+				i=mpos_perm[k1];
+				if(marker[i].pos_set==2) {
+					(void)fprintf(fmpos,"%g ",marker[i].locus.pos[0]);
+					if(sex_map) (void)fprintf(fmpos,"%g ",marker[i].locus.pos[1]);
+				}
+			}
+			(void)fputc('\n',fmpos);
+			(void)fflush(fmpos);
+		}
+	}
+	if((analysis&ESTIMATE_IBD) && *ibd_mode==MERLIN_IBD_MODE) Output_Merlin_IBD(fibd,lp-1);
+	if(!dumped && !(analysis&(IBD_ANALYSIS|IBS_ANALYSIS))) write_dump(lp-1,lp1,old_pos,flag);
+	if(fptr) (void)fclose(fptr);
+	if(fibd) (void)fclose(fibd);
+	if(fpos) (void)fclose(fpos);
+	if(ffreq) (void)fclose(ffreq);
+	if(polygenic_flag && Polyfile) {
+		if(!(fptr=fopen(Polyfile,"w"))) abt(__FILE__,__LINE__,"%s(): File Error.  Couldn't open '%s' for output\n",FUNC_NAME,Polyfile);
+		Output_BV(fptr);
+		(void)fclose(fptr);
+	}
+	if(mpos_perm) free(mpos_perm);
+	if(ss) free(ss);
+	if(perm) free(perm);
+	if(naffect) free(naffect);
+	if(affs) free(affs);
+	if(pairs) free(pairs);
+	if(ntl_linked) free(ntl_linked);
+	if(trpos) free(trpos);
+}

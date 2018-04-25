@@ -1,0 +1,42 @@
+SHELL = /bin/sh
+
+SUBDIRS = libsrc libparsesrc prepsrc xmlsrc lokisrc utils
+INSTALLDIRS = prepsrc lokisrc utils
+
+SED = @SED@
+PERL = @PERL@
+@SET_MAKE@
+all: progs
+
+progs: include/config.h depend
+	for subdir in $(SUBDIRS); do \
+	(cd $$subdir; $(MAKE)) \
+	done
+
+tests:
+	(cd test; $(MAKE))
+
+install: progs
+	for subdir in $(INSTALLDIRS); do \
+	(cd $$subdir; $(MAKE) install) \
+	done
+
+depend: include/config.h
+	for subdir in $(SUBDIRS); do \
+	(cd $$subdir; $(MAKE) depend) \
+	done
+	touch depend
+	
+clean:
+	for subdir in $(SUBDIRS) test; do \
+	(cd $$subdir; $(MAKE) clean) \
+	done
+	rm -f *~ core a.out *.bak depend
+
+distclean:
+	rm -f *~ core a.out *.bak include/config.h config.status \
+	config.log config.cache loki_cnt depend
+	for subdir in $(SUBDIRS) test; do \
+	(cd $$subdir; $(MAKE) distclean) \
+	done
+	rm -f Makefile

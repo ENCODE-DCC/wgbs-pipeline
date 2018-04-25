@@ -1,0 +1,39 @@
+1080222502: 331: Dmalloc version '5.3.0' from 'http://dmalloc.com/'
+1080222502: 331: flags = 0x4f4ed03, logfile 'logfile'
+1080222502: 331: interval = 0, addr = 0, seen # = 0, limit = 0
+1080222502: 331: starting time = 1080222502
+1080222502: 331: process pid = 69776
+1080222502: 331: Dumping Chunk Statistics:
+1080222502: 331: basic-block 4096 bytes, alignment 8 bytes, heap grows up
+1080222502: 331: heap address range: 0x80b9000 to 0x80cc000, 77824 bytes
+1080222502: 331:     user blocks: 12 blocks, 45056 bytes (57%)
+1080222502: 331:    admin blocks: 7 blocks, 28672 bytes (36%)
+1080222502: 331: external blocks: 0 blocks, 0 bytes (0%)
+1080222502: 331:    total blocks: 19 blocks, 77824 bytes
+1080222502: 331: heap checked 332
+1080222502: 331: alloc calls: malloc 164, calloc 2, realloc 0, free 165
+1080222502: 331: alloc calls: recalloc 0, memalign 0, valloc 0
+1080222502: 331: alloc calls: new 0, delete 0
+1080222502: 331:   current memory in use: 4096 bytes (1 pnts)
+1080222502: 331:  total memory allocated: 26776 bytes (166 pnts)
+1080222502: 331:  max in use at one time: 25688 bytes (138 pnts)
+1080222502: 331: max alloced with 1 call: 16384 bytes
+1080222502: 331: max unused memory space: 13128 bytes (33%)
+1080222502: 331: top 10 allocations:
+1080222502: 331:  total-size  count in-use-size  count  source
+1080222502: 331:       20480      2        4096      1  ra=0x28225cf6
+1080222502: 331:        2736    150           0      0  lk_malloc.c:38
+1080222502: 331:        1032      1           0      0  cleanup.c:255
+1080222502: 331:        1032      1           0      0  prep.c:151
+1080222502: 331:         776      2           0      0  lk_malloc.c:63
+1080222502: 331:         512      1           0      0  read_data1.c:683
+1080222502: 331:          96      4           0      0  read_control.c:481
+1080222502: 331:          40      1           0      0  prep_file_com.c:83
+1080222502: 331:          28      1           0      0  prep.c:136
+1080222502: 331:       26776    166        4096      1  Total of 12
+1080222502: 331: Dumping Not-Freed Pointers Changed Since Start:
+1080222502: 331:  not freed: '0x80c3008|s1' (4096 bytes) from 'ra=0x28225cf6'
+1080222502: 331:  total-size  count  source
+1080222502: 331:        4096      1  ra=0x28225cf6
+1080222502: 331:        4096      1  Total of 1
+1080222502: 331: ending time = 1080222502, elapsed since start = 0:00:00

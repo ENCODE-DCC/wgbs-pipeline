@@ -1,0 +1,62 @@
+<loki version='2.4.6pre1'>
+ <log file='log'/>
+ <family>
+  <comp comp_id='0'>
+   <ind id='1' sex='1' orig='1'/>
+   <ind id='2' sex='2' orig='2'/>
+   <ind id='3' father='1' mother='2' sex='2' orig='4'/>
+   <ind id='4' father='1' mother='2' sex='1' orig='5'/>
+   <ind id='5' sex='2' orig='6'/>
+   <ind id='6' father='1' mother='2' sex='1' orig='7'/>
+   <ind id='7' sex='2' orig='8'/>
+   <ind id='8' sex='1' orig='3'/>
+   <ind id='9' father='8' mother='3' sex='1' orig='9'/>
+   <ind id='10' father='4' mother='5' sex='2' orig='10'/>
+   <ind id='11' father='4' mother='5' sex='1' orig='11'/>
+   <ind id='12' father='6' mother='7' sex='2' orig='12'/>
+   <ind id='13' father='9' mother='10' sex='1' orig='13'/>
+   <ind id='14' father='11' mother='12' sex='2' orig='14'/>
+   <ind id='15' father='13' mother='14' orig='15'/>
+  </comp>
+ </family>
+ <group name='system'>
+  <var name='QTL' type='loki_qtl'/>
+ </group>
+ <group name='markers' type='microsat'>
+  <var name='MARK1'>
+   <levels>C D A B</levels>
+  </var>
+  <var name='MARK2'>
+   <levels>118 116 112</levels>
+  </var>
+ </group>
+ <link name='chromosome 1'>
+  MARK1
+  MARK2
+ </link>
+ <group name='single_rec'>
+  <var name='Y' type='real'/>
+ </group>
+ <model>
+  <trait>Y</trait>
+  <term>QTL</term>
+ </model>
+ <data group='markers'>
+   <rec id='9'>6,</rec>
+   <rec id='11'>3,6</rec>
+   <rec id='12'>10,1</rec>
+   <rec id='13'>,3</rec>
+   <rec id='14'>3,6</rec>
+   <rec id='15'>1,3</rec>
+ </data>
+ <data group='single_rec'>
+  <rec id='5'>1.32</rec>
+  <rec id='7'>0.65</rec>
+  <rec id='9'>0.32</rec>
+  <rec id='11'>1.72</rec>
+  <rec id='12'>2.01</rec>
+  <rec id='13'>0.9</rec>
+  <rec id='14'>0.91</rec>
+  <rec id='15'>1.01</rec>
+ </data>
+</loki>

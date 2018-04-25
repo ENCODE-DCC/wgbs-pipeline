@@ -1,0 +1,36 @@
+Parallel jobs in Loki
+
+There is no support for running an individual Loki job in parallel.
+However, there it is quite possible to run different jobs on different
+machines (or on different processors on the same machine) in parallel.  This
+is use in genome screen analyses where different chromosomes or different
+traits can be analyzed in parallel.  The important point to remember is that
+each loki run *must* be in a separate directory.
+
+It is often useful to run a single job multiple times with different random
+number seeds to verify that the results are consistent across runs.  If the
+runs are performed sequentially then this is OK, because Loki will start
+each new run, continuing the random number stream from where it finished.
+Each run will therefore get a different stream of random numbers.  However,
+if the jobs are run in parallel there is a risk that the random number
+streams may overlap, leading to correlation between the runs.  This
+correlation may or may not lead to correlation between the results from the
+runs.
+
+To avoid this, Loki has multiple independent random number generators.  Each
+generator has the same period (2^19937).  To switch from one generator to
+another it is necessary to add the following line to the parameter file:
+
+set rng x
+
+where x is an integer between 0 and 60 (this upper limit will increase as
+more independent generators are found).  The generator used is written to
+the seedfile, so be default subsequent runs will continue with the same
+generator.  Note that RNG 0 is the default generator, which was used by
+previous versions of Loki.  There is no guarantee that RNG 0 is independent
+to all of the other generators, so it is safest to only use values of x>0
+when parallel runs are performed.
+
+In conclusion, when performing parallel runs, each run should be run in a
+separate directory, and each run should be using a different random number
+generator.

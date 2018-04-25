@@ -1,0 +1,3473 @@
+Terminals which are not used
+
+   NOTATION
+   CDATASTART
+
+
+Grammar
+
+    0 $accept: document $end
+
+    1 document: prolog element misc
+
+    2 prolog: xmldecl misc1
+    3       | xmldecl misc1 doctypedecl misc1
+    4       | misc1
+
+    5 misc1: /* empty */
+    6      | misc2
+
+    7 misc2: misc
+    8      | misc2 misc
+
+    9 eq: EQ
+   10   | SPACE EQ
+   11   | SPACE EQ SPACE
+   12   | EQ SPACE
+
+   13 doctypedecl: dtd_start1 CLOSE
+   14            | dtd_start1 LSBRACK RSBRACK opt_space CLOSE
+   15            | dtd_start1 LSBRACK int_subset RSBRACK opt_space CLOSE
+
+   16 dtd_start1: dtd_start opt_space
+   17           | dtd_start SPACE dtd_tok SPACE att_value opt_space
+   18           | dtd_start SPACE dtd_tok SPACE att_value SPACE att_value opt_space
+
+   19 dtd_start: DOCTYPE SPACE name
+
+   20 int_subset: int_subset1
+   21           | int_subset int_subset1
+
+   22 int_subset1: markupdecl
+   23            | declsep
+
+   24 declsep: pereference
+   25        | SPACE
+
+   26 pereference: PERCENT name SEMICOLON
+
+   27 @1: /* empty */
+
+   28 markupdecl: ELEMENT SPACE name SPACE @1 contentspec opt_space CLOSE
+   29           | ATTLIST SPACE name attdef opt_space CLOSE
+   30           | ATTLIST SPACE name opt_space CLOSE
+   31           | pi
+   32           | comment
+
+   33 @2: /* empty */
+
+   34 @3: /* empty */
+
+   35 attdef: SPACE name SPACE @2 atttype SPACE @3 defaultdecl
+
+   36 @4: /* empty */
+
+   37 @5: /* empty */
+
+   38 attdef: attdef SPACE name SPACE @4 atttype SPACE @5 defaultdecl
+
+   39 atttype: CDATA
+   40        | ID
+   41        | IDREF
+   42        | IDREFS
+   43        | ENTITY
+   44        | ENTITIES
+   45        | NMTOKEN
+   46        | NMTOKENS
+   47        | enum_type
+
+   48 enum_type: LBRACK opt_space dtd_tok enums opt_space RBRACK
+   49          | LBRACK opt_space dtd_tok opt_space RBRACK
+
+   50 enums: opt_space BAR opt_space dtd_tok
+   51      | enums opt_space BAR opt_space dtd_tok
+
+   52 defaultdecl: REQUIRED
+   53            | IMPLIED
+   54            | FIXED SPACE att_value
+   55            | att_value
+
+   56 opt_star: /* empty */
+   57         | STAR
+
+   58 contentspec: EMPTY
+   59            | ANY
+   60            | choice_seq opt_modif
+   61            | LBRACK opt_space PCDATA opt_space RBRACK opt_star
+   62            | LBRACK opt_space PCDATA mixed opt_space RBRACK STAR
+
+   63 mixed: opt_space BAR opt_space name
+   64      | mixed opt_space BAR opt_space name
+
+   65 opt_modif: /* empty */
+   66          | PLUS
+   67          | STAR
+   68          | QUERY
+
+   69 choice_seq: LBRACK opt_space cp choice opt_space RBRACK
+   70           | LBRACK opt_space cp seq opt_space RBRACK
+   71           | LBRACK opt_space cp opt_space RBRACK
+
+   72 choice: opt_space BAR opt_space cp
+   73       | choice opt_space BAR opt_space cp
+
+   74 seq: opt_space COMMA opt_space cp
+   75    | seq opt_space COMMA opt_space cp
+
+   76 cp: name opt_modif
+   77   | choice_seq opt_modif
+
+   78 pi_start: QOPEN
+
+   79 xmldecl: pi_start XMLTOK att_list opt_space QCLOSE
+
+   80 pi: pi_start name SPACE pi_data QCLOSE
+   81   | pi_start name opt_space QCLOSE
+
+   82 pi_data: chardata1
+   83        | SPACE
+   84        | pi_data chardata1
+   85        | pi_data SPACE
+
+   86 dtd_tok: LETTER
+   87        | dtd_tok LETTER
+
+   88 chardata1: chardata
+   89          | OPEN
+   90          | AMPERSAND
+
+   91 chardata: attchar
+   92         | SQ
+   93         | DQ
+
+   94 attchar: name_char
+   95        | CHAR
+   96        | LSBRACK
+   97        | RSBRACK
+   98        | SEMICOLON
+   99        | PERCENT
+  100        | CLOSE
+  101        | EQ
+  102        | SLASH
+
+  103 attchar1: attchar
+  104         | DQ
+
+  105 attchar2: attchar
+  106         | SQ
+
+  107 name_char: name_char1
+  108          | DASH
+  109          | DOT
+
+  110 name_char1: LETTER
+  111           | DIGIT
+  112           | USCORE
+  113           | COLON
+
+  114 name: name_char1
+  115     | name name_char
+
+  116 misc: comment
+  117     | pi
+  118     | SPACE
+
+  119 comment_content: chardata1
+  120                | SPACE
+  121                | comment_content chardata1
+  122                | comment_content SPACE
+
+  123 @6: /* empty */
+
+  124 comment: COMMENTSTART @6 comment_content DOUBLEDASH CLOSE
+
+  125 element: empty_elem
+  126        | start_tag end_tag
+  127        | start_tag content end_tag
+
+  128 start1: OPEN name
+
+  129 start_tag: start1 att_list CLOSE
+  130          | start1 opt_space CLOSE
+
+  131 att_list: attribute
+  132         | att_list attribute
+
+  133 attribute: SPACE name eq att_value
+
+  134 att_value: SQ att_val1 SQ
+  135          | DQ att_val2 DQ
+
+  136 att_val1: attchar1
+  137         | SPACE
+  138         | att_val1 attchar1
+  139         | att_val1 SPACE
+
+  140 att_val2: attchar2
+  141         | SPACE
+  142         | att_val2 attchar2
+  143         | att_val2 SPACE
+
+  144 opt_space: /* empty */
+  145          | SPACE
+
+  146 end_tag: END name opt_space CLOSE
+
+  147 empty_elem: start1 att_list SLASH CLOSE
+
+  148 cdata: chardata
+  149      | SPACE
+  150      | cdata chardata
+  151      | cdata SPACE
+
+  152 content: cdata
+  153        | content1
+  154        | content content1
+
+  155 content1: element
+  156         | element cdata
+  157         | comment
+  158         | comment cdata
+  159         | pi
+  160         | pi cdata
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+END (258) 146
+XMLTOK (259) 79
+QCLOSE (260) 79 80 81
+QOPEN (261) 78
+DOCTYPE (262) 19
+COMMENTSTART (263) 124
+ELEMENT (264) 28
+ENTITY (265) 43
+ATTLIST (266) 29 30
+NOTATION (267)
+CDATASTART (268)
+DOUBLEDASH (269) 124
+EMPTY (270) 58
+ANY (271) 59
+PCDATA (272) 61 62
+REQUIRED (273) 52
+IMPLIED (274) 53
+FIXED (275) 54
+CDATA (276) 39
+ID (277) 40
+IDREF (278) 41
+IDREFS (279) 42
+ENTITIES (280) 44
+NMTOKEN (281) 45
+NMTOKENS (282) 46
+LETTER (283) 86 87 110
+DIGIT (284) 111
+SQ (285) 92 106 134
+DQ (286) 93 104 135
+DASH (287) 108
+DOT (288) 109
+USCORE (289) 112
+COLON (290) 113
+CHAR (291) 95
+OPEN (292) 89 128
+CLOSE (293) 13 14 15 28 29 30 100 124 129 130 146 147
+SLASH (294) 102 147
+AMPERSAND (295) 90
+EQ (296) 9 10 11 12 101
+LSBRACK (297) 14 15 96
+RSBRACK (298) 14 15 97
+PERCENT (299) 26 99
+SEMICOLON (300) 26 98
+LBRACK (301) 48 49 61 62 69 70 71
+RBRACK (302) 48 49 61 62 69 70 71
+STAR (303) 57 62 67
+PLUS (304) 66
+COMMA (305) 74 75
+QUERY (306) 68
+BAR (307) 50 51 63 64 72 73
+SPACE (308) 10 11 12 17 18 19 25 28 29 30 35 38 54 80 83 85 118 120
+    122 133 137 139 141 143 145 149 151
+
+
+Nonterminals, with rules where they appear
+
+$accept (54)
+    on left: 0
+document (55)
+    on left: 1, on right: 0
+prolog (56)
+    on left: 2 3 4, on right: 1
+misc1 (57)
+    on left: 5 6, on right: 2 3 4
+misc2 (58)
+    on left: 7 8, on right: 6 8
+eq (59)
+    on left: 9 10 11 12, on right: 133
+doctypedecl (60)
+    on left: 13 14 15, on right: 3
+dtd_start1 (61)
+    on left: 16 17 18, on right: 13 14 15
+dtd_start (62)
+    on left: 19, on right: 16 17 18
+int_subset (63)
+    on left: 20 21, on right: 15 21
+int_subset1 (64)
+    on left: 22 23, on right: 20 21
+declsep (65)
+    on left: 24 25, on right: 23
+pereference (66)
+    on left: 26, on right: 24
+markupdecl (67)
+    on left: 28 29 30 31 32, on right: 22
+@1 (68)
+    on left: 27, on right: 28
+attdef (69)
+    on left: 35 38, on right: 29 38
+@2 (70)
+    on left: 33, on right: 35
+@3 (71)
+    on left: 34, on right: 35
+@4 (72)
+    on left: 36, on right: 38
+@5 (73)
+    on left: 37, on right: 38
+atttype (74)
+    on left: 39 40 41 42 43 44 45 46 47, on right: 35 38
+enum_type (75)
+    on left: 48 49, on right: 47
+enums (76)
+    on left: 50 51, on right: 48 51
+defaultdecl (77)
+    on left: 52 53 54 55, on right: 35 38
+opt_star (78)
+    on left: 56 57, on right: 61
+contentspec (79)
+    on left: 58 59 60 61 62, on right: 28
+mixed (80)
+    on left: 63 64, on right: 62 64
+opt_modif (81)
+    on left: 65 66 67 68, on right: 60 76 77
+choice_seq (82)
+    on left: 69 70 71, on right: 60 77
+choice (83)
+    on left: 72 73, on right: 69 73
+seq (84)
+    on left: 74 75, on right: 70 75
+cp (85)
+    on left: 76 77, on right: 69 70 71 72 73 74 75
+pi_start (86)
+    on left: 78, on right: 79 80 81
+xmldecl (87)
+    on left: 79, on right: 2 3
+pi (88)
+    on left: 80 81, on right: 31 117 159 160
+pi_data (89)
+    on left: 82 83 84 85, on right: 80 84 85
+dtd_tok (90)
+    on left: 86 87, on right: 17 18 48 49 50 51 87
+chardata1 (91)
+    on left: 88 89 90, on right: 82 84 119 121
+chardata (92)
+    on left: 91 92 93, on right: 88 148 150
+attchar (93)
+    on left: 94 95 96 97 98 99 100 101 102, on right: 91 103 105
+attchar1 (94)
+    on left: 103 104, on right: 136 138
+attchar2 (95)
+    on left: 105 106, on right: 140 142
+name_char (96)
+    on left: 107 108 109, on right: 94 115
+name_char1 (97)
+    on left: 110 111 112 113, on right: 107 114
+name (98)
+    on left: 114 115, on right: 19 26 28 29 30 35 38 63 64 76 80 81
+    115 128 133 146
+misc (99)
+    on left: 116 117 118, on right: 1 7 8
+comment_content (100)
+    on left: 119 120 121 122, on right: 121 122 124
+comment (101)
+    on left: 124, on right: 32 116 157 158
+@6 (102)
+    on left: 123, on right: 124
+element (103)
+    on left: 125 126 127, on right: 1 155 156
+start1 (104)
+    on left: 128, on right: 129 130 147
+start_tag (105)
+    on left: 129 130, on right: 126 127
+att_list (106)
+    on left: 131 132, on right: 79 129 132 147
+attribute (107)
+    on left: 133, on right: 131 132
+att_value (108)
+    on left: 134 135, on right: 17 18 54 55 133
+att_val1 (109)
+    on left: 136 137 138 139, on right: 134 138 139
+att_val2 (110)
+    on left: 140 141 142 143, on right: 135 142 143
+opt_space (111)
+    on left: 144 145, on right: 14 15 16 17 18 28 29 30 48 49 50 51
+    61 62 63 64 69 70 71 72 73 74 75 79 81 130 146
+end_tag (112)
+    on left: 146, on right: 126 127
+empty_elem (113)
+    on left: 147, on right: 125
+cdata (114)
+    on left: 148 149 150 151, on right: 150 151 152 156 158 160
+content (115)
+    on left: 152 153 154, on right: 127 154
+content1 (116)
+    on left: 155 156 157 158 159 160, on right: 153 154
+
+
+state 0
+
+    0 $accept: . document $end
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    SPACE         shift, and go to state 3
+
+    $default  reduce using rule 5 (misc1)
+
+    document  go to state 4
+    prolog    go to state 5
+    misc1     go to state 6
+    misc2     go to state 7
+    pi_start  go to state 8
+    xmldecl   go to state 9
+    pi        go to state 10
+    misc      go to state 11
+    comment   go to state 12
+
+
+state 1
+
+   78 pi_start: QOPEN .
+
+    $default  reduce using rule 78 (pi_start)
+
+
+state 2
+
+  124 comment: COMMENTSTART . @6 comment_content DOUBLEDASH CLOSE
+
+    $default  reduce using rule 123 (@6)
+
+    @6  go to state 13
+
+
+state 3
+
+  118 misc: SPACE .
+
+    $default  reduce using rule 118 (misc)
+
+
+state 4
+
+    0 $accept: document . $end
+
+    $end  shift, and go to state 14
+
+
+state 5
+
+    1 document: prolog . element misc
+
+    OPEN  shift, and go to state 15
+
+    element     go to state 16
+    start1      go to state 17
+    start_tag   go to state 18
+    empty_elem  go to state 19
+
+
+state 6
+
+    4 prolog: misc1 .
+
+    $default  reduce using rule 4 (prolog)
+
+
+state 7
+
+    6 misc1: misc2 .
+    8 misc2: misc2 . misc
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    SPACE         shift, and go to state 3
+
+    $default  reduce using rule 6 (misc1)
+
+    pi_start  go to state 20
+    pi        go to state 10
+    misc      go to state 21
+    comment   go to state 12
+
+
+state 8
+
+   79 xmldecl: pi_start . XMLTOK att_list opt_space QCLOSE
+   80 pi: pi_start . name SPACE pi_data QCLOSE
+   81   | pi_start . name opt_space QCLOSE
+
+    XMLTOK  shift, and go to state 22
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 28
+
+
+state 9
+
+    2 prolog: xmldecl . misc1
+    3       | xmldecl . misc1 doctypedecl misc1
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    SPACE         shift, and go to state 3
+
+    $default  reduce using rule 5 (misc1)
+
+    misc1     go to state 29
+    misc2     go to state 7
+    pi_start  go to state 20
+    pi        go to state 10
+    misc      go to state 11
+    comment   go to state 12
+
+
+state 10
+
+  117 misc: pi .
+
+    $default  reduce using rule 117 (misc)
+
+
+state 11
+
+    7 misc2: misc .
+
+    $default  reduce using rule 7 (misc2)
+
+
+state 12
+
+  116 misc: comment .
+
+    $default  reduce using rule 116 (misc)
+
+
+state 13
+
+  124 comment: COMMENTSTART @6 . comment_content DOUBLEDASH CLOSE
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    OPEN       shift, and go to state 35
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    AMPERSAND  shift, and go to state 38
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 44
+
+    chardata1        go to state 45
+    chardata         go to state 46
+    attchar          go to state 47
+    name_char        go to state 48
+    name_char1       go to state 49
+    comment_content  go to state 50
+
+
+state 14
+
+    0 $accept: document $end .
+
+    $default  accept
+
+
+state 15
+
+  128 start1: OPEN . name
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 51
+
+
+state 16
+
+    1 document: prolog element . misc
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    SPACE         shift, and go to state 3
+
+    pi_start  go to state 20
+    pi        go to state 10
+    misc      go to state 52
+    comment   go to state 12
+
+
+state 17
+
+  129 start_tag: start1 . att_list CLOSE
+  130          | start1 . opt_space CLOSE
+  147 empty_elem: start1 . att_list SLASH CLOSE
+
+    SPACE  shift, and go to state 53
+
+    $default  reduce using rule 144 (opt_space)
+
+    att_list   go to state 54
+    attribute  go to state 55
+    opt_space  go to state 56
+
+
+state 18
+
+  126 element: start_tag . end_tag
+  127        | start_tag . content end_tag
+
+    END           shift, and go to state 57
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    LETTER        shift, and go to state 23
+    DIGIT         shift, and go to state 24
+    SQ            shift, and go to state 30
+    DQ            shift, and go to state 31
+    DASH          shift, and go to state 32
+    DOT           shift, and go to state 33
+    USCORE        shift, and go to state 25
+    COLON         shift, and go to state 26
+    CHAR          shift, and go to state 34
+    OPEN          shift, and go to state 15
+    CLOSE         shift, and go to state 36
+    SLASH         shift, and go to state 37
+    EQ            shift, and go to state 39
+    LSBRACK       shift, and go to state 40
+    RSBRACK       shift, and go to state 41
+    PERCENT       shift, and go to state 42
+    SEMICOLON     shift, and go to state 43
+    SPACE         shift, and go to state 58
+
+    pi_start    go to state 20
+    pi          go to state 59
+    chardata    go to state 60
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+    comment     go to state 61
+    element     go to state 62
+    start1      go to state 17
+    start_tag   go to state 18
+    end_tag     go to state 63
+    empty_elem  go to state 19
+    cdata       go to state 64
+    content     go to state 65
+    content1    go to state 66
+
+
+state 19
+
+  125 element: empty_elem .
+
+    $default  reduce using rule 125 (element)
+
+
+state 20
+
+   80 pi: pi_start . name SPACE pi_data QCLOSE
+   81   | pi_start . name opt_space QCLOSE
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 28
+
+
+state 21
+
+    8 misc2: misc2 misc .
+
+    $default  reduce using rule 8 (misc2)
+
+
+state 22
+
+   79 xmldecl: pi_start XMLTOK . att_list opt_space QCLOSE
+
+    SPACE  shift, and go to state 67
+
+    att_list   go to state 68
+    attribute  go to state 55
+
+
+state 23
+
+  110 name_char1: LETTER .
+
+    $default  reduce using rule 110 (name_char1)
+
+
+state 24
+
+  111 name_char1: DIGIT .
+
+    $default  reduce using rule 111 (name_char1)
+
+
+state 25
+
+  112 name_char1: USCORE .
+
+    $default  reduce using rule 112 (name_char1)
+
+
+state 26
+
+  113 name_char1: COLON .
+
+    $default  reduce using rule 113 (name_char1)
+
+
+state 27
+
+  114 name: name_char1 .
+
+    $default  reduce using rule 114 (name)
+
+
+state 28
+
+   80 pi: pi_start name . SPACE pi_data QCLOSE
+   81   | pi_start name . opt_space QCLOSE
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 69
+
+    $default  reduce using rule 144 (opt_space)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+    opt_space   go to state 71
+
+
+state 29
+
+    2 prolog: xmldecl misc1 .
+    3       | xmldecl misc1 . doctypedecl misc1
+
+    DOCTYPE  shift, and go to state 72
+
+    $default  reduce using rule 2 (prolog)
+
+    doctypedecl  go to state 73
+    dtd_start1   go to state 74
+    dtd_start    go to state 75
+
+
+state 30
+
+   92 chardata: SQ .
+
+    $default  reduce using rule 92 (chardata)
+
+
+state 31
+
+   93 chardata: DQ .
+
+    $default  reduce using rule 93 (chardata)
+
+
+state 32
+
+  108 name_char: DASH .
+
+    $default  reduce using rule 108 (name_char)
+
+
+state 33
+
+  109 name_char: DOT .
+
+    $default  reduce using rule 109 (name_char)
+
+
+state 34
+
+   95 attchar: CHAR .
+
+    $default  reduce using rule 95 (attchar)
+
+
+state 35
+
+   89 chardata1: OPEN .
+
+    $default  reduce using rule 89 (chardata1)
+
+
+state 36
+
+  100 attchar: CLOSE .
+
+    $default  reduce using rule 100 (attchar)
+
+
+state 37
+
+  102 attchar: SLASH .
+
+    $default  reduce using rule 102 (attchar)
+
+
+state 38
+
+   90 chardata1: AMPERSAND .
+
+    $default  reduce using rule 90 (chardata1)
+
+
+state 39
+
+  101 attchar: EQ .
+
+    $default  reduce using rule 101 (attchar)
+
+
+state 40
+
+   96 attchar: LSBRACK .
+
+    $default  reduce using rule 96 (attchar)
+
+
+state 41
+
+   97 attchar: RSBRACK .
+
+    $default  reduce using rule 97 (attchar)
+
+
+state 42
+
+   99 attchar: PERCENT .
+
+    $default  reduce using rule 99 (attchar)
+
+
+state 43
+
+   98 attchar: SEMICOLON .
+
+    $default  reduce using rule 98 (attchar)
+
+
+state 44
+
+  120 comment_content: SPACE .
+
+    $default  reduce using rule 120 (comment_content)
+
+
+state 45
+
+  119 comment_content: chardata1 .
+
+    $default  reduce using rule 119 (comment_content)
+
+
+state 46
+
+   88 chardata1: chardata .
+
+    $default  reduce using rule 88 (chardata1)
+
+
+state 47
+
+   91 chardata: attchar .
+
+    $default  reduce using rule 91 (chardata)
+
+
+state 48
+
+   94 attchar: name_char .
+
+    $default  reduce using rule 94 (attchar)
+
+
+state 49
+
+  107 name_char: name_char1 .
+
+    $default  reduce using rule 107 (name_char)
+
+
+state 50
+
+  121 comment_content: comment_content . chardata1
+  122                | comment_content . SPACE
+  124 comment: COMMENTSTART @6 comment_content . DOUBLEDASH CLOSE
+
+    DOUBLEDASH  shift, and go to state 76
+    LETTER      shift, and go to state 23
+    DIGIT       shift, and go to state 24
+    SQ          shift, and go to state 30
+    DQ          shift, and go to state 31
+    DASH        shift, and go to state 32
+    DOT         shift, and go to state 33
+    USCORE      shift, and go to state 25
+    COLON       shift, and go to state 26
+    CHAR        shift, and go to state 34
+    OPEN        shift, and go to state 35
+    CLOSE       shift, and go to state 36
+    SLASH       shift, and go to state 37
+    AMPERSAND   shift, and go to state 38
+    EQ          shift, and go to state 39
+    LSBRACK     shift, and go to state 40
+    RSBRACK     shift, and go to state 41
+    PERCENT     shift, and go to state 42
+    SEMICOLON   shift, and go to state 43
+    SPACE       shift, and go to state 77
+
+    chardata1   go to state 78
+    chardata    go to state 46
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 51
+
+  115 name: name . name_char
+  128 start1: OPEN name .
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 128 (start1)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 52
+
+    1 document: prolog element misc .
+
+    $default  reduce using rule 1 (document)
+
+
+state 53
+
+  133 attribute: SPACE . name eq att_value
+  145 opt_space: SPACE .
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 145 (opt_space)
+
+    name_char1  go to state 27
+    name        go to state 79
+
+
+state 54
+
+  129 start_tag: start1 att_list . CLOSE
+  132 att_list: att_list . attribute
+  147 empty_elem: start1 att_list . SLASH CLOSE
+
+    CLOSE  shift, and go to state 80
+    SLASH  shift, and go to state 81
+    SPACE  shift, and go to state 67
+
+    attribute  go to state 82
+
+
+state 55
+
+  131 att_list: attribute .
+
+    $default  reduce using rule 131 (att_list)
+
+
+state 56
+
+  130 start_tag: start1 opt_space . CLOSE
+
+    CLOSE  shift, and go to state 83
+
+
+state 57
+
+  146 end_tag: END . name opt_space CLOSE
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 84
+
+
+state 58
+
+  149 cdata: SPACE .
+
+    $default  reduce using rule 149 (cdata)
+
+
+state 59
+
+  159 content1: pi .
+  160         | pi . cdata
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 58
+
+    $default  reduce using rule 159 (content1)
+
+    chardata    go to state 60
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+    cdata       go to state 85
+
+
+state 60
+
+  148 cdata: chardata .
+
+    $default  reduce using rule 148 (cdata)
+
+
+state 61
+
+  157 content1: comment .
+  158         | comment . cdata
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 58
+
+    $default  reduce using rule 157 (content1)
+
+    chardata    go to state 60
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+    cdata       go to state 86
+
+
+state 62
+
+  155 content1: element .
+  156         | element . cdata
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 58
+
+    $default  reduce using rule 155 (content1)
+
+    chardata    go to state 60
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+    cdata       go to state 87
+
+
+state 63
+
+  126 element: start_tag end_tag .
+
+    $default  reduce using rule 126 (element)
+
+
+state 64
+
+  150 cdata: cdata . chardata
+  151      | cdata . SPACE
+  152 content: cdata .
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 88
+
+    $default  reduce using rule 152 (content)
+
+    chardata    go to state 89
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 65
+
+  127 element: start_tag content . end_tag
+  154 content: content . content1
+
+    END           shift, and go to state 57
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    OPEN          shift, and go to state 15
+
+    pi_start    go to state 20
+    pi          go to state 59
+    comment     go to state 61
+    element     go to state 62
+    start1      go to state 17
+    start_tag   go to state 18
+    end_tag     go to state 90
+    empty_elem  go to state 19
+    content1    go to state 91
+
+
+state 66
+
+  153 content: content1 .
+
+    $default  reduce using rule 153 (content)
+
+
+state 67
+
+  133 attribute: SPACE . name eq att_value
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 79
+
+
+state 68
+
+   79 xmldecl: pi_start XMLTOK att_list . opt_space QCLOSE
+  132 att_list: att_list . attribute
+
+    SPACE  shift, and go to state 53
+
+    $default  reduce using rule 144 (opt_space)
+
+    attribute  go to state 82
+    opt_space  go to state 92
+
+
+state 69
+
+   80 pi: pi_start name SPACE . pi_data QCLOSE
+  145 opt_space: SPACE .
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    OPEN       shift, and go to state 35
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    AMPERSAND  shift, and go to state 38
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 93
+
+    $default  reduce using rule 145 (opt_space)
+
+    pi_data     go to state 94
+    chardata1   go to state 95
+    chardata    go to state 46
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 70
+
+  115 name: name name_char .
+
+    $default  reduce using rule 115 (name)
+
+
+state 71
+
+   81 pi: pi_start name opt_space . QCLOSE
+
+    QCLOSE  shift, and go to state 96
+
+
+state 72
+
+   19 dtd_start: DOCTYPE . SPACE name
+
+    SPACE  shift, and go to state 97
+
+
+state 73
+
+    3 prolog: xmldecl misc1 doctypedecl . misc1
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    SPACE         shift, and go to state 3
+
+    $default  reduce using rule 5 (misc1)
+
+    misc1     go to state 98
+    misc2     go to state 7
+    pi_start  go to state 20
+    pi        go to state 10
+    misc      go to state 11
+    comment   go to state 12
+
+
+state 74
+
+   13 doctypedecl: dtd_start1 . CLOSE
+   14            | dtd_start1 . LSBRACK RSBRACK opt_space CLOSE
+   15            | dtd_start1 . LSBRACK int_subset RSBRACK opt_space CLOSE
+
+    CLOSE    shift, and go to state 99
+    LSBRACK  shift, and go to state 100
+
+
+state 75
+
+   16 dtd_start1: dtd_start . opt_space
+   17           | dtd_start . SPACE dtd_tok SPACE att_value opt_space
+   18           | dtd_start . SPACE dtd_tok SPACE att_value SPACE att_value opt_space
+
+    SPACE  shift, and go to state 101
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 102
+
+
+state 76
+
+  124 comment: COMMENTSTART @6 comment_content DOUBLEDASH . CLOSE
+
+    CLOSE  shift, and go to state 103
+
+
+state 77
+
+  122 comment_content: comment_content SPACE .
+
+    $default  reduce using rule 122 (comment_content)
+
+
+state 78
+
+  121 comment_content: comment_content chardata1 .
+
+    $default  reduce using rule 121 (comment_content)
+
+
+state 79
+
+  115 name: name . name_char
+  133 attribute: SPACE name . eq att_value
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    EQ      shift, and go to state 104
+    SPACE   shift, and go to state 105
+
+    eq          go to state 106
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 80
+
+  129 start_tag: start1 att_list CLOSE .
+
+    $default  reduce using rule 129 (start_tag)
+
+
+state 81
+
+  147 empty_elem: start1 att_list SLASH . CLOSE
+
+    CLOSE  shift, and go to state 107
+
+
+state 82
+
+  132 att_list: att_list attribute .
+
+    $default  reduce using rule 132 (att_list)
+
+
+state 83
+
+  130 start_tag: start1 opt_space CLOSE .
+
+    $default  reduce using rule 130 (start_tag)
+
+
+state 84
+
+  115 name: name . name_char
+  146 end_tag: END name . opt_space CLOSE
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+    opt_space   go to state 109
+
+
+state 85
+
+  150 cdata: cdata . chardata
+  151      | cdata . SPACE
+  160 content1: pi cdata .
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 88
+
+    $default  reduce using rule 160 (content1)
+
+    chardata    go to state 89
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 86
+
+  150 cdata: cdata . chardata
+  151      | cdata . SPACE
+  158 content1: comment cdata .
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 88
+
+    $default  reduce using rule 158 (content1)
+
+    chardata    go to state 89
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 87
+
+  150 cdata: cdata . chardata
+  151      | cdata . SPACE
+  156 content1: element cdata .
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 88
+
+    $default  reduce using rule 156 (content1)
+
+    chardata    go to state 89
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 88
+
+  151 cdata: cdata SPACE .
+
+    $default  reduce using rule 151 (cdata)
+
+
+state 89
+
+  150 cdata: cdata chardata .
+
+    $default  reduce using rule 150 (cdata)
+
+
+state 90
+
+  127 element: start_tag content end_tag .
+
+    $default  reduce using rule 127 (element)
+
+
+state 91
+
+  154 content: content content1 .
+
+    $default  reduce using rule 154 (content)
+
+
+state 92
+
+   79 xmldecl: pi_start XMLTOK att_list opt_space . QCLOSE
+
+    QCLOSE  shift, and go to state 110
+
+
+state 93
+
+   83 pi_data: SPACE .
+
+    $default  reduce using rule 83 (pi_data)
+
+
+state 94
+
+   80 pi: pi_start name SPACE pi_data . QCLOSE
+   84 pi_data: pi_data . chardata1
+   85        | pi_data . SPACE
+
+    QCLOSE     shift, and go to state 111
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 30
+    DQ         shift, and go to state 31
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    OPEN       shift, and go to state 35
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    AMPERSAND  shift, and go to state 38
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 112
+
+    chardata1   go to state 113
+    chardata    go to state 46
+    attchar     go to state 47
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 95
+
+   82 pi_data: chardata1 .
+
+    $default  reduce using rule 82 (pi_data)
+
+
+state 96
+
+   81 pi: pi_start name opt_space QCLOSE .
+
+    $default  reduce using rule 81 (pi)
+
+
+state 97
+
+   19 dtd_start: DOCTYPE SPACE . name
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 114
+
+
+state 98
+
+    3 prolog: xmldecl misc1 doctypedecl misc1 .
+
+    $default  reduce using rule 3 (prolog)
+
+
+state 99
+
+   13 doctypedecl: dtd_start1 CLOSE .
+
+    $default  reduce using rule 13 (doctypedecl)
+
+
+state 100
+
+   14 doctypedecl: dtd_start1 LSBRACK . RSBRACK opt_space CLOSE
+   15            | dtd_start1 LSBRACK . int_subset RSBRACK opt_space CLOSE
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    ELEMENT       shift, and go to state 115
+    ATTLIST       shift, and go to state 116
+    RSBRACK       shift, and go to state 117
+    PERCENT       shift, and go to state 118
+    SPACE         shift, and go to state 119
+
+    int_subset   go to state 120
+    int_subset1  go to state 121
+    declsep      go to state 122
+    pereference  go to state 123
+    markupdecl   go to state 124
+    pi_start     go to state 20
+    pi           go to state 125
+    comment      go to state 126
+
+
+state 101
+
+   17 dtd_start1: dtd_start SPACE . dtd_tok SPACE att_value opt_space
+   18           | dtd_start SPACE . dtd_tok SPACE att_value SPACE att_value opt_space
+  145 opt_space: SPACE .
+
+    LETTER  shift, and go to state 127
+
+    $default  reduce using rule 145 (opt_space)
+
+    dtd_tok  go to state 128
+
+
+state 102
+
+   16 dtd_start1: dtd_start opt_space .
+
+    $default  reduce using rule 16 (dtd_start1)
+
+
+state 103
+
+  124 comment: COMMENTSTART @6 comment_content DOUBLEDASH CLOSE .
+
+    $default  reduce using rule 124 (comment)
+
+
+state 104
+
+    9 eq: EQ .
+   12   | EQ . SPACE
+
+    SPACE  shift, and go to state 129
+
+    $default  reduce using rule 9 (eq)
+
+
+state 105
+
+   10 eq: SPACE . EQ
+   11   | SPACE . EQ SPACE
+
+    EQ  shift, and go to state 130
+
+
+state 106
+
+  133 attribute: SPACE name eq . att_value
+
+    SQ  shift, and go to state 131
+    DQ  shift, and go to state 132
+
+    att_value  go to state 133
+
+
+state 107
+
+  147 empty_elem: start1 att_list SLASH CLOSE .
+
+    $default  reduce using rule 147 (empty_elem)
+
+
+state 108
+
+  145 opt_space: SPACE .
+
+    $default  reduce using rule 145 (opt_space)
+
+
+state 109
+
+  146 end_tag: END name opt_space . CLOSE
+
+    CLOSE  shift, and go to state 134
+
+
+state 110
+
+   79 xmldecl: pi_start XMLTOK att_list opt_space QCLOSE .
+
+    $default  reduce using rule 79 (xmldecl)
+
+
+state 111
+
+   80 pi: pi_start name SPACE pi_data QCLOSE .
+
+    $default  reduce using rule 80 (pi)
+
+
+state 112
+
+   85 pi_data: pi_data SPACE .
+
+    $default  reduce using rule 85 (pi_data)
+
+
+state 113
+
+   84 pi_data: pi_data chardata1 .
+
+    $default  reduce using rule 84 (pi_data)
+
+
+state 114
+
+   19 dtd_start: DOCTYPE SPACE name .
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 19 (dtd_start)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 115
+
+   28 markupdecl: ELEMENT . SPACE name SPACE @1 contentspec opt_space CLOSE
+
+    SPACE  shift, and go to state 135
+
+
+state 116
+
+   29 markupdecl: ATTLIST . SPACE name attdef opt_space CLOSE
+   30           | ATTLIST . SPACE name opt_space CLOSE
+
+    SPACE  shift, and go to state 136
+
+
+state 117
+
+   14 doctypedecl: dtd_start1 LSBRACK RSBRACK . opt_space CLOSE
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 137
+
+
+state 118
+
+   26 pereference: PERCENT . name SEMICOLON
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 138
+
+
+state 119
+
+   25 declsep: SPACE .
+
+    $default  reduce using rule 25 (declsep)
+
+
+state 120
+
+   15 doctypedecl: dtd_start1 LSBRACK int_subset . RSBRACK opt_space CLOSE
+   21 int_subset: int_subset . int_subset1
+
+    QOPEN         shift, and go to state 1
+    COMMENTSTART  shift, and go to state 2
+    ELEMENT       shift, and go to state 115
+    ATTLIST       shift, and go to state 116
+    RSBRACK       shift, and go to state 139
+    PERCENT       shift, and go to state 118
+    SPACE         shift, and go to state 119
+
+    int_subset1  go to state 140
+    declsep      go to state 122
+    pereference  go to state 123
+    markupdecl   go to state 124
+    pi_start     go to state 20
+    pi           go to state 125
+    comment      go to state 126
+
+
+state 121
+
+   20 int_subset: int_subset1 .
+
+    $default  reduce using rule 20 (int_subset)
+
+
+state 122
+
+   23 int_subset1: declsep .
+
+    $default  reduce using rule 23 (int_subset1)
+
+
+state 123
+
+   24 declsep: pereference .
+
+    $default  reduce using rule 24 (declsep)
+
+
+state 124
+
+   22 int_subset1: markupdecl .
+
+    $default  reduce using rule 22 (int_subset1)
+
+
+state 125
+
+   31 markupdecl: pi .
+
+    $default  reduce using rule 31 (markupdecl)
+
+
+state 126
+
+   32 markupdecl: comment .
+
+    $default  reduce using rule 32 (markupdecl)
+
+
+state 127
+
+   86 dtd_tok: LETTER .
+
+    $default  reduce using rule 86 (dtd_tok)
+
+
+state 128
+
+   17 dtd_start1: dtd_start SPACE dtd_tok . SPACE att_value opt_space
+   18           | dtd_start SPACE dtd_tok . SPACE att_value SPACE att_value opt_space
+   87 dtd_tok: dtd_tok . LETTER
+
+    LETTER  shift, and go to state 141
+    SPACE   shift, and go to state 142
+
+
+state 129
+
+   12 eq: EQ SPACE .
+
+    $default  reduce using rule 12 (eq)
+
+
+state 130
+
+   10 eq: SPACE EQ .
+   11   | SPACE EQ . SPACE
+
+    SPACE  shift, and go to state 143
+
+    $default  reduce using rule 10 (eq)
+
+
+state 131
+
+  134 att_value: SQ . att_val1 SQ
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    DQ         shift, and go to state 144
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 145
+
+    attchar     go to state 146
+    attchar1    go to state 147
+    name_char   go to state 48
+    name_char1  go to state 49
+    att_val1    go to state 148
+
+
+state 132
+
+  135 att_value: DQ . att_val2 DQ
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 149
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 150
+
+    attchar     go to state 151
+    attchar2    go to state 152
+    name_char   go to state 48
+    name_char1  go to state 49
+    att_val2    go to state 153
+
+
+state 133
+
+  133 attribute: SPACE name eq att_value .
+
+    $default  reduce using rule 133 (attribute)
+
+
+state 134
+
+  146 end_tag: END name opt_space CLOSE .
+
+    $default  reduce using rule 146 (end_tag)
+
+
+state 135
+
+   28 markupdecl: ELEMENT SPACE . name SPACE @1 contentspec opt_space CLOSE
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 154
+
+
+state 136
+
+   29 markupdecl: ATTLIST SPACE . name attdef opt_space CLOSE
+   30           | ATTLIST SPACE . name opt_space CLOSE
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 155
+
+
+state 137
+
+   14 doctypedecl: dtd_start1 LSBRACK RSBRACK opt_space . CLOSE
+
+    CLOSE  shift, and go to state 156
+
+
+state 138
+
+   26 pereference: PERCENT name . SEMICOLON
+  115 name: name . name_char
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    SEMICOLON  shift, and go to state 157
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 139
+
+   15 doctypedecl: dtd_start1 LSBRACK int_subset RSBRACK . opt_space CLOSE
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 158
+
+
+state 140
+
+   21 int_subset: int_subset int_subset1 .
+
+    $default  reduce using rule 21 (int_subset)
+
+
+state 141
+
+   87 dtd_tok: dtd_tok LETTER .
+
+    $default  reduce using rule 87 (dtd_tok)
+
+
+state 142
+
+   17 dtd_start1: dtd_start SPACE dtd_tok SPACE . att_value opt_space
+   18           | dtd_start SPACE dtd_tok SPACE . att_value SPACE att_value opt_space
+
+    SQ  shift, and go to state 131
+    DQ  shift, and go to state 132
+
+    att_value  go to state 159
+
+
+state 143
+
+   11 eq: SPACE EQ SPACE .
+
+    $default  reduce using rule 11 (eq)
+
+
+state 144
+
+  104 attchar1: DQ .
+
+    $default  reduce using rule 104 (attchar1)
+
+
+state 145
+
+  137 att_val1: SPACE .
+
+    $default  reduce using rule 137 (att_val1)
+
+
+state 146
+
+  103 attchar1: attchar .
+
+    $default  reduce using rule 103 (attchar1)
+
+
+state 147
+
+  136 att_val1: attchar1 .
+
+    $default  reduce using rule 136 (att_val1)
+
+
+state 148
+
+  134 att_value: SQ att_val1 . SQ
+  138 att_val1: att_val1 . attchar1
+  139         | att_val1 . SPACE
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 160
+    DQ         shift, and go to state 144
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 161
+
+    attchar     go to state 146
+    attchar1    go to state 162
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 149
+
+  106 attchar2: SQ .
+
+    $default  reduce using rule 106 (attchar2)
+
+
+state 150
+
+  141 att_val2: SPACE .
+
+    $default  reduce using rule 141 (att_val2)
+
+
+state 151
+
+  105 attchar2: attchar .
+
+    $default  reduce using rule 105 (attchar2)
+
+
+state 152
+
+  140 att_val2: attchar2 .
+
+    $default  reduce using rule 140 (att_val2)
+
+
+state 153
+
+  135 att_value: DQ att_val2 . DQ
+  142 att_val2: att_val2 . attchar2
+  143         | att_val2 . SPACE
+
+    LETTER     shift, and go to state 23
+    DIGIT      shift, and go to state 24
+    SQ         shift, and go to state 149
+    DQ         shift, and go to state 163
+    DASH       shift, and go to state 32
+    DOT        shift, and go to state 33
+    USCORE     shift, and go to state 25
+    COLON      shift, and go to state 26
+    CHAR       shift, and go to state 34
+    CLOSE      shift, and go to state 36
+    SLASH      shift, and go to state 37
+    EQ         shift, and go to state 39
+    LSBRACK    shift, and go to state 40
+    RSBRACK    shift, and go to state 41
+    PERCENT    shift, and go to state 42
+    SEMICOLON  shift, and go to state 43
+    SPACE      shift, and go to state 164
+
+    attchar     go to state 151
+    attchar2    go to state 165
+    name_char   go to state 48
+    name_char1  go to state 49
+
+
+state 154
+
+   28 markupdecl: ELEMENT SPACE name . SPACE @1 contentspec opt_space CLOSE
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 166
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 155
+
+   29 markupdecl: ATTLIST SPACE name . attdef opt_space CLOSE
+   30           | ATTLIST SPACE name . opt_space CLOSE
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 167
+
+    $default  reduce using rule 144 (opt_space)
+
+    attdef      go to state 168
+    name_char   go to state 70
+    name_char1  go to state 49
+    opt_space   go to state 169
+
+
+state 156
+
+   14 doctypedecl: dtd_start1 LSBRACK RSBRACK opt_space CLOSE .
+
+    $default  reduce using rule 14 (doctypedecl)
+
+
+state 157
+
+   26 pereference: PERCENT name SEMICOLON .
+
+    $default  reduce using rule 26 (pereference)
+
+
+state 158
+
+   15 doctypedecl: dtd_start1 LSBRACK int_subset RSBRACK opt_space . CLOSE
+
+    CLOSE  shift, and go to state 170
+
+
+state 159
+
+   17 dtd_start1: dtd_start SPACE dtd_tok SPACE att_value . opt_space
+   18           | dtd_start SPACE dtd_tok SPACE att_value . SPACE att_value opt_space
+
+    SPACE  shift, and go to state 171
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 172
+
+
+state 160
+
+  134 att_value: SQ att_val1 SQ .
+
+    $default  reduce using rule 134 (att_value)
+
+
+state 161
+
+  139 att_val1: att_val1 SPACE .
+
+    $default  reduce using rule 139 (att_val1)
+
+
+state 162
+
+  138 att_val1: att_val1 attchar1 .
+
+    $default  reduce using rule 138 (att_val1)
+
+
+state 163
+
+  135 att_value: DQ att_val2 DQ .
+
+    $default  reduce using rule 135 (att_value)
+
+
+state 164
+
+  143 att_val2: att_val2 SPACE .
+
+    $default  reduce using rule 143 (att_val2)
+
+
+state 165
+
+  142 att_val2: att_val2 attchar2 .
+
+    $default  reduce using rule 142 (att_val2)
+
+
+state 166
+
+   28 markupdecl: ELEMENT SPACE name SPACE . @1 contentspec opt_space CLOSE
+
+    $default  reduce using rule 27 (@1)
+
+    @1  go to state 173
+
+
+state 167
+
+   35 attdef: SPACE . name SPACE @2 atttype SPACE @3 defaultdecl
+  145 opt_space: SPACE .
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 145 (opt_space)
+
+    name_char1  go to state 27
+    name        go to state 174
+
+
+state 168
+
+   29 markupdecl: ATTLIST SPACE name attdef . opt_space CLOSE
+   38 attdef: attdef . SPACE name SPACE @4 atttype SPACE @5 defaultdecl
+
+    SPACE  shift, and go to state 175
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 176
+
+
+state 169
+
+   30 markupdecl: ATTLIST SPACE name opt_space . CLOSE
+
+    CLOSE  shift, and go to state 177
+
+
+state 170
+
+   15 doctypedecl: dtd_start1 LSBRACK int_subset RSBRACK opt_space CLOSE .
+
+    $default  reduce using rule 15 (doctypedecl)
+
+
+state 171
+
+   18 dtd_start1: dtd_start SPACE dtd_tok SPACE att_value SPACE . att_value opt_space
+  145 opt_space: SPACE .
+
+    SQ  shift, and go to state 131
+    DQ  shift, and go to state 132
+
+    $default  reduce using rule 145 (opt_space)
+
+    att_value  go to state 178
+
+
+state 172
+
+   17 dtd_start1: dtd_start SPACE dtd_tok SPACE att_value opt_space .
+
+    $default  reduce using rule 17 (dtd_start1)
+
+
+state 173
+
+   28 markupdecl: ELEMENT SPACE name SPACE @1 . contentspec opt_space CLOSE
+
+    EMPTY   shift, and go to state 179
+    ANY     shift, and go to state 180
+    LBRACK  shift, and go to state 181
+
+    contentspec  go to state 182
+    choice_seq   go to state 183
+
+
+state 174
+
+   35 attdef: SPACE name . SPACE @2 atttype SPACE @3 defaultdecl
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 184
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 175
+
+   38 attdef: attdef SPACE . name SPACE @4 atttype SPACE @5 defaultdecl
+  145 opt_space: SPACE .
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 145 (opt_space)
+
+    name_char1  go to state 27
+    name        go to state 185
+
+
+state 176
+
+   29 markupdecl: ATTLIST SPACE name attdef opt_space . CLOSE
+
+    CLOSE  shift, and go to state 186
+
+
+state 177
+
+   30 markupdecl: ATTLIST SPACE name opt_space CLOSE .
+
+    $default  reduce using rule 30 (markupdecl)
+
+
+state 178
+
+   18 dtd_start1: dtd_start SPACE dtd_tok SPACE att_value SPACE att_value . opt_space
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 187
+
+
+state 179
+
+   58 contentspec: EMPTY .
+
+    $default  reduce using rule 58 (contentspec)
+
+
+state 180
+
+   59 contentspec: ANY .
+
+    $default  reduce using rule 59 (contentspec)
+
+
+state 181
+
+   61 contentspec: LBRACK . opt_space PCDATA opt_space RBRACK opt_star
+   62            | LBRACK . opt_space PCDATA mixed opt_space RBRACK STAR
+   69 choice_seq: LBRACK . opt_space cp choice opt_space RBRACK
+   70           | LBRACK . opt_space cp seq opt_space RBRACK
+   71           | LBRACK . opt_space cp opt_space RBRACK
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 188
+
+
+state 182
+
+   28 markupdecl: ELEMENT SPACE name SPACE @1 contentspec . opt_space CLOSE
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 189
+
+
+state 183
+
+   60 contentspec: choice_seq . opt_modif
+
+    STAR   shift, and go to state 190
+    PLUS   shift, and go to state 191
+    QUERY  shift, and go to state 192
+
+    $default  reduce using rule 65 (opt_modif)
+
+    opt_modif  go to state 193
+
+
+state 184
+
+   35 attdef: SPACE name SPACE . @2 atttype SPACE @3 defaultdecl
+
+    $default  reduce using rule 33 (@2)
+
+    @2  go to state 194
+
+
+state 185
+
+   38 attdef: attdef SPACE name . SPACE @4 atttype SPACE @5 defaultdecl
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    SPACE   shift, and go to state 195
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 186
+
+   29 markupdecl: ATTLIST SPACE name attdef opt_space CLOSE .
+
+    $default  reduce using rule 29 (markupdecl)
+
+
+state 187
+
+   18 dtd_start1: dtd_start SPACE dtd_tok SPACE att_value SPACE att_value opt_space .
+
+    $default  reduce using rule 18 (dtd_start1)
+
+
+state 188
+
+   61 contentspec: LBRACK opt_space . PCDATA opt_space RBRACK opt_star
+   62            | LBRACK opt_space . PCDATA mixed opt_space RBRACK STAR
+   69 choice_seq: LBRACK opt_space . cp choice opt_space RBRACK
+   70           | LBRACK opt_space . cp seq opt_space RBRACK
+   71           | LBRACK opt_space . cp opt_space RBRACK
+
+    PCDATA  shift, and go to state 196
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 199
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 189
+
+   28 markupdecl: ELEMENT SPACE name SPACE @1 contentspec opt_space . CLOSE
+
+    CLOSE  shift, and go to state 201
+
+
+state 190
+
+   67 opt_modif: STAR .
+
+    $default  reduce using rule 67 (opt_modif)
+
+
+state 191
+
+   66 opt_modif: PLUS .
+
+    $default  reduce using rule 66 (opt_modif)
+
+
+state 192
+
+   68 opt_modif: QUERY .
+
+    $default  reduce using rule 68 (opt_modif)
+
+
+state 193
+
+   60 contentspec: choice_seq opt_modif .
+
+    $default  reduce using rule 60 (contentspec)
+
+
+state 194
+
+   35 attdef: SPACE name SPACE @2 . atttype SPACE @3 defaultdecl
+
+    ENTITY    shift, and go to state 202
+    CDATA     shift, and go to state 203
+    ID        shift, and go to state 204
+    IDREF     shift, and go to state 205
+    IDREFS    shift, and go to state 206
+    ENTITIES  shift, and go to state 207
+    NMTOKEN   shift, and go to state 208
+    NMTOKENS  shift, and go to state 209
+    LBRACK    shift, and go to state 210
+
+    atttype    go to state 211
+    enum_type  go to state 212
+
+
+state 195
+
+   38 attdef: attdef SPACE name SPACE . @4 atttype SPACE @5 defaultdecl
+
+    $default  reduce using rule 36 (@4)
+
+    @4  go to state 213
+
+
+state 196
+
+   61 contentspec: LBRACK opt_space PCDATA . opt_space RBRACK opt_star
+   62            | LBRACK opt_space PCDATA . mixed opt_space RBRACK STAR
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    mixed      go to state 214
+    opt_space  go to state 215
+
+
+state 197
+
+   69 choice_seq: LBRACK . opt_space cp choice opt_space RBRACK
+   70           | LBRACK . opt_space cp seq opt_space RBRACK
+   71           | LBRACK . opt_space cp opt_space RBRACK
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 216
+
+
+state 198
+
+   77 cp: choice_seq . opt_modif
+
+    STAR   shift, and go to state 190
+    PLUS   shift, and go to state 191
+    QUERY  shift, and go to state 192
+
+    $default  reduce using rule 65 (opt_modif)
+
+    opt_modif  go to state 217
+
+
+state 199
+
+   69 choice_seq: LBRACK opt_space cp . choice opt_space RBRACK
+   70           | LBRACK opt_space cp . seq opt_space RBRACK
+   71           | LBRACK opt_space cp . opt_space RBRACK
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    choice     go to state 218
+    seq        go to state 219
+    opt_space  go to state 220
+
+
+state 200
+
+   76 cp: name . opt_modif
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    STAR    shift, and go to state 190
+    PLUS    shift, and go to state 191
+    QUERY   shift, and go to state 192
+
+    $default  reduce using rule 65 (opt_modif)
+
+    opt_modif   go to state 221
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 201
+
+   28 markupdecl: ELEMENT SPACE name SPACE @1 contentspec opt_space CLOSE .
+
+    $default  reduce using rule 28 (markupdecl)
+
+
+state 202
+
+   43 atttype: ENTITY .
+
+    $default  reduce using rule 43 (atttype)
+
+
+state 203
+
+   39 atttype: CDATA .
+
+    $default  reduce using rule 39 (atttype)
+
+
+state 204
+
+   40 atttype: ID .
+
+    $default  reduce using rule 40 (atttype)
+
+
+state 205
+
+   41 atttype: IDREF .
+
+    $default  reduce using rule 41 (atttype)
+
+
+state 206
+
+   42 atttype: IDREFS .
+
+    $default  reduce using rule 42 (atttype)
+
+
+state 207
+
+   44 atttype: ENTITIES .
+
+    $default  reduce using rule 44 (atttype)
+
+
+state 208
+
+   45 atttype: NMTOKEN .
+
+    $default  reduce using rule 45 (atttype)
+
+
+state 209
+
+   46 atttype: NMTOKENS .
+
+    $default  reduce using rule 46 (atttype)
+
+
+state 210
+
+   48 enum_type: LBRACK . opt_space dtd_tok enums opt_space RBRACK
+   49          | LBRACK . opt_space dtd_tok opt_space RBRACK
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 222
+
+
+state 211
+
+   35 attdef: SPACE name SPACE @2 atttype . SPACE @3 defaultdecl
+
+    SPACE  shift, and go to state 223
+
+
+state 212
+
+   47 atttype: enum_type .
+
+    $default  reduce using rule 47 (atttype)
+
+
+state 213
+
+   38 attdef: attdef SPACE name SPACE @4 . atttype SPACE @5 defaultdecl
+
+    ENTITY    shift, and go to state 202
+    CDATA     shift, and go to state 203
+    ID        shift, and go to state 204
+    IDREF     shift, and go to state 205
+    IDREFS    shift, and go to state 206
+    ENTITIES  shift, and go to state 207
+    NMTOKEN   shift, and go to state 208
+    NMTOKENS  shift, and go to state 209
+    LBRACK    shift, and go to state 210
+
+    atttype    go to state 224
+    enum_type  go to state 212
+
+
+state 214
+
+   62 contentspec: LBRACK opt_space PCDATA mixed . opt_space RBRACK STAR
+   64 mixed: mixed . opt_space BAR opt_space name
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 225
+
+
+state 215
+
+   61 contentspec: LBRACK opt_space PCDATA opt_space . RBRACK opt_star
+   63 mixed: opt_space . BAR opt_space name
+
+    RBRACK  shift, and go to state 226
+    BAR     shift, and go to state 227
+
+
+state 216
+
+   69 choice_seq: LBRACK opt_space . cp choice opt_space RBRACK
+   70           | LBRACK opt_space . cp seq opt_space RBRACK
+   71           | LBRACK opt_space . cp opt_space RBRACK
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 199
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 217
+
+   77 cp: choice_seq opt_modif .
+
+    $default  reduce using rule 77 (cp)
+
+
+state 218
+
+   69 choice_seq: LBRACK opt_space cp choice . opt_space RBRACK
+   73 choice: choice . opt_space BAR opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 228
+
+
+state 219
+
+   70 choice_seq: LBRACK opt_space cp seq . opt_space RBRACK
+   75 seq: seq . opt_space COMMA opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 229
+
+
+state 220
+
+   71 choice_seq: LBRACK opt_space cp opt_space . RBRACK
+   72 choice: opt_space . BAR opt_space cp
+   74 seq: opt_space . COMMA opt_space cp
+
+    RBRACK  shift, and go to state 230
+    COMMA   shift, and go to state 231
+    BAR     shift, and go to state 232
+
+
+state 221
+
+   76 cp: name opt_modif .
+
+    $default  reduce using rule 76 (cp)
+
+
+state 222
+
+   48 enum_type: LBRACK opt_space . dtd_tok enums opt_space RBRACK
+   49          | LBRACK opt_space . dtd_tok opt_space RBRACK
+
+    LETTER  shift, and go to state 127
+
+    dtd_tok  go to state 233
+
+
+state 223
+
+   35 attdef: SPACE name SPACE @2 atttype SPACE . @3 defaultdecl
+
+    $default  reduce using rule 34 (@3)
+
+    @3  go to state 234
+
+
+state 224
+
+   38 attdef: attdef SPACE name SPACE @4 atttype . SPACE @5 defaultdecl
+
+    SPACE  shift, and go to state 235
+
+
+state 225
+
+   62 contentspec: LBRACK opt_space PCDATA mixed opt_space . RBRACK STAR
+   64 mixed: mixed opt_space . BAR opt_space name
+
+    RBRACK  shift, and go to state 236
+    BAR     shift, and go to state 237
+
+
+state 226
+
+   61 contentspec: LBRACK opt_space PCDATA opt_space RBRACK . opt_star
+
+    STAR  shift, and go to state 238
+
+    $default  reduce using rule 56 (opt_star)
+
+    opt_star  go to state 239
+
+
+state 227
+
+   63 mixed: opt_space BAR . opt_space name
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 240
+
+
+state 228
+
+   69 choice_seq: LBRACK opt_space cp choice opt_space . RBRACK
+   73 choice: choice opt_space . BAR opt_space cp
+
+    RBRACK  shift, and go to state 241
+    BAR     shift, and go to state 242
+
+
+state 229
+
+   70 choice_seq: LBRACK opt_space cp seq opt_space . RBRACK
+   75 seq: seq opt_space . COMMA opt_space cp
+
+    RBRACK  shift, and go to state 243
+    COMMA   shift, and go to state 244
+
+
+state 230
+
+   71 choice_seq: LBRACK opt_space cp opt_space RBRACK .
+
+    $default  reduce using rule 71 (choice_seq)
+
+
+state 231
+
+   74 seq: opt_space COMMA . opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 245
+
+
+state 232
+
+   72 choice: opt_space BAR . opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 246
+
+
+state 233
+
+   48 enum_type: LBRACK opt_space dtd_tok . enums opt_space RBRACK
+   49          | LBRACK opt_space dtd_tok . opt_space RBRACK
+   87 dtd_tok: dtd_tok . LETTER
+
+    LETTER  shift, and go to state 141
+    SPACE   shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    enums      go to state 247
+    opt_space  go to state 248
+
+
+state 234
+
+   35 attdef: SPACE name SPACE @2 atttype SPACE @3 . defaultdecl
+
+    REQUIRED  shift, and go to state 249
+    IMPLIED   shift, and go to state 250
+    FIXED     shift, and go to state 251
+    SQ        shift, and go to state 131
+    DQ        shift, and go to state 132
+
+    defaultdecl  go to state 252
+    att_value    go to state 253
+
+
+state 235
+
+   38 attdef: attdef SPACE name SPACE @4 atttype SPACE . @5 defaultdecl
+
+    $default  reduce using rule 37 (@5)
+
+    @5  go to state 254
+
+
+state 236
+
+   62 contentspec: LBRACK opt_space PCDATA mixed opt_space RBRACK . STAR
+
+    STAR  shift, and go to state 255
+
+
+state 237
+
+   64 mixed: mixed opt_space BAR . opt_space name
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 256
+
+
+state 238
+
+   57 opt_star: STAR .
+
+    $default  reduce using rule 57 (opt_star)
+
+
+state 239
+
+   61 contentspec: LBRACK opt_space PCDATA opt_space RBRACK opt_star .
+
+    $default  reduce using rule 61 (contentspec)
+
+
+state 240
+
+   63 mixed: opt_space BAR opt_space . name
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 257
+
+
+state 241
+
+   69 choice_seq: LBRACK opt_space cp choice opt_space RBRACK .
+
+    $default  reduce using rule 69 (choice_seq)
+
+
+state 242
+
+   73 choice: choice opt_space BAR . opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 258
+
+
+state 243
+
+   70 choice_seq: LBRACK opt_space cp seq opt_space RBRACK .
+
+    $default  reduce using rule 70 (choice_seq)
+
+
+state 244
+
+   75 seq: seq opt_space COMMA . opt_space cp
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 259
+
+
+state 245
+
+   74 seq: opt_space COMMA opt_space . cp
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 260
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 246
+
+   72 choice: opt_space BAR opt_space . cp
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 261
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 247
+
+   48 enum_type: LBRACK opt_space dtd_tok enums . opt_space RBRACK
+   51 enums: enums . opt_space BAR opt_space dtd_tok
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 262
+
+
+state 248
+
+   49 enum_type: LBRACK opt_space dtd_tok opt_space . RBRACK
+   50 enums: opt_space . BAR opt_space dtd_tok
+
+    RBRACK  shift, and go to state 263
+    BAR     shift, and go to state 264
+
+
+state 249
+
+   52 defaultdecl: REQUIRED .
+
+    $default  reduce using rule 52 (defaultdecl)
+
+
+state 250
+
+   53 defaultdecl: IMPLIED .
+
+    $default  reduce using rule 53 (defaultdecl)
+
+
+state 251
+
+   54 defaultdecl: FIXED . SPACE att_value
+
+    SPACE  shift, and go to state 265
+
+
+state 252
+
+   35 attdef: SPACE name SPACE @2 atttype SPACE @3 defaultdecl .
+
+    $default  reduce using rule 35 (attdef)
+
+
+state 253
+
+   55 defaultdecl: att_value .
+
+    $default  reduce using rule 55 (defaultdecl)
+
+
+state 254
+
+   38 attdef: attdef SPACE name SPACE @4 atttype SPACE @5 . defaultdecl
+
+    REQUIRED  shift, and go to state 249
+    IMPLIED   shift, and go to state 250
+    FIXED     shift, and go to state 251
+    SQ        shift, and go to state 131
+    DQ        shift, and go to state 132
+
+    defaultdecl  go to state 266
+    att_value    go to state 253
+
+
+state 255
+
+   62 contentspec: LBRACK opt_space PCDATA mixed opt_space RBRACK STAR .
+
+    $default  reduce using rule 62 (contentspec)
+
+
+state 256
+
+   64 mixed: mixed opt_space BAR opt_space . name
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    name_char1  go to state 27
+    name        go to state 267
+
+
+state 257
+
+   63 mixed: opt_space BAR opt_space name .
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 63 (mixed)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 258
+
+   73 choice: choice opt_space BAR opt_space . cp
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 268
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 259
+
+   75 seq: seq opt_space COMMA opt_space . cp
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+    LBRACK  shift, and go to state 197
+
+    choice_seq  go to state 198
+    cp          go to state 269
+    name_char1  go to state 27
+    name        go to state 200
+
+
+state 260
+
+   74 seq: opt_space COMMA opt_space cp .
+
+    $default  reduce using rule 74 (seq)
+
+
+state 261
+
+   72 choice: opt_space BAR opt_space cp .
+
+    $default  reduce using rule 72 (choice)
+
+
+state 262
+
+   48 enum_type: LBRACK opt_space dtd_tok enums opt_space . RBRACK
+   51 enums: enums opt_space . BAR opt_space dtd_tok
+
+    RBRACK  shift, and go to state 270
+    BAR     shift, and go to state 271
+
+
+state 263
+
+   49 enum_type: LBRACK opt_space dtd_tok opt_space RBRACK .
+
+    $default  reduce using rule 49 (enum_type)
+
+
+state 264
+
+   50 enums: opt_space BAR . opt_space dtd_tok
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 272
+
+
+state 265
+
+   54 defaultdecl: FIXED SPACE . att_value
+
+    SQ  shift, and go to state 131
+    DQ  shift, and go to state 132
+
+    att_value  go to state 273
+
+
+state 266
+
+   38 attdef: attdef SPACE name SPACE @4 atttype SPACE @5 defaultdecl .
+
+    $default  reduce using rule 38 (attdef)
+
+
+state 267
+
+   64 mixed: mixed opt_space BAR opt_space name .
+  115 name: name . name_char
+
+    LETTER  shift, and go to state 23
+    DIGIT   shift, and go to state 24
+    DASH    shift, and go to state 32
+    DOT     shift, and go to state 33
+    USCORE  shift, and go to state 25
+    COLON   shift, and go to state 26
+
+    $default  reduce using rule 64 (mixed)
+
+    name_char   go to state 70
+    name_char1  go to state 49
+
+
+state 268
+
+   73 choice: choice opt_space BAR opt_space cp .
+
+    $default  reduce using rule 73 (choice)
+
+
+state 269
+
+   75 seq: seq opt_space COMMA opt_space cp .
+
+    $default  reduce using rule 75 (seq)
+
+
+state 270
+
+   48 enum_type: LBRACK opt_space dtd_tok enums opt_space RBRACK .
+
+    $default  reduce using rule 48 (enum_type)
+
+
+state 271
+
+   51 enums: enums opt_space BAR . opt_space dtd_tok
+
+    SPACE  shift, and go to state 108
+
+    $default  reduce using rule 144 (opt_space)
+
+    opt_space  go to state 274
+
+
+state 272
+
+   50 enums: opt_space BAR opt_space . dtd_tok
+
+    LETTER  shift, and go to state 127
+
+    dtd_tok  go to state 275
+
+
+state 273
+
+   54 defaultdecl: FIXED SPACE att_value .
+
+    $default  reduce using rule 54 (defaultdecl)
+
+
+state 274
+
+   51 enums: enums opt_space BAR opt_space . dtd_tok
+
+    LETTER  shift, and go to state 127
+
+    dtd_tok  go to state 276
+
+
+state 275
+
+   50 enums: opt_space BAR opt_space dtd_tok .
+   87 dtd_tok: dtd_tok . LETTER
+
+    LETTER  shift, and go to state 141
+
+    $default  reduce using rule 50 (enums)
+
+
+state 276
+
+   51 enums: enums opt_space BAR opt_space dtd_tok .
+   87 dtd_tok: dtd_tok . LETTER
+
+    LETTER  shift, and go to state 141
+
+    $default  reduce using rule 51 (enums)

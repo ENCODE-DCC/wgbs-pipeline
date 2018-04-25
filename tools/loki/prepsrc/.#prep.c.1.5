@@ -1,0 +1,105 @@
+/****************************************************************************
+ *                                                                          *
+ *     Loki - Programs for genetic analysis of complex traits using MCMC    *
+ *                                                                          *
+ *             Simon Heath - University of Washington                       *
+ *                                                                          *
+ *                       March 1997                                         *
+ *                                                                          *
+ * prep.c:                                                                  *
+ *                                                                          *
+ * Data preperation - reading control file, reading datafiles, recoding     *
+ * factorial data, and writing out binary datafiles for loki                *
+ *                                                                          *
+ * Copyright (C) Simon C. Heath 1997, 2000, 2002                            *
+ * This is free software.  You can distribute it and/or modify it           *
+ * under the terms of the Modified BSD license, see the file COPYING        *
+ *                                                                          *
+ ****************************************************************************/
+
+#include <config.h>
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
+#include <stdio.h>
+
+#include "version.h"
+#include "ranlib.h"
+#include "utils.h"
+#include "libhdr.h"
+#include "scan.h"
+#include "control_parse.h"
+
+unsigned int RunID;
+int nrm_flag;
+time_t start_time;
+double extra_time,extra_stime,extra_utime;
+
+static char *LogFile;
+
+#ifdef FUNC_NAME
+#undef FUNC_NAME
+#endif
+#define FUNC_NAME "main"
+int main(int argc,char *argv[])
+{
+	FILE *fptr;
+	int err,c,ec_flag=0,error_check=1;
+	
+	while((c=getopt(argc,argv,"ev"))!=-1) switch(c) {
+	 case 'e':
+		error_check=0;
+		ec_flag=1;
+		break;
+	 case 'v':
+		(void)printf("%s\n",PREP_NAME);
+		return 0;
+	}
+	if(optind>=argc) abt(__FILE__,__LINE__,"No parameter file specified\n");
+	init_stuff(&LogFile);
+	start_time=time(0);
+	if(argc<2) abt(__FILE__,__LINE__,"No control file specified\n");
+	if((fptr=fopen(argv[optind],"r"))) err=ReadControl(fptr,argv[optind],&LogFile);
+	else {
+		(void)printf("Couldn't open '%s' for input as control file\nAborting...\n",argv[optind]);
+		exit(EXIT_FAILURE);
+	}
+	(void)fclose(fptr);
+	if(err) {
+		LogFile=0;
+		exit(EXIT_FAILURE);
+	}
+	if(!ec_flag) error_check=syst_var[ERROR_CHECK];
+	print_start_time(PREP_NAME,"w",LogFile);
+	if(getseed("seedfile",0)) init_ranf(135421);
+	RunID=(unsigned int)(ranf()*(double)0xffffffffU);
+	if(!scan_error_n) ReadData(LogFile);          /* Read in the datafile(s) and recode (where necessary) */
+	if(!pruned_ped_size) {
+		(void)printf("Zero size pedigree\nAborting...\n");
+		exit(EXIT_FAILURE);
+	}
+	if(!scan_error_n)	{
+		InitFamilies(LogFile);
+		count_loops(LogFile);
+		check_inbreeding(LogFile);
+		check_ymark();
+	}
+	if(!scan_error_n && (traitlocus || n_markers)) err=Genotype_Elimination(syst_var[CORRECT_ERRORS],LogFile,error_check);
+	if(!scan_error_n && !err) nrm_flag=Calculate_NRM(LogFile);
+	(void)writeseed("seedfile",1);
+	if(family) free(family);
+	if(!scan_error_n && !err && nrm_flag>=0) {
+		WriteData(LogFile);
+		WriteReport(LogFile);
+	}
+	free_nodes();
+	if(LogFile) free(LogFile);
+	if(scan_error_n) (void)fprintf(stderr,"Errors: %d  ",scan_error_n);
+	if(scan_warn_n) (void)fprintf(stderr,"Warnings: %d  ",scan_warn_n);
+	if(scan_error_n || scan_warn_n) (void)fprintf(stderr,"\n");
+	return sig_caught;
+}

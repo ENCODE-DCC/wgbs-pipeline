@@ -1,0 +1,31 @@
+# Declare "*" as the symbol for a missing record
+missing "*"
+
+# It can be convenient to put directory names into variables so they can be easily changed.
+datadir="../data/"
+
+# The output file
+log "log"
+
+/*
+ * Read in data from "../data/jvped" 
+ * This declares that there are 9 (no more or less) fields per record. 
+ * Records will be read in until the end of the file is reached.
+ */
+file datadir+"jvped",id,sire,dam,y,mark1,mark2,af
+
+# Declare which variables have the pedigree information
+pedigree id,sire,dam
+
+# Declare markers
+marker locus mark1,mark2
+
+# We have a trait locus (actually this can be multiple trait loci)
+trait locus QTL
+
+# Define the model
+model y=QTL+mark1
+
+# Set up the linkage group
+link "chromosome 1",mark1,mark2
+

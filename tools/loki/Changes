@@ -1,0 +1,285 @@
+4 Jun 2004(SCH)
+ - Fixed bug when using si_mode with QTLs and lm_ratio>0
+3 Jun 2004(SCH)
+ - Fixed bug in gen_pen() with genetics groups
+16 Jan 2004(SCH)
+ - Fixed bug when ids are shared between families and individuals.
+9 Jan 2004 (EWD)
+ - Merge in QTL genotype printing code
+10 June 2003 (SCH)
+ - Multiple link definitions for the same chromosome are now merged
+   (suggention from Warwick)
+7 June 2003 (SCH)
+ - Bumped version to 2.4.7
+6 June 2003 (SCH)
+ - Checked IBD output from old and new versions.  Fixed some trivial bugs, and
+   sorted out speed problem in new code.
+5 June 2003 (SCH)
+ - New peeling sequence linked into rest of loki.  Peeling routines
+   working again.  Remove prep output routines from write_data.c and
+	gen_elim.c (apart from marker error files).
+ - Rename control_gaw9.in to control_gaw9 in test/
+ - Meiosis scan now works again
+31 May 2003 (SCH)
+ - Peeling sequence determination in loki about finished.
+ - Fix floating point error in sample_effects.c with no_overdominant
+   flag set (thanks Warwick).
+ - Fix compile warnings from gcc 3.3 in gen_pen.c and meiosis_scan.c
+25 May 2003 (SCH)
+ - Move loki_compress from lokisrc to libsrc.  WriteXMLData now uses
+   this if Filter has not been set.
+ - count_loops now outputs the original family name as well as the
+   component number (if available) when reporting loops
+21 May 2003 (SCH)
+ - Gen elim and set recoding routines in loki appear to be working.
+ - Begin work on peeling seq. determination in loki
+19 May 2003 (SCH)
+ - Gen elim routine in loki more or less complete.  Performance tuning reqd.
+26 Feb - 21 March 2003 (SCH)
+ -	Work on new gen_elim routines to be used in loki rather than prep.
+21 March 2003(SCH)
+ - Fix bug with dummy pedigree members whose sex was not being initialized
+18 March 2003(SCH)
+ - Fix bug in control_parse with arrays in File statement
+25 February 2003(SCH)
+ - Remove globals from Loki.  Create loki data structure which is passed
+   between subroutines
+19 February 2003(SCH)
+ - Fix memory corruption when singleton component is larger than first 
+   component
+ - Import getopt_long.c from OpenBSD C library to the long options work on
+   Solaris and other systems lacking these calls
+13 February 2003(SCH)
+ - Fix bug in IBD reporting on Alphas
+ - Fix bug in Merlin IBD output with singletons
+7 January 2003 (SCH)
+ - Allow specification of markers rather than alleles in cases where allele
+   columns are adjacent (normal case)
+ - Allow specification of unaffected as well as affected conditions
+ - Allow specification of multiple sex definitions (so we can say male is
+   '1' or 'm' or 'M' for example
+ - Add Integer specification to Missing scopes
+6 January 2003 (SCH)
+ - Start work on compatability code - making it simpler to read in
+   pre-existing data formats
+16 December 2002 (SCH)
+ - Fix bug in reporting inbreeding coefficients
+ - Remove reporting of loop breakers in log file (not correct in any case...)
+ - Stop printing dummy individuals to logfile if pruned
+30 October 2002 (SCH)
+ - Lots of changes (not all today...)
+ - Redo IBD output code.  Now can output in SOLAR format, with proper
+	translation of IDs
+ - Alter Missing command so that general classes of variables can be
+   specified (Pedigree/Genotypes/Factors/Real)
+ - Set sensible defaults for Missing (all categorical variables)
+ - Allow both haplotype to come together in a data field to allow reading of 
+   genotypes like 118/120.  Add GS variable which determines character that
+   separates genotypes in this case.
+ - Add skip option to file command - causes Loki to skip a numnber of lines
+   at the top of a data file.
+ - Alter documentation to reflect above changes.
+ - Put binary tree code into library.  Remove redundant copies of code.
+11 September 2002 (SCH)
+ - Fix bug that caused Loki to hang if performing a segregation analysis and
+    a total map length was not set.
+2 August 2002 (SCH)
+ - Reorganize source code into separate prep and loki directories to make
+    it easier to reuse bits of the code
+23 July 2002 (SCH)
+ - Modify IBD output code so that be default, all zeros are not printed
+ - Fix IBD output bug with >1 location
+ - Add options for calculating IBD matrices on a grid or at every marker
+ - Remove references to TDT and IBS analyses (old, broken)
+12 July 2002 (SCH)
+ - Modify IBD estimation code so that fixed values are not calculated
+ - Remove printing bug in no marker data case
+10 July 2002 (SCH)
+ - Change default to CONSTANT for all variables.  Add MULTIPLE keyword 
+    to set multiple records for variables.  Add multiple_records system
+	 variable to switch back to default behaviour
+9 July 2002 (SCH)
+ - Add checks for failure to open log file in Loki
+2 July 2002 (SCH)
+ - Add code to support parallel RNGs
+28 June 2002 (SCH)
+ - Clean up bugs found when testing on Ellen's Alphas
+    fix unitialized variable (flag) bug in loki_sample.c
+    make conversion of genotype to alleles robust to rounding errors
+25 June 2002 (SCH)
+ - Fix memory allocation bug in Solaris
+ - Remove globals from loki_peel.c
+ - Finish splitting loki_peel.c
+24 June 2002 (SCH)
+ - Fix bug when M-sampler is used and allele frequencies are specified
+ - Add new tests
+** Version 2.4.2
+18 June 2002 (SCH)
+ - Too many changes to list.  New sampling code, many bug fixes, many
+   new features.  I'll try and keep this list more up to date in future
+** Version 2.3.0_beta
+30 August 2000 (SCH)
+ - Change Makefiles so they work with OSF1 make as well as GNU make 
+ - Add README_optimization to test/ to warn of difficulties with compiler
+   optimization flags that affect math operaitons.
+29 August 2000 (SCH)
+ - Fix overdominant flag so it now works again.
+28 August 2000 (SCH)
+ - Change storage of factors in control_parse.y and read_data.c to a
+   balanced binary tree rather than a hash table.  Rewrite recode_factor()
+	to further increase speed.
+23 August 2000 (SCH)
+ - Implement t-distributed error models.  Not fully tested as yet - don't use.
+16 August 2000 (SCH)
+ - Implement polygenic and uncorrelated random effects into loki.  Rewrite
+   effect sampling so that *all* model effects (QTL, candidate genes, fixed
+	effects and random effects) are updated simultaneously using sparse
+	Gaussian elimination.
+15 August 2000 (SCH)
+ - Begin splitting source files into smaller units
+
+** Version 2.2.1_r2
+29 Feb 2000 (SCH)
+ - Fix problem in read_binfiles.c where a component with no phenotype data
+   but some genotype data would crash on peeling the trait locus.
+ - Bug fix to control_parse.y to prevent crashing when trace_affect or
+   trace_censored were used.
+ - Lump components with single individuals together to simplify handling.
+25 Feb 2000 (SCH) 
+ - Bug fix to write_data.c and read_binfiles.c which would cause genotype
+   data to be scrambled when an individual had genotype data but no phenotype
+	data.  Not normally a problem for the L-Sampler as the raw genotype data
+	is not used, but did affect the M-Sampler.
+ - Changes to Makefiles to allow compilation in FreeBSD
+23 Feb 2000 (SCH)
+ - Changes to M sampler and ibd handling code to clear up several bugs and
+   allow use of sloppy segregation patterns (better mixing) from the 
+	L sampler.
+22 Feb 2000 (SCH)
+ - Modify TL_Birth_Death() again to avoid Ve problems with censored traits.
+ 
+** Version 2.2.1_r1
+9 Feb 2000 (SCH)
+ - Fix TL_Birth_Death() so it works again with censored traits (broken in
+   2.2.0_r3)
+8 Feb 2000 (SCH)
+ - Modified output routines for loki.pos so that sample_from limit is
+   honoured.
+ - Fixed bug in restrict_data() which prevented conditions with unary minus
+   operators from working correctly.
+ - Fixed memory allocation bug in loki_complex_peelop() which caused writing
+   to random pointers in some circumstances when candidate genes were used.
+28 Jan 2000 (SCH) 
+ - Add code to SampleLoop() to output QTL position every iteration to
+   loki.pos.  Only outputs when a change occurs.
+22 Jan 2000 (SCH) 
+ - Fixed bug added in 2.2.1 in loki_init().
+** Version 2.2.1
+21 Jan 2000 (SCH)
+ - Changed start_time/end_time processing so elapsed, system, and user time
+   is written to the dumpfiles, allowing more accurate total times
+	to be printed to the logfiles in the case of the program being stopped.
+	Note that the new read_dump() routine will still read in the old dump
+   files which lack this time information.  Note also that the time
+   information is written as doubles which may lose some accuracy, but is
+	(I think) portable.
+ - Changed the order of statements in loki_init() to get around optimization 
+   bug in gcc 2.95.2 on Ultras.
+ - Made it so alleles which are no longer found in the dataset after
+   restriction statements and genotype cleaning, are deleted from the
+	appropriate marker.
+20 Jan 2000 (SCH)
+ - Changed loki_sample() so the model is now printed out to the output file.
+ - Fixed bug in read_dump() where a dumpfile would not be read in correctly
+   if a censored data model was used.
+** Version 2.2.0_r5
+18 Jan 2000 (SCH)
+ - Removed bug (introduced in 2.2.0_r4) with censored or affected data where 
+   indicator variable was marked as not required and removed.
+ - Change libsrc/Makefile.in and lokisrc/Makefile.in so that it is easier
+   to enable libdmalloc usage (just uncomment the appropriate lines in the
+	makefiles.
+	
+** Version 2.2.0_r4
+12 Jan 2000 (SCH)
+ - Cleanup restrict code so that unsed restrictions and variables are not
+   kept.
+ - fix bug in restrict_data.c which prevented restrictions on everything
+   (i.e., with null affected list) from taking affect.
+ - Change param_parse.y so files can be 'included' using include "file".
+ 
+** Version 2.2.0_r3
+   Nov/Dec 1999 (SCH)
+ - Change reversible jump steps so that ve is changed simultanously with
+   number of QTL to improve acceptance ratio.  **Note** that only add and 
+	delete steps are now active as split/combine steps are broken!
+ - Change sample_effects() in loki_sample.c so that QTL effects and covariate 
+   effects are sampled jointly - again to improve mixing.  **NOTE** This has 
+	the side effect of breaking the no_overdominant flag.  Correct bug in
+	sample_effects() where the wrong covariate levels were used for discrete
+	covariates.
+ 
+** Version 2.2.0_r2
+16 Oct 1999 (SCH)
+ - Binary file formats changed so that they are (almost) platform independent.
+17 Sep 1999 (SCH)
+ - Many changes to all files, see summaries below
+ - Long-standing bug causing random crashes after weeks of running tracked
+   down to RNG occasionally producing zeros and ones.  Corrected.
+ - IBD routines now in main distribution, though not documented as user
+	interface not necessarily stable.  
+ - Quantitative analyses can now be stopped and restarted which allows long
+   runs with unstable systems, and simplifies bug tracking.
+ - Output format changed yet again, but "OUTPUT TYPE" option in parameter
+   file allows previous formats to be selected.
+ - M and LM sampler routines present, but not fully integrated.
+ - Genotype error correcting routines added.  Use 'set correct_errors 1' in
+   control file to activate.  A subset of genotypes wil be zeroed leading to
+   a consistent configuration.  Very handy, but use with caution.
+
+** Version 2.1.4_r1
+
+21 Mar 1998 (SCH)
+ - setup_ped.c: Change output of component sizes - individual component
+   sizes are not now listed.  Change formatting out output for pruned
+	individuals.  Sort components in descending size order.
+ - param_parse.y, param_lex.l, loki_sample.c, loki.h: Add LIMIT
+   variances option so lower limits on variance components can be set.
+16-21 Mar 1998 (SCH)
+ - most files: Allow specification of sex specific maps.  Change sampling
+   routines for genotypes and loci positions to reflect this.  Change
+	output routines and loki_ext accordingly.
+20 Mar 1998 (SCH)
+ - control_parse.y, write_report.c: Add OUTPUT option to allow pedigree to
+   be written to a datafile after pruning and recoding.
+ - setup_ped.c: Added checks for close inbreeding/weird inbreeding patterns.
+ 
+** Version 2.1.4
+
+15 Mar 1998 (SCH)
+ - most files...: Enable GROUP command for specification of genetic groups.
+	Added GROUP ORDER command for parameter file to specify order that
+	multiple allele frequencies appear.  FREQUENCY statements can now take
+	multiple allele frequencies (if multiple groups exist).  Modified
+	calculation of founder probabilities to use group frequencies; ditto for
+	sampling frequencies.  Modifiy reversible jump steps to account for
+	multiple sets of allele frequencies.
+1 Mar 1998 (SCH) 
+ - recode_factors.c: Change consistency checks for genetic data so now   
+	genotypes rather than haplotypes are checked for consistency.
+28 Feb 1998 (SCH) 
+ - loki.c: Write starting seedfile to to logfile. 
+ - read_data.c setup_ped.c control_parse.y write_data.c read_binfiles.c
+	loki_init.c: Allow sex to be specified using sex command.  Check sex
+	against pedigree data.  Modify input/output routines for loki.out to
+	allow for sex information. 
+ - control_lex.l control_parse.y: Fix looping bug for control files. 
+	Fix some small bugs concerning format clauses.
+27 Feb 1998 (SCH) 
+ - read_data.c: Allow blank records in datafiles.
+ - setup_ped.c: Add code to count pedigree loops.
+ 
+** Version 2.1.3
+
+26 Feb 1998 (SCH) gen_elim.c
+ - gen_elim.c: Fix bug when pruning (level=2) resulted in singletons.
