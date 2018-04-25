@@ -10,6 +10,7 @@ workflow wgbs {
 	call index { input:
 		reference_fasta = reference_fasta
 	} 
+
 }
 
 task index {
@@ -17,15 +18,11 @@ task index {
 	File reference_fasta
 
 	command {
-		gemBS index -i reference
+		gemBS index -i ${reference_fasta}
 	}
 
 	output {
-		File reference_gem
-		File reference_info
-	}
-
-	runtime {
-		docker : "quay.io/encode-dcc/wgbs-pipeline:latest"
+		File reference_gem = glob("*.BS.gem")[0]
+		File reference_info = glob("*.BS.info")[0]
 	}
 }
