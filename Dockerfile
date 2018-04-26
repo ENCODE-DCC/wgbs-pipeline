@@ -46,7 +46,6 @@ RUN cd xz-5.2.3 && ./configure && make && make install
 
 # Upgrade pip
 RUN pip install --upgrade pip
-RUN pip3 install --upgrade pip3
 
 # Install setuptools
 RUN pip install -U setuptools
