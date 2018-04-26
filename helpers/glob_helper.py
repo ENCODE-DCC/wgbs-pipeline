@@ -10,8 +10,8 @@ def search(pattern):
 
 
 def pattern_from_neighbour(nearest_file, pattern):
-    subdirectory = nearest_file.rsplit('/', 1)[0]
-    return subdirectory + '/**/' + pattern
+    # subdirectory = nearest_file.rsplit('/', 1)[0]
+    return './**/' + pattern
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print file path that matches pattern')
