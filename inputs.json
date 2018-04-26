@@ -1,0 +1,5 @@
+{
+  "wgbs.reference_fasta": "/Users/bek/wgbs-pipeline/test/yeast.fa",
+  "wgbs.metadata": "/Users/bek/wgbs-pipeline/test/metadata.csv",
+  "wgbs.sequence": "/Users/bek/wgbs-pipeline/test/metadata.json"
+}
