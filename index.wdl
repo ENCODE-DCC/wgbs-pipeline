@@ -6,11 +6,13 @@ workflow index {
 	}
 
 	call pyglob as fetch_gem_file { input:
-		pattern = "./**/*.BS.gem",
+		pattern = "*.BS.gem",
+		output_location = index_job.stdout 
 	}
 
 	call pyglob as fetch_info_file { input:
-		pattern = "./**/*.BS.info",
+		pattern = "*.BS.info",
+		output_location = index_job.stdout
 	}
 
 	output {
@@ -28,18 +30,20 @@ task index_job {
 	}
 
 	output {
-		String placeholder = read_string(stdout())
+		String stdout = read_string(stdout())
 	}
 }
 
 task pyglob {
 
 	String pattern
-	String? nearest_node
+	String output_location
 
 	command {
 		python3 /software/helpers/glob_helper.py \
-			${"--pattern '" + pattern + "'"} 
+			${"--pattern '" + pattern + "'"} \
+			${"--output-location '" + output_location + "'"}
+
 	}
 
 	output {
