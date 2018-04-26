@@ -98,4 +98,9 @@ ENV PATH="/root/.local/bin:${PATH}"
 # Set up test data
 RUN cd gemBS/test && tar -xvf example.tar.gz 
 
+# Set up Python helpers for WDL scripts
+RUN mkdir helpers/
+COPY helpers/ helpers/
+ENV PATH="/software/helpers:${PATH}"
+
 ENTRYPOINT ["/bin/bash","-c"]
