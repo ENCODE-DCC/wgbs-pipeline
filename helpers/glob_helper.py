@@ -4,7 +4,6 @@ import pdb
 
 
 def search(pattern):
-    pdb.set_trace()
     for file in glob.iglob(pattern, recursive=True):
         print(file)
 
