@@ -6,13 +6,11 @@ workflow index {
 	}
 
 	call pyglob as fetch_gem_file { input:
-		pattern = "*.BS.gem",
-		nearest_node = reference_fasta
+		pattern = "./**/*.BS.gem",
 	}
 
 	call pyglob as fetch_info_file { input:
-		pattern = "*.BS.info",
-		nearest_node = reference_fasta
+		pattern = "./**/*.BS.info",
 	}
 
 	output {
@@ -40,9 +38,8 @@ task pyglob {
 	String? nearest_node
 
 	command {
-		python3 $(which glob_helper.py) \
-			${"--pattern '" + pattern + "'"} \
-			${"--nearest_neighbour '" + nearest_node + "'"}
+		python3 /software/helpers/glob_helper.py \
+			${"--pattern '" + pattern + "'"} 
 	}
 
 	output {
