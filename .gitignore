@@ -1,6 +1,9 @@
 # Test files can be large
 test/
 
+# Cromwell run metadata output
+metadata.json
+
 # cromwell temp dirs
 cromwell-executions/
 cromwell-workflow-logs/

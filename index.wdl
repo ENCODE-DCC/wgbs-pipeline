@@ -42,7 +42,7 @@ task pyglob {
 	command {
 		python3 /software/helpers/glob_helper.py \
 			${"--pattern '" + pattern + "'"} \
-			${"--output-location '" + output_location + "'"}
+			${"--outputs '" + output_location + "'"}
 
 	}
 

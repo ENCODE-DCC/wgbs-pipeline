@@ -1,15 +1,17 @@
 import glob
 import argparse
+import pdb
 
 
 def search(pattern):
+    pdb.set_trace()
     for file in glob.iglob(pattern, recursive=True):
         print(file)
 
 
 def pattern_from_neighbour(nearest_file, pattern):
     subdirectory = nearest_file.rsplit('/', 1)[0]
-    return subdirectory + '**/' + pattern
+    return subdirectory + '/**/' + pattern
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print file path that matches pattern')
