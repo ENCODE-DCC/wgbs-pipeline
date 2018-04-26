@@ -1,5 +1,6 @@
 # ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS
 # Maintainer: Ulugbek Baymuradov
+import 'index.wdl' as step1
 
 workflow wgbs {
 
@@ -7,23 +8,12 @@ workflow wgbs {
 	File metadata 
 	File sequence
 	
-	call index { input:
+	call step1.index { input:
 		reference_fasta = reference_fasta
 	} 
 
-}
-
-task index {
-
-	File reference_fasta
-
-	command {
-		gemBS index -i ${reference_fasta}
-	}
-
 	output {
-		#Array[String] reference_bs = read_lines(stdout())
-		File reference_gem = glob("./*.BS.gem")[0]
-		File reference_info = glob("./*.BS.info")[0]
+		File reference_gem = index.reference_gem
+		File reference_info = index.reference_info
 	}
 }
