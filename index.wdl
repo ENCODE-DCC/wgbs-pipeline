@@ -15,8 +15,8 @@ workflow index {
 	}
 
 	output {
-		File reference_gem = fetch_gem_file.files[1]
-		File reference_info = fetch_info_file.files[1]
+		File reference_gem = fetch_gem_file.files[0]
+		File reference_info = fetch_info_file.files[0]
 	}
 }
 
@@ -48,7 +48,7 @@ task pyglob {
 	}
 
 	output {
-		Array[File] files = read_lines(glob('matching_files.txt')
+		Array[File] files = read_lines('matching_files.txt')
 	}
 }
 
