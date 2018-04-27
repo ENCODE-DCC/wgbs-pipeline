@@ -4,8 +4,10 @@ import os
 
 
 def search(pattern):
-    for file in glob.iglob(pattern, recursive=True):
-        print(file)
+    with open("matching_files.txt", "w") as f:
+        for file in glob.iglob(pattern, recursive=True):
+            f.write("{}\n".format(file))
+
 
 def pattern_from_current_dir(directory, pattern, up=2):
     # In Cromwell directory structure, sibling tasks are

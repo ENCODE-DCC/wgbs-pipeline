@@ -1,4 +1,5 @@
 workflow index {
+
 	File reference_fasta
 
 	call index_job { input:
@@ -7,17 +8,15 @@ workflow index {
 
 	call pyglob as fetch_gem_file { input:
 		pattern = "*.BS.gem",
-		output_location = index_job.stdout 
 	}
 
 	call pyglob as fetch_info_file { input:
 		pattern = "*.BS.info",
-		output_location = index_job.stdout
 	}
 
 	output {
-		File reference_gem = fetch_gem_file.files[0]
-		File reference_info = fetch_info_file.files[0]
+		File reference_gem = fetch_gem_file.files[1]
+		File reference_info = fetch_info_file.files[1]
 	}
 }
 
@@ -37,21 +36,24 @@ task index_job {
 task pyglob {
 
 	String pattern
-	String output_location
+	Int? nearness
+
+	Int? nearness_value = if defined(nearness) then nearness else 2
+
 
 	command {
 		python3 /software/helpers/glob_helper.py \
 			${"--pattern '" + pattern + "'"} \
-			${"--outputs '" + output_location + "'"}
-
+			${"--nearness " + nearness_value}
 	}
 
 	output {
-		Array[File] files = read_lines(stdout())
+		Array[File] files = read_lines(glob('matching_files.txt')
 	}
 }
 
 task current_dir {
+
 	command {
 		pwd
 	}
