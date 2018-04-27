@@ -1,25 +1,24 @@
 import glob
 import argparse
-import pdb
+import os
 
 
 def search(pattern):
     for file in glob.iglob(pattern, recursive=True):
         print(file)
 
+def pattern_from_current_dir(directory, pattern, up=2):
+    # In Cromwell directory structure, sibling tasks are
+    # 2 parent directory away
+    search_directory = directory.rsplit('/', up)[0]
+    return search_directory + '/**/' + pattern
 
-def pattern_from_neighbour(nearest_file, pattern):
-    # subdirectory = nearest_file.rsplit('/', 1)[0]
-    return './**/' + pattern
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print file path that matches pattern')
     parser.add_argument('--pattern', type=str, help='patter example:  subdirectory/**/*.gz', required=True)
-    parser.add_argument('--outputs', type=str, help='used for determining common parent directory')
+    parser.add_argument('--nearness', type=int, default=2, help='Number of directories to climb before searching ')
     args = parser.parse_args()
-    if args.outputs:
-        location = args.outputs.split('-o ')[-1]
-        pattern = pattern_from_neighbour(location, args.pattern)
-    else:
-        pattern = args.pattern
+    current_dir = os.getcwd()
+    pattern = pattern_from_current_dir(current_dir, args.pattern, up=args.nearness)
     search(pattern)

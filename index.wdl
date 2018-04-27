@@ -50,3 +50,13 @@ task pyglob {
 		Array[File] files = read_lines(stdout())
 	}
 }
+
+task current_dir {
+	command {
+		pwd
+	}
+
+	output {
+		String path = read_string(stdout())
+	}
+}
