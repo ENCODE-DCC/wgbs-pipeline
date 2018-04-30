@@ -13,7 +13,7 @@ def pattern_from_current_dir(directory, pattern, up=2):
     # In Cromwell directory structure, sibling tasks are
     # 2 parent directory away
     search_directory = directory.rsplit('/', up)[0]
-    return search_directory + '/**/*' + pattern
+    return search_directory + '/**/' + pattern
 
 
 if __name__ == '__main__':

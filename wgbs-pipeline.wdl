@@ -27,7 +27,7 @@ task index_job {
 	command {
 		gemBS index -i ${reference_fasta}
 		python3 /software/helpers/glob_helper.py \
-			${"--pattern '" + info_file_pattern + "'"} \
+			${"--pattern '*.BS.info'"} \
 			${"--nearness " + 1} \
 			${"--matched-files-name info"}
 	}
