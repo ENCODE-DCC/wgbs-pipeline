@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print file path that matches pattern')
     parser.add_argument('--pattern', type=str, help='patter example:  subdirectory/**/*.gz', required=True)
     parser.add_argument('--nearness', type=int, default=2, help='Number of directories to climb before searching ')
+    parser.add_argument('--matched-files-name', type=str, help='Name of the file that contains matched files')
     args = parser.parse_args()
     current_dir = os.getcwd()
     pattern = pattern_from_current_dir(current_dir, args.pattern, up=args.nearness)

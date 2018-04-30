@@ -13,7 +13,7 @@ workflow wgbs {
 	}
 
 	output {
-		File reference_info = index_job.reference_info
+		#File reference_info = index_job.reference_info
 		#File reference_info = index.reference_info
 		#File test_file = index.original_fasta
 	}
@@ -33,6 +33,6 @@ task index_job {
 	}
 
 	output {
-		File reference_info = glob(read_lines("info.txt")[0])[0]
+		#File reference_info = glob(read_lines("info.txt")[0])[0]
 	}
 }
