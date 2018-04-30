@@ -3,8 +3,8 @@ import argparse
 import os
 
 
-def search(pattern):
-    with open("matching_files.txt", "w") as f:
+def search(pattern, matched_files_name):
+    with open("{}.txt".format(matched_files_name), "a") as f:
         for file in glob.iglob(pattern, recursive=True):
             f.write("{}\n".format(file))
 
@@ -13,7 +13,7 @@ def pattern_from_current_dir(directory, pattern, up=2):
     # In Cromwell directory structure, sibling tasks are
     # 2 parent directory away
     search_directory = directory.rsplit('/', up)[0]
-    return search_directory + '/**/' + pattern
+    return search_directory + '/**/*' + pattern
 
 
 if __name__ == '__main__':
@@ -26,4 +26,4 @@ if __name__ == '__main__':
     with open("debug.txt", "w") as f:
         f.write("{}\n".format(current_dir))
         f.write("{}\n".format(pattern))
-    search(pattern)
+    search(pattern, args.matched_files_name)
