@@ -6,7 +6,8 @@ import os
 def search(pattern, matched_files_name):
     with open("{}.txt".format(matched_files_name), "a") as f:
         for file in glob.iglob(pattern, recursive=True):
-            f.write("{}\n".format(file))
+            file_path = "../{}".format(file.split("/", 5)[-1])
+            f.write("{}\n".format(file_path))
 
 
 def pattern_from_current_dir(directory, pattern, up=2):
@@ -24,7 +25,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     current_dir = os.getcwd()
     pattern = pattern_from_current_dir(current_dir, args.pattern, up=args.nearness)
-    with open("debug.txt", "w") as f:
-        f.write("{}\n".format(current_dir))
-        f.write("{}\n".format(pattern))
     search(pattern, args.matched_files_name)

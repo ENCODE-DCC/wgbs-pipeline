@@ -33,6 +33,6 @@ task index_job {
 	}
 
 	output {
-		#File reference_info = glob(read_lines("info.txt")[0])[0]
+		String reference_info = read_lines("info.txt")[0]
 	}
 }
