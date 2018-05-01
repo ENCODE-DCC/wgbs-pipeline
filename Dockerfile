@@ -100,6 +100,7 @@ RUN cd gemBS/test && tar -xvf example.tar.gz
 # Set up Python helpers for WDL scripts
 RUN mkdir -p helpers
 COPY /helpers helpers
+RUN chmod +x -R helpers/ 
 ENV PATH="/software/helpers:${PATH}"
 
 ENTRYPOINT ["/bin/bash","-c"]
