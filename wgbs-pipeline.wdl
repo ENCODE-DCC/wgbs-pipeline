@@ -12,9 +12,14 @@ workflow wgbs {
 		reference_fasta = reference_fasta,
 	}
 
+	call prepare_config { input:
+		metadata_csv = metadata
+	}
+
 	output {
 		File reference_info = index.reference_info
 		File reference_gem = index.reference_gem
+		File metadata_json = prepare_config.metadata_json
 	}
 }
 
@@ -42,5 +47,17 @@ task index {
 	output {
 		File reference_info = glob("index_out/*.BS.info")[0]
 		File reference_gem = glob("index_out/*.BS.gem")[0]
+	}
+}
+
+task prepare_config {
+	File metadata_csv
+
+	command {
+		gemBS prepare-config -t ${metadata_csv} -j metadata.json
+	}
+
+	output {
+		File metadata_json = glob("metadata.json")[0]
 	}
 }
