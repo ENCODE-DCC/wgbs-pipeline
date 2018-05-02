@@ -26,4 +26,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     current_dir = os.getcwd()
     pattern = pattern_from_current_dir(current_dir, args.pattern, up=args.nearness)
+    with open("debug.txt", "w") as f:
+        f.write("{}\n".format(current_dir))
+        f.write("{}\n".format(pattern))
     search(pattern, args.matched_files_name)

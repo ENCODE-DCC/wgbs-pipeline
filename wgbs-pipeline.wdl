@@ -25,18 +25,15 @@ task index {
 
 	command {
 		gemBS index -i ${reference_fasta}
-		glob.py --pattern '*.BS.info' \
-			--nearness 1 \
-			--matched-files-name 'info'
-		glob.py \
-			--pattern '*.BS.gem' \
-			--nearness 1 \
-			--matched-files-name 'gem'
+		glob_helper.py \
+			${"--pattern '*.BS.info'"} \
+-			${"--nearness " + 1} \
+-			${"--matched-files-name info"}
+		glob_helper.py \
+			${"--pattern '*.BS.gem'"} \
+-			${"--nearness " + 1} \
+-			${"--matched-files-name gem"}
 		mkdir index_out
-		< info.txt xargs -I{} -d'\n' ln -s {} index_out/{}
-		< gem.txt xargs -I{} -d'\n' ln -s {} index_out/{}
-
-
 	}
 
 	output {
