@@ -94,9 +94,6 @@ RUN sed -i 's+^GSL_INC =.*+GSL_INC = -I/usr/include/gsl/+g' /software/gemBS/tool
 RUN cd gemBS && python setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Set up test data
-RUN cd gemBS/test && tar -xvf example.tar.gz 
-
 # Set up Python helpers for WDL scripts
 RUN mkdir -p helpers
 COPY helpers helpers

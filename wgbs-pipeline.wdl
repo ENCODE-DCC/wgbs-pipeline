@@ -25,11 +25,11 @@ task index {
 
 	command {
 		gemBS index -i ${reference_fasta}
-		glob_helper.py \
+		python3 glob_helper.py \
 			${"--pattern '*.BS.info'"} \
 -			${"--nearness " + 1} \
 -			${"--matched-files-name info"}
-		glob_helper.py \
+		python3 glob_helper.py \
 			${"--pattern '*.BS.gem'"} \
 -			${"--nearness " + 1} \
 -			${"--matched-files-name gem"}
