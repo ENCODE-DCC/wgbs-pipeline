@@ -1,5 +1,6 @@
 # Test files can be large
 test/
+helpers/__pycache__
 
 # Cromwell run metadata output
 metadata.json
