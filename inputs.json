@@ -2,5 +2,7 @@
   "wgbs.reference_fasta": "/Users/bek/wgbs-pipeline/test/yeast.fa",
   "wgbs.metadata": "/Users/bek/wgbs-pipeline/test/metadata.csv",
   "wgbs.fastq_files": ["/Users/bek/wgbs-pipeline/test/fastq/flowcell_1_1_1.fastq.gz",
-  				  "/Users/bek/wgbs-pipeline/test/fastq/flowcell_1_1_2.fastq.gz"]
+  				  "/Users/bek/wgbs-pipeline/test/fastq/flowcell_1_1_2.fastq.gz"],
+  "wgbs.chromosomes": ["chr3"],
+  "wgbs.organism": "Yeast"
 }
