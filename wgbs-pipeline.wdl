@@ -212,7 +212,7 @@ task bscall {
 	}
 
 	output {
-		Array[File] outputs = glob("/data/chr_snp_calls/*")
+		Array[File] outputs = glob("data/chr_snp_calls/*")
 	}
 }
 
