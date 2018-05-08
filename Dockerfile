@@ -70,7 +70,7 @@ RUN cd samtools && make && make install
 
 # Install bcftools 1.3.1
 RUN git clone --branch 1.3.1 git://github.com/samtools/bcftools.git
-RUN cd bcftools && make
+RUN cd bcftools && make && make install
 
 # Install matplotlib
 RUN pip install --upgrade matplotlib[mplot3d]
