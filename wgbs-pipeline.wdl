@@ -48,7 +48,7 @@ workflow wgbs {
 		}
 	}
 
-	Array[Pair[String, Pair[String, File]]] cross_chromosomes_and_samples = cross(chromosomes, merging_sample.sample_and_bam)
+	Array[Pair[String, Pair[String, Pair[File, File]]]] cross_chromosomes_and_samples = cross(chromosomes, merging_sample.sample_bai_bam)
 
 	scatter(chromosome_sample_pair in cross_chromosomes_and_samples) {
 		call bscall { input:
@@ -57,20 +57,11 @@ workflow wgbs {
 			chr_sample_pair = chromosome_sample_pair
 		}
 	}
-	#call bscall { input:
-	#	reference_fasta = reference_fasta,
-	#	sample_bam = merging_sample.bam,
-	#	sample = "test",
-	#	chromosome = "chrIII"
-	#}
-
-
 
 	output {
 		File reference_info = index.reference_info
 		File reference_gem = index.reference_gem
 		File metadata_json = prepare_config.metadata_json
-		Array[Pair[String, Pair[String, File]]] crossed = cross_chromosomes_and_samples
 	}
 }
 
@@ -194,19 +185,30 @@ task merging_sample {
 
 	output {
 		File bam = glob("data/sample_mappings/*.bam")[0]
-		String sample_name = sample
-		Pair[String, File] sample_and_bam = (sample_name, bam)
+		File bai = glob("data/sample_mappings/*.bai")[0]
+		Pair[String, Pair[File, File]] sample_bai_bam = (sample, (bai, bam))
 	}
 }
 
 task bscall {
 	File reference_fasta
 	String organism
-	Pair[String, Pair[String, File]] chr_sample_pair
+	Pair[String, Pair[String, Pair[File, File]]] chr_sample_pair
 	
 	command {
 		mkdir -p data/chr_snp_calls
-		gemBS bscall -r ${reference_fasta} -e ${organism} -s ${chr_sample_pair.right.left} -c ${chr_sample_pair.left} -i ${chr_sample_pair.right.right} -o data/chr_snp_calls
+		mkdir -p data/sample_mappings
+		# Directionswise, this is basically a right turn
+		ln -s ${chr_sample_pair.right.right.left} data/sample_mappings/
+		# And this is left
+		ln -s ${chr_sample_pair.right.right.right} data/sample_mappings/
+		gemBS bscall \
+			-r ${reference_fasta} \
+			-e ${organism} \
+			-s ${chr_sample_pair.right.left} \
+			-c ${chr_sample_pair.left} \
+			-i data/sample_mappings/$(basename ${chr_sample_pair.right.right.right}) \
+			-o data/chr_snp_calls
 	}
 
 	output {
