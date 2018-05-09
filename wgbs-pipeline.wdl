@@ -35,10 +35,6 @@ workflow wgbs {
 		commands = generate_mapping_commands.mapping_commands
 	}
 
-	#call merging_sample { input:
-	#	mapping_outputs = mapping.all_outputs,
-	#	metadata_json = prepare_config.metadata_json
-	#}
 
 	scatter(name in get_sample_names.names) {
 		call merging_sample { input:
@@ -55,6 +51,13 @@ workflow wgbs {
 			organism = organism,
 			reference_fasta = reference_fasta,
 			chr_sample_pair = chromosome_sample_pair
+		}
+	}
+
+	scatter(sample in get_sample_names.names) {
+		call group_files_by_sample{ input:
+			all_bcf_files = bscall.bcf,
+			sample = sample
 		}
 	}
 
@@ -212,7 +215,25 @@ task bscall {
 	}
 
 	output {
-		Array[File] outputs = glob("data/chr_snp_calls/*")
+		File json = glob("data/chr_snp_calls/*.json")[0]
+		File bcf = glob("data/chr_snp_calls/*.bcf")[0]
+	}
+}
+
+task group_files_by_sample {
+
+	Array[File] all_bcf_files
+	String sample
+
+	command {
+		mkdir -p sample_bcfs
+		for i in ${sep=" " all_bcf_files}; do
+			ln -s $i sample_bcfs
+		done
+	}
+
+	output {
+		Array[File] files = glob("sample_bcfs/*")
 	}
 }
 
