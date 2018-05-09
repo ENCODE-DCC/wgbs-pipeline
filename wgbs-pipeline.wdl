@@ -1,6 +1,6 @@
 # ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS
 # Maintainer: Ulugbek Baymuradov
-# import 'index.wdl' as step1
+import 'bs-call.wdl' as bscaller
 
 workflow wgbs {
 	String organism
@@ -42,22 +42,19 @@ workflow wgbs {
 			metadata_json = prepare_config.metadata_json,
 			sample = name
 		}
-	}
 
-	Array[Pair[String, Pair[String, Pair[File, File]]]] cross_chromosomes_and_samples = cross(chromosomes, merging_sample.sample_bai_bam)
-
-	scatter(chromosome_sample_pair in cross_chromosomes_and_samples) {
-		call bscall { input:
+		call bscaller.bscall { input:
 			organism = organism,
 			reference_fasta = reference_fasta,
-			chr_sample_pair = chromosome_sample_pair
+			bam = merging_sample.bam,
+			bai = merging_sample.bai,
+			sample = name,
+			chromosomes = chromosomes
 		}
-	}
 
-	scatter(sample in get_sample_names.names) {
-		call group_files_by_sample{ input:
-			all_bcf_files = bscall.bcf,
-			sample = sample
+		call bscall_concatenate { input:
+			sample = name,
+			bcf_files = bscall.bcf_files
 		}
 	}
 
@@ -183,60 +180,28 @@ task merging_sample {
 		mkdir temp
 		mkdir -p data/mappings
 		cat ${write_lines(mapping_outputs)} | xargs -I % ln -s % data/mappings
-		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 8 -o data/sample_mappings/ -d ./tmp/
+		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 8 -o data/sample_mappings/ -d tmp/
 	}
 
 	output {
 		File bam = glob("data/sample_mappings/*.bam")[0]
 		File bai = glob("data/sample_mappings/*.bai")[0]
-		Pair[String, Pair[File, File]] sample_bai_bam = (sample, (bai, bam))
 	}
 }
 
-task bscall {
-	File reference_fasta
-	String organism
-	Pair[String, Pair[String, Pair[File, File]]] chr_sample_pair
-	
-	command {
-		mkdir -p data/chr_snp_calls
-		mkdir -p data/sample_mappings
-		# Directionswise, this is basically a right turn
-		ln -s ${chr_sample_pair.right.right.left} data/sample_mappings/
-		# And this is left
-		ln -s ${chr_sample_pair.right.right.right} data/sample_mappings/
-		gemBS bscall \
-			-r ${reference_fasta} \
-			-e ${organism} \
-			-s ${chr_sample_pair.right.left} \
-			-c ${chr_sample_pair.left} \
-			-i data/sample_mappings/$(basename ${chr_sample_pair.right.right.right}) \
-			-o data/chr_snp_calls
-	}
-
-	output {
-		File json = glob("data/chr_snp_calls/*.json")[0]
-		File bcf = glob("data/chr_snp_calls/*.bcf")[0]
-	}
-}
-
-task group_files_by_sample {
-
-	Array[File] all_bcf_files
+task bscall_concatenate {
 	String sample
+	Array[File] bcf_files
 
 	command {
-		mkdir -p sample_bcfs
-		for i in ${sep=" " all_bcf_files}; do
-			ln -s $i sample_bcfs
-		done
+		mkdir -p data/merged_calls
+		gemBS bscall-concatenate -s ${sample} -l ${sep=" " bcf_files} -o data/merged_calls
 	}
 
 	output {
-		Array[File] files = glob("sample_bcfs/*")
+
 	}
 }
-
 
 
 
