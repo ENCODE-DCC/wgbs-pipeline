@@ -58,10 +58,15 @@ workflow wgbs {
 		}
 	}
 
+	call methylation_filtering {input:
+		merged_call_file = bscall_concatenate.merged_file[0]
+	}
+
 	output {
 		File reference_info = index.reference_info
 		File reference_gem = index.reference_gem
 		File metadata_json = prepare_config.metadata_json
+		File filtered_meth_calls = methylation_filtering.filtered_meth_file
 	}
 }
 
@@ -199,9 +204,33 @@ task bscall_concatenate {
 	}
 
 	output {
-
+		File merged_file = glob("data/merged_calls/*.raw.bcf")[0]
 	}
 }
+
+task methylation_filtering {
+	File merged_call_file
+	command {
+		mkdir -p data/filtered_meth_calls
+		gemBS methylation-filtering -b ${merged_call_file} -o data/filtered_meth_calls
+	}
+
+	output {
+		File filtered_meth_file = glob("data/filtered_meth_calls/*.txt.gz")
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
