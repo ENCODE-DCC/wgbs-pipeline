@@ -184,8 +184,8 @@ task merging_sample {
 	command {
 		mkdir temp
 		mkdir -p data/mappings
-		cat ${write_lines(mapping_outputs)} | xargs -I % ln -s % data/mappings
-		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 8 -o data/sample_mappings/ -d tmp/
+		cat ${write_lines(mapping_outputs)} | xargs -I % ln % data/mappings
+		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 8 -o data/sample_mappings -d tmp/
 	}
 
 	output {
