@@ -4,6 +4,8 @@ helpers/__pycache__
 # Cromwell run metadata output
 metadata.json
 
+help/ENC*
+
 # cromwell temp dirs
 cromwell-executions/
 cromwell-workflow-logs/

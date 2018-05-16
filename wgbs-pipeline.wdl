@@ -76,7 +76,7 @@ task index {
 	File reference_fasta
 
 	command {
-		gemBS index -i ${reference_fasta}
+		gemBS index -i ${reference_fasta} -t 8
 		pyglob.py \
 			${"--pattern '*.BS.info'"} \
 			${"--nearness " + 1} \
@@ -216,7 +216,7 @@ task methylation_filtering {
 	}
 
 	output {
-		File filtered_meth_file = glob("data/filtered_meth_calls/*.txt.gz")
+		File filtered_meth_file = glob("data/filtered_meth_calls/*.txt.gz")[0]
 	}
 }
 
