@@ -5,15 +5,23 @@ import 'bs-call.wdl' as bscaller
 workflow wgbs {
 	String organism
 	File reference_fasta
+	File? indexed_reference_gem
+	File? indexed_reference_info
 	File metadata 
+	Int pyglob_nearness
 	Array[File] fastq_files
-
-	# In a full pipeline run, this will be an array of all chromosomes
 	Array[String] chromosomes
-	
-	call index { input:
-		reference_fasta = reference_fasta
+
+
+	if (!defined(indexed_reference_gem)) {
+		call index { input:
+			reference_fasta = reference_fasta,
+			nearness = pyglob_nearness
+		}
 	}
+
+	File indexed_gem = select_first([indexed_reference_gem, index.reference_gem])
+	File indexed_info = select_first([indexed_reference_info, index.reference_info])
 
 	call prepare_config { input:
 		metadata_csv = metadata
@@ -24,12 +32,12 @@ workflow wgbs {
 	}
 
 	call generate_mapping_commands { input:
-		reference_gem = index.reference_gem,
+		reference_gem = indexed_gem,
 		metadata_json = prepare_config.metadata_json
 	}
 
 	call mapping { input:
-		reference_gem = index.reference_gem,
+		reference_gem = indexed_gem,
 		metadata_json = prepare_config.metadata_json,
 		fastq_files = fastq_files,
 		commands = generate_mapping_commands.mapping_commands
@@ -56,17 +64,23 @@ workflow wgbs {
 			sample = name,
 			bcf_files = bscall.bcf_files
 		}
+
+		call methylation_filtering {input:
+			merged_call_file = bscall_concatenate.merged_file
+		}
+
 	}
 
-	call methylation_filtering {input:
-		merged_call_file = bscall_concatenate.merged_file[0]
-	}
 
 	output {
-		File reference_info = index.reference_info
-		File reference_gem = index.reference_gem
+		File reference_info = indexed_info
+		File reference_gem = indexed_gem
 		File metadata_json = prepare_config.metadata_json
-		File filtered_meth_calls = methylation_filtering.filtered_meth_file
+		Array[File] mapping_step_outputs = mapping.all_outputs
+		Array[File] merged_bam = merging_sample.bam
+		Array[File] merged_bai = merging_sample.bai
+		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file
+		Array[File] methylation_filtered_file = methylation_filtering.filtered_meth_file
 	}
 }
 
@@ -74,16 +88,22 @@ workflow wgbs {
 task index {
 
 	File reference_fasta
+	Int nearness
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 
 	command {
-		gemBS index -i ${reference_fasta} -t 8
+		gemBS index -i ${reference_fasta}
 		pyglob.py \
 			${"--pattern '*.BS.info'"} \
-			${"--nearness " + 1} \
+			${"--nearness " + nearness} \
 			${"--matched-files-name info"}
 		pyglob.py \
 			${"--pattern '*.BS.gem'"} \
-			${"--nearness " + 1} \
+			${"--nearness " + nearness} \
 			${"--matched-files-name gem"}
 		mkdir index_out
 		cat info.txt | xargs -I % ln -s % index_out
@@ -94,6 +114,12 @@ task index {
 	output {
 		File reference_info = glob("index_out/*.BS.info")[0]
 		File reference_gem = glob("index_out/*.BS.gem")[0]
+	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'52'])} GB"
+		disks : select_first([disks,"local-disk 100 HDD"])
 	}
 }
 
@@ -132,7 +158,7 @@ task get_sample_names {
 
 task generate_mapping_commands {
 
-	File reference_gem
+	String reference_gem
 	File metadata_json
 
 	command {
@@ -142,7 +168,7 @@ task generate_mapping_commands {
 		mkdir reference
 		ln -s ${reference_gem} reference/
 		ln -s ${metadata_json} .
-		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 8 -p
+		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 16 -p
 	}
 
 	output {
@@ -155,6 +181,11 @@ task mapping {
 	File metadata_json
 	Array[File] fastq_files
 	Array[String] commands
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 
 	command {
 		mkdir tmp
@@ -173,6 +204,12 @@ task mapping {
 		# File mapping_bam_file = glob("data/mappings/*.bam")[0]
 		# File mapping_json_file = glob("data/mappings/*.json")[0]
 		Array[File] all_outputs = glob("data/mappings/*")
+	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'104'])} GB"
+		disks : select_first([disks,"local-disk 100 HDD"])
 	}
 }
 
