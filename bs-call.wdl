@@ -50,4 +50,11 @@ task bscall_task {
 		File json = glob("data/chr_snp_calls/*.json")[0]
 		File bcf = glob("data/chr_snp_calls/*.bcf")[0]
 	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 600 HDD"])
+	}
+
 }

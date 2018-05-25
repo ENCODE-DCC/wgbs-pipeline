@@ -10,6 +10,7 @@ workflow wgbs {
 	File metadata 
 	Int pyglob_nearness
 	Array[File] fastq_files
+	Array[File]? mapping_outputs
 	Array[String] chromosomes
 
 
@@ -36,17 +37,21 @@ workflow wgbs {
 		metadata_json = prepare_config.metadata_json
 	}
 
-	call mapping { input:
-		reference_gem = indexed_gem,
-		metadata_json = prepare_config.metadata_json,
-		fastq_files = fastq_files,
-		commands = generate_mapping_commands.mapping_commands
+	if (!defined(mapping_outputs)) {
+		call mapping { input:
+			reference_gem = indexed_gem,
+			metadata_json = prepare_config.metadata_json,
+			fastq_files = fastq_files,
+			commands = generate_mapping_commands.mapping_commands
+		}
 	}
+
+	Array[File] mapping_output_files = select_first([mapping_outputs, mapping.all_outputs])
 
 
 	scatter(name in get_sample_names.names) {
 		call merging_sample { input:
-			mapping_outputs = mapping.all_outputs,
+			mapping_outputs = mapping_output_files,
 			metadata_json = prepare_config.metadata_json,
 			sample = name
 		}
@@ -76,7 +81,7 @@ workflow wgbs {
 		File reference_info = indexed_info
 		File reference_gem = indexed_gem
 		File metadata_json = prepare_config.metadata_json
-		Array[File] mapping_step_outputs = mapping.all_outputs
+		Array[File] mapping_step_outputs = mapping_output_files
 		Array[File] merged_bam = merging_sample.bam
 		Array[File] merged_bai = merging_sample.bai
 		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file
@@ -118,7 +123,7 @@ task index {
 
 	runtime {
 		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'52'])} GB"
+		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 100 HDD"])
 	}
 }
@@ -208,8 +213,8 @@ task mapping {
 
 	runtime {
 		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'104'])} GB"
-		disks : select_first([disks,"local-disk 600 HDD"])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 500 HDD"])
 	}
 }
 
@@ -217,6 +222,11 @@ task merging_sample {
 	Array[File] mapping_outputs
 	File metadata_json
 	String sample 
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 
 	command {
 		mkdir temp
@@ -232,8 +242,8 @@ task merging_sample {
 
 	runtime {
 		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'104'])} GB"
-		disks : select_first([disks,"local-disk 600 HDD"])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 500 HDD"])
 	}
 
 }
@@ -241,6 +251,11 @@ task merging_sample {
 task bscall_concatenate {
 	String sample
 	Array[File] bcf_files
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 
 	command {
 		mkdir -p data/merged_calls
@@ -250,10 +265,22 @@ task bscall_concatenate {
 	output {
 		File merged_file = glob("data/merged_calls/*.raw.bcf")[0]
 	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 500 HDD"])
+	}
+
 }
 
 task methylation_filtering {
 	File merged_call_file
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 	command {
 		mkdir -p data/filtered_meth_calls
 		gemBS methylation-filtering -b ${merged_call_file} -o data/filtered_meth_calls
@@ -262,6 +289,13 @@ task methylation_filtering {
 	output {
 		File filtered_meth_file = glob("data/filtered_meth_calls/*.txt.gz")[0]
 	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 500 HDD"])
+	}
+
 }
 
 
