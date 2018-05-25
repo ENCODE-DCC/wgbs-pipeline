@@ -168,7 +168,7 @@ task generate_mapping_commands {
 		mkdir reference
 		ln -s ${reference_gem} reference/
 		ln -s ${metadata_json} .
-		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 16 -p
+		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p
 	}
 
 	output {
@@ -209,7 +209,7 @@ task mapping {
 	runtime {
 		cpu: select_first([cpu,16])
 		memory : "${select_first([memory_gb,'104'])} GB"
-		disks : select_first([disks,"local-disk 100 HDD"])
+		disks : select_first([disks,"local-disk 600 HDD"])
 	}
 }
 
@@ -222,13 +222,20 @@ task merging_sample {
 		mkdir temp
 		mkdir -p data/mappings
 		cat ${write_lines(mapping_outputs)} | xargs -I % ln % data/mappings
-		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 8 -o data/sample_mappings -d tmp/
+		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d tmp/
 	}
 
 	output {
 		File bam = glob("data/sample_mappings/*.bam")[0]
 		File bai = glob("data/sample_mappings/*.bai")[0]
 	}
+
+	runtime {
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'104'])} GB"
+		disks : select_first([disks,"local-disk 600 HDD"])
+	}
+
 }
 
 task bscall_concatenate {
