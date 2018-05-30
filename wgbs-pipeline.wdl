@@ -1,6 +1,7 @@
 # ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS
 # Maintainer: Ulugbek Baymuradov
 import 'bs-call.wdl' as bscaller
+import 'mapping.wdl' as mapper
 
 workflow wgbs {
 	String organism
@@ -29,43 +30,30 @@ workflow wgbs {
 		metadata_csv = metadata
 	}
 
-	#call get_sample_names { input:
-	#	metadata_json = prepare_config.metadata_json
-	#}
 
 	call generate_mapping_commands { input:
 		reference_gem = indexed_gem,
 		metadata_json = prepare_config.metadata_json
 	}
 
-	Array[Pair[String,String]] lane_to_command = zip(samples, generate_mapping_commands.mapping_commands)
+	call flowcell_to_commands { input:
+		metadata_json = prepare_config.metadata_json,
+		commands = generate_mapping_commands.mapping_commands
+	}
 
-	#if (!defined(mapping_outputs)) {
-	#	call mapping { input:
-	#		reference_gem = indexed_gem,
-	#		metadata_json = prepare_config.metadata_json,
-	#		fastq_files = fastq_files,
-	#		commands = generate_mapping_commands.mapping_commands
-	#	}
-	#}
+	scatter(sample_files in fastq_files) {
 
-	Array[File] mapping_output_files = select_first([mapping_outputs, mapping.all_outputs])
-
-
-	scatter(sample in fastq_files) {
-
-		call mapping { input:
+		call mapper.mapping as map { input:
 			reference_gem = indexed_gem,
 			metadata_json = prepare_config.metadata_json,
-			fastq_files = sample.right.right,
-			commands = generate_mapping_commands.mapping_commands
+			sample_files = sample_files,
+			commands = flowcell_to_commands.commands
 		}
 
-
 		call merging_sample { input:
-			mapping_outputs = mapping_output_files,
+			mapping_outputs = map.mapping_outputs,
 			metadata_json = prepare_config.metadata_json,
-			sample = name
+			sample = sample_files.left
 		}
 
 		call bscaller.bscall { input:
@@ -73,19 +61,18 @@ workflow wgbs {
 			reference_fasta = reference_fasta,
 			bam = merging_sample.bam,
 			bai = merging_sample.bai,
-			sample = name,
+			sample = sample_files.left,
 			chromosomes = chromosomes
 		}
 
 		call bscall_concatenate { input:
-			sample = name,
+			sample = sample_files.left,
 			bcf_files = bscall.bcf_files
 		}
 
 		call methylation_filtering {input:
 			merged_call_file = bscall_concatenate.merged_file
 		}
-
 	}
 
 
@@ -93,7 +80,7 @@ workflow wgbs {
 		File reference_info = indexed_info
 		File reference_gem = indexed_gem
 		File metadata_json = prepare_config.metadata_json
-		Array[File] mapping_step_outputs = mapping_output_files
+		Array[Array[File]] mapping_step_outputs = map.mapping_outputs
 		Array[File] merged_bam = merging_sample.bam
 		Array[File] merged_bai = merging_sample.bai
 		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file
@@ -125,7 +112,6 @@ task index {
 		mkdir index_out
 		cat info.txt | xargs -I % ln -s % index_out
 		cat gem.txt | xargs -I % ln -s % index_out
-
 	}
 
 	output {
@@ -152,24 +138,29 @@ task prepare_config {
 	}
 }
 
-task get_sample_names {
+task flowcell_to_commands {
 	File metadata_json
+	Array[String] commands
 
 	command <<<
 		python3 <<CODE
 		import json
 		with open('${metadata_json}') as file:
 			metadata_json = json.load(file)
-		names = []
+		lane_names = []
 		for key, value in metadata_json.items():
-			names.append(value['sample_barcode'])
-		for name in set(names):
-			print(name)
+			lane_names.append("{}_{}_{}".format(value['flowcell_name'], 
+											  value['index_name'], 
+											  value['lane_number']))
+		for name in set(lane_names):
+			for command in commands:
+				if name in commands:
+					print("{}\t{}".format(name, command))
 		CODE
 	>>>
 
 	output {
-		Array[String] names = read_lines(stdout())
+		Map[String, String] commands = read_map(stdout())
 	}
 }
 
@@ -193,45 +184,9 @@ task generate_mapping_commands {
 	}
 }
 
-task mapping {
-	File reference_gem
-	File metadata_json
-	Array[File] fastq_files
-	Array[String] commands
-
-	Int? memory_gb
-	Int? cpu
-	String? disks
-
-
-	command {
-		mkdir tmp
-		mkdir fastqs
-		mkdir -p data/mappings 
-		mkdir reference
-		ln -s ${reference_gem} reference/
-		ln -s ${metadata_json} .
-		cat ${write_lines(fastq_files)} | xargs -I % ln -s % fastqs
-		${commands[0]}
-	}
-
-	output {
-		# May need individual outputs for testing purposes
-		# File mapping_bai_file = glob("data/mappings/*.bai")[0]
-		# File mapping_bam_file = glob("data/mappings/*.bam")[0]
-		# File mapping_json_file = glob("data/mappings/*.json")[0]
-		Array[File] all_outputs = glob("data/mappings/*")
-	}
-
-	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 500 HDD"])
-	}
-}
 
 task merging_sample {
-	Array[File] mapping_outputs
+	Array[Array[File]] mapping_outputs
 	File metadata_json
 	String sample 
 
@@ -243,7 +198,7 @@ task merging_sample {
 	command {
 		mkdir temp
 		mkdir -p data/mappings
-		cat ${write_lines(mapping_outputs)} | xargs -I % ln % data/mappings
+		cat ${write_lines(mapping_outputs[0])} | xargs -I % ln % data/mappings
 		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d tmp/
 	}
 
@@ -257,7 +212,6 @@ task merging_sample {
 		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 500 HDD"])
 	}
-
 }
 
 task bscall_concatenate {
@@ -283,7 +237,6 @@ task bscall_concatenate {
 		memory : "${select_first([memory_gb,'7.5'])} GB"
 		disks : select_first([disks,"local-disk 100 HDD"])
 	}
-
 }
 
 task methylation_filtering {
@@ -307,42 +260,4 @@ task methylation_filtering {
 		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 500 HDD"])
 	}
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

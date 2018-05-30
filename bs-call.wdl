@@ -7,7 +7,7 @@ workflow bscall {
 	Array[String] chromosomes
 
 	scatter(chromosome in chromosomes) {
-		call bscall_task { input:
+		call bscall_job { input:
 			organism = organism,
 			reference_fasta = reference_fasta,
 			bam = bam,
@@ -18,13 +18,13 @@ workflow bscall {
 	}
 
 	output {
-		Array[File] bcf_files = bscall_task.bcf
-		Array[File] json_files = bscall_task.json
+		Array[File] bcf_files = bscall_job.bcf
+		Array[File] json_files = bscall_job.json
 	}
 
 }
 
-task bscall_task {
+task bscall_job {
 	File reference_fasta
 	File bam
 	File bai
