@@ -9,9 +9,10 @@ workflow wgbs {
 	File? indexed_reference_info
 	File metadata 
 	Int pyglob_nearness
-	Array[File] fastq_files
+	Array[Pair[String, Array[Pair[String,Array[File]]]]] fastq_files
 	Array[File]? mapping_outputs
 	Array[String] chromosomes
+	Array[String] samples
 
 
 	if (!defined(indexed_reference_gem)) {
@@ -28,28 +29,39 @@ workflow wgbs {
 		metadata_csv = metadata
 	}
 
-	call get_sample_names { input:
-		metadata_json = prepare_config.metadata_json
-	}
+	#call get_sample_names { input:
+	#	metadata_json = prepare_config.metadata_json
+	#}
 
 	call generate_mapping_commands { input:
 		reference_gem = indexed_gem,
 		metadata_json = prepare_config.metadata_json
 	}
 
-	if (!defined(mapping_outputs)) {
-		call mapping { input:
-			reference_gem = indexed_gem,
-			metadata_json = prepare_config.metadata_json,
-			fastq_files = fastq_files,
-			commands = generate_mapping_commands.mapping_commands
-		}
-	}
+	Array[Pair[String,String]] lane_to_command = zip(samples, generate_mapping_commands.mapping_commands)
+
+	#if (!defined(mapping_outputs)) {
+	#	call mapping { input:
+	#		reference_gem = indexed_gem,
+	#		metadata_json = prepare_config.metadata_json,
+	#		fastq_files = fastq_files,
+	#		commands = generate_mapping_commands.mapping_commands
+	#	}
+	#}
 
 	Array[File] mapping_output_files = select_first([mapping_outputs, mapping.all_outputs])
 
 
-	scatter(name in get_sample_names.names) {
+	scatter(sample in fastq_files) {
+
+		call mapping { input:
+			reference_gem = indexed_gem,
+			metadata_json = prepare_config.metadata_json,
+			fastq_files = sample.right.right,
+			commands = generate_mapping_commands.mapping_commands
+		}
+
+
 		call merging_sample { input:
 			mapping_outputs = mapping_output_files,
 			metadata_json = prepare_config.metadata_json,
@@ -267,9 +279,9 @@ task bscall_concatenate {
 	}
 
 	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 500 HDD"])
+		cpu: select_first([cpu,2])
+		memory : "${select_first([memory_gb,'7.5'])} GB"
+		disks : select_first([disks,"local-disk 100 HDD"])
 	}
 
 }

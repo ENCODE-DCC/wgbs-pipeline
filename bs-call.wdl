@@ -31,6 +31,11 @@ task bscall_task {
 	String organism
 	String sample
 	String chromosome
+
+	Int? memory_gb
+	Int? cpu
+	String? disks
+
 	
 	command {
 		mkdir -p data/chr_snp_calls
@@ -52,9 +57,8 @@ task bscall_task {
 	}
 
 	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 600 HDD"])
+		cpu: select_first([cpu,8])
+		memory : "${select_first([memory_gb,'30'])} GB"
+		disks : select_first([disks,"local-disk 200 HDD"])
 	}
-
 }
