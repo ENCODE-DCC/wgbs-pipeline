@@ -1,0 +1,2446 @@
+{
+  "workflowName": "wgbs",
+  "submittedFiles": {
+    "workflow": "# ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS\n# Maintainer: Ulugbek Baymuradov\nimport 'bs-call.wdl' as bscaller\n\nworkflow wgbs {\n\tString organism\n\tFile reference_fasta\n\tFile? indexed_reference_gem\n\tFile? indexed_reference_info\n\tFile metadata \n\tInt pyglob_nearness\n\tArray[File] fastq_files\n\tArray[File]? mapping_outputs\n\tArray[String] chromosomes\n\n\n\tif (!defined(indexed_reference_gem)) {\n\t\tcall index { input:\n\t\t\treference_fasta = reference_fasta,\n\t\t\tnearness = pyglob_nearness\n\t\t}\n\t}\n\n\tFile indexed_gem = select_first([indexed_reference_gem, index.reference_gem])\n\tFile indexed_info = select_first([indexed_reference_info, index.reference_info])\n\n\tcall prepare_config { input:\n\t\tmetadata_csv = metadata\n\t}\n\n\tcall get_sample_names { input:\n\t\tmetadata_json = prepare_config.metadata_json\n\t}\n\n\tcall generate_mapping_commands { input:\n\t\treference_gem = indexed_gem,\n\t\tmetadata_json = prepare_config.metadata_json\n\t}\n\n\tif (!defined(mapping_outputs)) {\n\t\tcall mapping { input:\n\t\t\treference_gem = indexed_gem,\n\t\t\tmetadata_json = prepare_config.metadata_json,\n\t\t\tfastq_files = fastq_files,\n\t\t\tcommands = generate_mapping_commands.mapping_commands\n\t\t}\n\t}\n\n\tArray[File] mapping_output_files = select_first([mapping_outputs, mapping.all_outputs])\n\n\n\tscatter(name in get_sample_names.names) {\n\t\tcall merging_sample { input:\n\t\t\tmapping_outputs = mapping_output_files,\n\t\t\tmetadata_json = prepare_config.metadata_json,\n\t\t\tsample = name\n\t\t}\n\n\t\tcall bscaller.bscall { input:\n\t\t\torganism = organism,\n\t\t\treference_fasta = reference_fasta,\n\t\t\tbam = merging_sample.bam,\n\t\t\tbai = merging_sample.bai,\n\t\t\tsample = name,\n\t\t\tchromosomes = chromosomes\n\t\t}\n\n\t\tcall bscall_concatenate { input:\n\t\t\tsample = name,\n\t\t\tbcf_files = bscall.bcf_files\n\t\t}\n\n\t\tcall methylation_filtering {input:\n\t\t\tmerged_call_file = bscall_concatenate.merged_file\n\t\t}\n\n\t}\n\n\n\toutput {\n\t\tFile reference_info = indexed_info\n\t\tFile reference_gem = indexed_gem\n\t\tFile metadata_json = prepare_config.metadata_json\n\t\tArray[File] mapping_step_outputs = mapping_output_files\n\t\tArray[File] merged_bam = merging_sample.bam\n\t\tArray[File] merged_bai = merging_sample.bai\n\t\tArray[File] bscall_concatenated_file = bscall_concatenate.merged_file\n\t\tArray[File] methylation_filtered_file = methylation_filtering.filtered_meth_file\n\t}\n}\n\n\ntask index {\n\n\tFile reference_fasta\n\tInt nearness\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tgemBS index -i ${reference_fasta}\n\t\tpyglob.py \\\n\t\t\t${\"--pattern '*.BS.info'\"} \\\n\t\t\t${\"--nearness \" + nearness} \\\n\t\t\t${\"--matched-files-name info\"}\n\t\tpyglob.py \\\n\t\t\t${\"--pattern '*.BS.gem'\"} \\\n\t\t\t${\"--nearness \" + nearness} \\\n\t\t\t${\"--matched-files-name gem\"}\n\t\tmkdir index_out\n\t\tcat info.txt | xargs -I % ln -s % index_out\n\t\tcat gem.txt | xargs -I % ln -s % index_out\n\n\t}\n\n\toutput {\n\t\tFile reference_info = glob(\"index_out/*.BS.info\")[0]\n\t\tFile reference_gem = glob(\"index_out/*.BS.gem\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 100 HDD\"])\n\t}\n}\n\ntask prepare_config {\n\tFile metadata_csv\n\n\tcommand {\n\t\tgemBS prepare-config -t ${metadata_csv} -j metadata.json\n\t}\n\n\toutput {\n\t\tFile metadata_json = glob(\"metadata.json\")[0]\n\t}\n}\n\ntask get_sample_names {\n\tFile metadata_json\n\n\tcommand <<<\n\t\tpython3 <<CODE\n\t\timport json\n\t\twith open('${metadata_json}') as file:\n\t\t\tmetadata_json = json.load(file)\n\t\tnames = []\n\t\tfor key, value in metadata_json.items():\n\t\t\tnames.append(value['sample_barcode'])\n\t\tfor name in set(names):\n\t\t\tprint(name)\n\t\tCODE\n\t>>>\n\n\toutput {\n\t\tArray[String] names = read_lines(stdout())\n\t}\n}\n\ntask generate_mapping_commands {\n\n\tString reference_gem\n\tFile metadata_json\n\n\tcommand {\n\t\tmkdir fastqs\n\t\tmkdir -p data/mappings \n\t\tmkdir tmp\n\t\tmkdir reference\n\t\tln -s ${reference_gem} reference/\n\t\tln -s ${metadata_json} .\n\t\tgemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p\n\t}\n\n\toutput {\n\t\tArray[String] mapping_commands = read_lines(stdout())\n\t}\n}\n\ntask mapping {\n\tFile reference_gem\n\tFile metadata_json\n\tArray[File] fastq_files\n\tArray[String] commands\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir tmp\n\t\tmkdir fastqs\n\t\tmkdir -p data/mappings \n\t\tmkdir reference\n\t\tln -s ${reference_gem} reference/\n\t\tln -s ${metadata_json} .\n\t\tcat ${write_lines(fastq_files)} | xargs -I % ln -s % fastqs\n\t\t${commands[0]}\n\t}\n\n\toutput {\n\t\t# May need individual outputs for testing purposes\n\t\t# File mapping_bai_file = glob(\"data/mappings/*.bai\")[0]\n\t\t# File mapping_bam_file = glob(\"data/mappings/*.bam\")[0]\n\t\t# File mapping_json_file = glob(\"data/mappings/*.json\")[0]\n\t\tArray[File] all_outputs = glob(\"data/mappings/*\")\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n}\n\ntask merging_sample {\n\tArray[File] mapping_outputs\n\tFile metadata_json\n\tString sample \n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir temp\n\t\tmkdir -p data/mappings\n\t\tcat ${write_lines(mapping_outputs)} | xargs -I % ln % data/mappings\n\t\tgemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d tmp/\n\t}\n\n\toutput {\n\t\tFile bam = glob(\"data/sample_mappings/*.bam\")[0]\n\t\tFile bai = glob(\"data/sample_mappings/*.bai\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n\n}\n\ntask bscall_concatenate {\n\tString sample\n\tArray[File] bcf_files\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir -p data/merged_calls\n\t\tgemBS bscall-concatenate -s ${sample} -l ${sep=\" \" bcf_files} -o data/merged_calls\n\t}\n\n\toutput {\n\t\tFile merged_file = glob(\"data/merged_calls/*.raw.bcf\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n\n}\n\ntask methylation_filtering {\n\tFile merged_call_file\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\tcommand {\n\t\tmkdir -p data/filtered_meth_calls\n\t\tgemBS methylation-filtering -b ${merged_call_file} -o data/filtered_meth_calls\n\t}\n\n\toutput {\n\t\tFile filtered_meth_file = glob(\"data/filtered_meth_calls/*.txt.gz\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+    "workflowType": "WDL",
+    "options": "{\n  \"default_runtime_attributes\": {\n    \"preemptible\": \"0\",\n    \"bootDiskSizeGb\": \"10\",\n    \"disks\": \"local-disk 100 HDD\",\n    \"docker\": \"quay.io/encode-dcc/wgbs-pipeline:latest\",\n    \"cpu\": \"1\",\n    \"noAddress\": \"false\",\n    \"zones\": \"us-west1-a us-west1-b us-west1-c\",\n    \"memory\": \"2 GB\"\n  }\n}",
+    "inputs": "{\n  \"wgbs.reference_fasta\": \"gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz\",\n  \"wgbs.indexed_reference_gem\": \"gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem\",\n  \"wgbs.indexed_reference_info\": \"gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.info\",\n  \"wgbs.metadata\": \"gs://wgbs-pipeline/input_data/ENCSR750CPN/metadata.csv\",\n  \"wgbs.fastq_files\": [\"gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_2.fastq.gz\",\n  \t\t\t\t  \t   \"gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_1.fastq.gz\"],\n  \"wgbs.chromosomes\": [\"chr1\", \"chr2\", \"chr3\", \"chr4\", \"chr5\", \"chr6\", \"chr7\", \"chr8\", \"chr9\", \"chr10\", \"chr11\", \"chr12\", \"chr13\", \"chr14\", \"chr15\", \"chr16\", \"chr17\", \"chr18\", \"chr19\", \"chr20\", \"chr21\", \"chr22\", \"chrX\", \"chrY\"],\n  \"wgbs.organism\": \"Human\",\n  \"wgbs.pyglob_nearness\": 0\n}",
+    "labels": "{}",
+    "imports": {
+      "bs-call.wdl": "workflow bscall {\n\tFile reference_fasta\n\tFile bam\n\tFile bai\n\tString organism\n\tString sample\n\tArray[String] chromosomes\n\n\tscatter(chromosome in chromosomes) {\n\t\tcall bscall_task { input:\n\t\t\torganism = organism,\n\t\t\treference_fasta = reference_fasta,\n\t\t\tbam = bam,\n\t\t\tbai = bai,\n\t\t\tsample = sample,\n\t\t\tchromosome = chromosome\n\t\t}\n\t}\n\n\toutput {\n\t\tArray[File] bcf_files = bscall_task.bcf\n\t\tArray[File] json_files = bscall_task.json\n\t}\n\n}\n\ntask bscall_task {\n\tFile reference_fasta\n\tFile bam\n\tFile bai\n\tString organism\n\tString sample\n\tString chromosome\n\t\n\tcommand {\n\t\tmkdir -p data/chr_snp_calls\n\t\tmkdir -p data/sample_mappings\n\t\tln -s ${bam} data/sample_mappings/\n\t\tln -s ${bai} data/sample_mappings/\n\t\tgemBS bscall \\\n\t\t\t-r ${reference_fasta} \\\n\t\t\t-e ${organism} \\\n\t\t\t-s ${sample} \\\n\t\t\t-c ${chromosome} \\\n\t\t\t-i data/sample_mappings/$(basename ${bam}) \\\n\t\t\t-o data/chr_snp_calls\n\t}\n\n\toutput {\n\t\tFile json = glob(\"data/chr_snp_calls/*.json\")[0]\n\t\tFile bcf = glob(\"data/chr_snp_calls/*.bcf\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 600 HDD\"])\n\t}\n\n}\n"
+    }
+  },
+  "calls": {
+    "wgbs.generate_mapping_commands": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-generate_mapping_commands/generate_mapping_commands-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-5475764346276275445"
+      },
+      "outputs": {
+        "mapping_commands": ["gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "]
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "EC6966C68F05682BB11643D236635E15",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA"
+          },
+          "output expression": {
+            "Array": "EFE386CE68D702F4E73611BD6D6F4549"
+          },
+          "input count": "C81E728D9D4C2F636F067F89CC14862C",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "E8055C630E08F9A91BB82F1FD6FB0A88",
+          "input": {
+            "String reference_gem": "DF184DF5707F9B83173E7AD3613E5F35",
+            "File metadata_json": "kKUf1A=="
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem"
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+        "wdl-task-name": "generate-mapping-commands"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "generate_mapping_commands",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "jobId": "operations/EPT0vJq7LBj1ya_sk9X0_ksgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-05-30T16:10:28.550-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:849d0482dade8647af77b9e923b0619fc904bbc22ecb9ce26f8df78248448933",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-generate_mapping_commands/generate_mapping_commands-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-generate_mapping_commands",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-05-30T16:10:28.550-07:00",
+        "startTime": "2018-05-30T16:10:28.174-07:00",
+        "description": "UpdatingCallCache"
+      }, {
+        "endTime": "2018-05-30T23:10:04.661463234Z",
+        "description": "localizing-files",
+        "startTime": "2018-05-30T23:09:58.089902207Z"
+      }, {
+        "startTime": "2018-05-30T16:08:14.668-07:00",
+        "endTime": "2018-05-30T23:08:24Z",
+        "description": "RunningJob"
+      }, {
+        "endTime": "2018-05-30T23:09:09.448355629Z",
+        "startTime": "2018-05-30T23:09:09.447680151Z",
+        "description": "start"
+      }, {
+        "description": "waiting for quota",
+        "endTime": "2018-05-30T23:08:27Z",
+        "startTime": "2018-05-30T23:08:24Z"
+      }, {
+        "startTime": "2018-05-30T16:08:14.661-07:00",
+        "description": "Pending",
+        "endTime": "2018-05-30T16:08:14.661-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.662-07:00",
+        "description": "WaitingForValueStore",
+        "startTime": "2018-05-30T16:08:14.661-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.661-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-05-30T16:08:14.661-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.665-07:00",
+        "description": "PreparingJob",
+        "startTime": "2018-05-30T16:08:14.662-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.668-07:00",
+        "startTime": "2018-05-30T16:08:14.665-07:00",
+        "description": "CheckingCallCache"
+      }, {
+        "description": "initializing VM",
+        "endTime": "2018-05-30T23:09:09.447680151Z",
+        "startTime": "2018-05-30T23:08:27Z"
+      }, {
+        "description": "ok",
+        "endTime": "2018-05-30T23:10:11.072621923Z",
+        "startTime": "2018-05-30T23:10:11.072621923Z"
+      }, {
+        "description": "cromwell poll interval",
+        "endTime": "2018-05-30T16:10:28.174-07:00",
+        "startTime": "2018-05-30T23:10:11.072621923Z"
+      }, {
+        "description": "running-docker",
+        "startTime": "2018-05-30T23:10:04.661463234Z",
+        "endTime": "2018-05-30T23:10:08.743015480Z"
+      }, {
+        "endTime": "2018-05-30T23:10:11.072621923Z",
+        "startTime": "2018-05-30T23:10:08.743015480Z",
+        "description": "delocalizing-files"
+      }, {
+        "endTime": "2018-05-30T23:09:58.089902207Z",
+        "startTime": "2018-05-30T23:09:09.448355629Z",
+        "description": "pulling-image"
+      }, {
+        "endTime": "2018-05-30T16:10:28.550-07:00",
+        "startTime": "2018-05-30T16:10:28.550-07:00",
+        "description": "UpdatingJobStore"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-generate_mapping_commands/generate_mapping_commands.log"
+      },
+      "start": "2018-05-30T16:08:14.661-07:00"
+    }],
+    "wgbs.merging_sample": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/merging_sample-0-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": 0,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-16",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-6161011780537644751"
+      },
+      "outputs": {
+        "bai": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-3a28b840fa81b8d0fd468b1db31ea7bc/sample_ENCSR750CPN.bai",
+        "bam": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-f18f0b4e1b56183594a70d724b1ef631/sample_ENCSR750CPN.bam"
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 500 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "16",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "60 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C81E728D9D4C2F636F067F89CC14862C",
+          "runtime attribute": {
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "docker": "EC6966C68F05682BB11643D236635E15",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "File bai": "2E9A37A31F75938B0EFA489CAFE045BC",
+            "File bam": "B277408D3A90B39285BBC28520C18253"
+          },
+          "input count": "E4DA3B7FBBCE2345D7772B0674A318D5",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "F56901BCF9BE5BD5066F5FA5F095810A",
+          "input": {
+            "File metadata_json": "kKUf1A==",
+            "File mapping_outputs": ["dX3qDg==", "2rtrCw==", "dXe3Zw=="],
+            "String sample": "53D2657C5773F1F2497FA66B1D779F96"
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "mapping_outputs": ["gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.json"],
+        "disks": null,
+        "cpu": null,
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "sample": "sample_ENCSR750CPN",
+        "memory_gb": null
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+        "wdl-task-name": "merging-sample"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "merging_sample",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "jobId": "operations/EKKC9ba7LBjP7cXfpvKTwFUgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-05-31T09:59:54.297-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:849d0482dade8647af77b9e923b0619fc904bbc22ecb9ce26f8df78248448933",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/merging_sample-0-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0",
+      "attempt": 1,
+      "executionEvents": [{
+        "startTime": "2018-05-31T15:42:27Z",
+        "description": "initializing VM",
+        "endTime": "2018-05-31T15:43:59.400249857Z"
+      }, {
+        "description": "running-docker",
+        "endTime": "2018-05-31T16:00:59.457923521Z",
+        "startTime": "2018-05-31T15:59:33.973175557Z"
+      }, {
+        "endTime": "2018-05-31T15:59:33.973175557Z",
+        "startTime": "2018-05-31T15:44:55.566015839Z",
+        "description": "localizing-files"
+      }, {
+        "endTime": "2018-05-31T09:59:54.297-07:00",
+        "description": "UpdatingCallCache",
+        "startTime": "2018-05-31T09:59:53.061-07:00"
+      }, {
+        "endTime": "2018-05-31T08:41:58.009-07:00",
+        "description": "CheckingCallCache",
+        "startTime": "2018-05-31T08:41:58.003-07:00"
+      }, {
+        "startTime": "2018-05-31T16:24:53.258229519Z",
+        "description": "ok",
+        "endTime": "2018-05-31T16:24:53.258229519Z"
+      }, {
+        "description": "Pending",
+        "endTime": "2018-05-31T08:41:57.995-07:00",
+        "startTime": "2018-05-31T08:41:57.995-07:00"
+      }, {
+        "startTime": "2018-05-31T09:59:54.297-07:00",
+        "endTime": "2018-05-31T09:59:54.297-07:00",
+        "description": "UpdatingJobStore"
+      }, {
+        "description": "start",
+        "startTime": "2018-05-31T15:43:59.400249857Z",
+        "endTime": "2018-05-31T15:43:59.400526227Z"
+      }, {
+        "startTime": "2018-05-31T08:41:57.996-07:00",
+        "description": "WaitingForValueStore",
+        "endTime": "2018-05-31T08:41:57.996-07:00"
+      }, {
+        "endTime": "2018-05-31T08:41:58.003-07:00",
+        "startTime": "2018-05-31T08:41:57.996-07:00",
+        "description": "PreparingJob"
+      }, {
+        "endTime": "2018-05-31T15:42:27Z",
+        "startTime": "2018-05-31T15:42:23Z",
+        "description": "waiting for quota"
+      }, {
+        "startTime": "2018-05-31T16:24:53.258229519Z",
+        "description": "cromwell poll interval",
+        "endTime": "2018-05-31T09:59:53.061-07:00"
+      }, {
+        "description": "pulling-image",
+        "startTime": "2018-05-31T15:43:59.400526227Z",
+        "endTime": "2018-05-31T15:44:55.566015839Z"
+      }, {
+        "endTime": "2018-05-31T16:24:53.258229519Z",
+        "description": "delocalizing-files",
+        "startTime": "2018-05-31T16:00:59.457923521Z"
+      }, {
+        "endTime": "2018-05-31T15:42:23Z",
+        "description": "RunningJob",
+        "startTime": "2018-05-31T08:41:58.009-07:00"
+      }, {
+        "endTime": "2018-05-31T08:41:57.996-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-05-31T08:41:57.995-07:00"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/merging_sample-0.log"
+      },
+      "start": "2018-05-31T08:41:57.995-07:00"
+    }],
+    "wgbs.prepare_config": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/prepare_config-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-4609481763471425453"
+      },
+      "outputs": {
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json"
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "EC6966C68F05682BB11643D236635E15",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "File metadata_json": "C3511F71C2A3F33FFE1A0E4E12102522"
+          },
+          "input count": "C4CA4238A0B923820DCC509A6F75849B",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "A9E600E4D0E09F10AEBEBDF544E5574A",
+          "input": {
+            "File metadata_csv": "ppw5ww=="
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "metadata_csv": "gs://wgbs-pipeline/input_data/ENCSR750CPN/metadata.csv"
+      },
+      "backendLabels": {
+        "wdl-task-name": "prepare-config",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "prepare_config",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "jobId": "operations/EOmEtJq7LBit_-uy3ueK_D8gtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-05-30T16:08:13.580-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:849d0482dade8647af77b9e923b0619fc904bbc22ecb9ce26f8df78248448933",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/prepare_config-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config",
+      "attempt": 1,
+      "executionEvents": [{
+        "description": "CheckingCallCache",
+        "startTime": "2018-05-30T16:05:51.510-07:00",
+        "endTime": "2018-05-30T16:05:51.576-07:00"
+      }, {
+        "description": "pulling-image",
+        "endTime": "2018-05-30T23:07:48.567457360Z",
+        "startTime": "2018-05-30T23:06:45.591166449Z"
+      }, {
+        "description": "UpdatingCallCache",
+        "startTime": "2018-05-30T16:08:13.151-07:00",
+        "endTime": "2018-05-30T16:08:13.579-07:00"
+      }, {
+        "endTime": "2018-05-30T16:05:50.687-07:00",
+        "description": "Pending",
+        "startTime": "2018-05-30T16:05:50.678-07:00"
+      }, {
+        "endTime": "2018-05-30T16:05:50.708-07:00",
+        "description": "WaitingForValueStore",
+        "startTime": "2018-05-30T16:05:50.699-07:00"
+      }, {
+        "endTime": "2018-05-30T16:05:51.510-07:00",
+        "description": "PreparingJob",
+        "startTime": "2018-05-30T16:05:50.708-07:00"
+      }, {
+        "startTime": "2018-05-30T16:05:51.576-07:00",
+        "endTime": "2018-05-30T23:05:58Z",
+        "description": "RunningJob"
+      }, {
+        "endTime": "2018-05-30T23:06:45.591166449Z",
+        "description": "start",
+        "startTime": "2018-05-30T23:06:45.590468163Z"
+      }, {
+        "startTime": "2018-05-30T23:08:03Z",
+        "description": "cromwell poll interval",
+        "endTime": "2018-05-30T16:08:13.151-07:00"
+      }, {
+        "startTime": "2018-05-30T23:08:02.979781094Z",
+        "description": "ok",
+        "endTime": "2018-05-30T23:08:03Z"
+      }, {
+        "startTime": "2018-05-30T23:06:03Z",
+        "endTime": "2018-05-30T23:06:45.590468163Z",
+        "description": "initializing VM"
+      }, {
+        "endTime": "2018-05-30T23:07:55.728324971Z",
+        "startTime": "2018-05-30T23:07:48.567457360Z",
+        "description": "localizing-files"
+      }, {
+        "endTime": "2018-05-30T23:07:57.939201447Z",
+        "startTime": "2018-05-30T23:07:55.728324971Z",
+        "description": "running-docker"
+      }, {
+        "endTime": "2018-05-30T23:06:03Z",
+        "description": "waiting for quota",
+        "startTime": "2018-05-30T23:05:58Z"
+      }, {
+        "startTime": "2018-05-30T23:07:57.939201447Z",
+        "description": "delocalizing-files",
+        "endTime": "2018-05-30T23:08:02.979781094Z"
+      }, {
+        "description": "UpdatingJobStore",
+        "endTime": "2018-05-30T16:08:13.582-07:00",
+        "startTime": "2018-05-30T16:08:13.579-07:00"
+      }, {
+        "endTime": "2018-05-30T16:05:50.699-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-05-30T16:05:50.687-07:00"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/prepare_config.log"
+      },
+      "start": "2018-05-30T16:05:50.668-07:00"
+    }],
+    "wgbs.get_sample_names": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-get_sample_names/get_sample_names-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-7368296913700418951"
+      },
+      "outputs": {
+        "names": ["sample_ENCSR750CPN"]
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "EC6966C68F05682BB11643D236635E15",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA"
+          },
+          "output expression": {
+            "Array": "EFE386CE68D702F4E73611BD6D6F4549"
+          },
+          "input count": "C4CA4238A0B923820DCC509A6F75849B",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "67EF07207AD3F3310859BD099D4B33A2",
+          "input": {
+            "File metadata_json": "kKUf1A=="
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json"
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+        "wdl-task-name": "get-sample-names"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "get_sample_names",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "jobId": "operations/EPD0vJq7LBiH6-HlkODcoGYgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-05-30T16:10:19.551-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:849d0482dade8647af77b9e923b0619fc904bbc22ecb9ce26f8df78248448933",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-get_sample_names/get_sample_names-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-get_sample_names",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-05-30T23:09:09.232158920Z",
+        "description": "initializing VM",
+        "startTime": "2018-05-30T23:08:28Z"
+      }, {
+        "endTime": "2018-05-30T16:10:19.551-07:00",
+        "startTime": "2018-05-30T16:10:19.551-07:00",
+        "description": "UpdatingJobStore"
+      }, {
+        "endTime": "2018-05-30T16:10:19.551-07:00",
+        "startTime": "2018-05-30T16:10:16.764-07:00",
+        "description": "UpdatingCallCache"
+      }, {
+        "endTime": "2018-05-30T23:09:56.137085430Z",
+        "startTime": "2018-05-30T23:09:09.232790799Z",
+        "description": "pulling-image"
+      }, {
+        "endTime": "2018-05-30T23:10:07.656450701Z",
+        "description": "running-docker",
+        "startTime": "2018-05-30T23:10:05.883314488Z"
+      }, {
+        "startTime": "2018-05-30T23:10:07.656450701Z",
+        "description": "delocalizing-files",
+        "endTime": "2018-05-30T23:10:09.736195834Z"
+      }, {
+        "description": "WaitingForValueStore",
+        "startTime": "2018-05-30T16:08:14.662-07:00",
+        "endTime": "2018-05-30T16:08:14.662-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.661-07:00",
+        "startTime": "2018-05-30T16:08:14.661-07:00",
+        "description": "Pending"
+      }, {
+        "endTime": "2018-05-30T23:10:10Z",
+        "startTime": "2018-05-30T23:10:09.736195834Z",
+        "description": "ok"
+      }, {
+        "endTime": "2018-05-30T23:09:09.232790799Z",
+        "startTime": "2018-05-30T23:09:09.232158920Z",
+        "description": "start"
+      }, {
+        "endTime": "2018-05-30T23:10:05.883314488Z",
+        "description": "localizing-files",
+        "startTime": "2018-05-30T23:09:56.137085430Z"
+      }, {
+        "startTime": "2018-05-30T16:08:14.665-07:00",
+        "endTime": "2018-05-30T16:08:14.668-07:00",
+        "description": "CheckingCallCache"
+      }, {
+        "description": "cromwell poll interval",
+        "startTime": "2018-05-30T23:10:10Z",
+        "endTime": "2018-05-30T16:10:16.764-07:00"
+      }, {
+        "endTime": "2018-05-30T16:08:14.662-07:00",
+        "startTime": "2018-05-30T16:08:14.661-07:00",
+        "description": "RequestingExecutionToken"
+      }, {
+        "endTime": "2018-05-30T16:08:14.665-07:00",
+        "description": "PreparingJob",
+        "startTime": "2018-05-30T16:08:14.662-07:00"
+      }, {
+        "endTime": "2018-05-30T23:08:28Z",
+        "startTime": "2018-05-30T23:08:24Z",
+        "description": "waiting for quota"
+      }, {
+        "endTime": "2018-05-30T23:08:24Z",
+        "description": "RunningJob",
+        "startTime": "2018-05-30T16:08:14.668-07:00"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-get_sample_names/get_sample_names.log"
+      },
+      "start": "2018-05-30T16:08:14.661-07:00"
+    }],
+    "wgbs.mapping": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/mapping-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-a/n1-standard-16",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-a",
+        "instanceName": "ggp-16397462154913724369"
+      },
+      "outputs": {
+        "all_outputs": ["gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/glob-eb405632777facee831d536a4f7c2f85/flowcell_1_1.json"]
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 500 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "16",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "60 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "EC6966C68F05682BB11643D236635E15",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA"
+          },
+          "output expression": {
+            "Array": "543008CF180DD2075B53B72B9071CECF"
+          },
+          "input count": "E4DA3B7FBBCE2345D7772B0674A318D5",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "93ECA6E8D303B6E2721513E2584FE4F4",
+          "input": {
+            "File metadata_json": "kKUf1A==",
+            "File fastq_files": ["HTBazA==", "eSj95g=="],
+            "File reference_gem": "Np/1sg==",
+            "String commands": ["3EFBA44E2FF87C115D519700850EEE54"]
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+        "disks": null,
+        "cpu": null,
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "memory_gb": null,
+        "commands": ["gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "],
+        "fastq_files": ["gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_2.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_1.fastq.gz"]
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+        "wdl-task-name": "mapping"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "mapping",
+        "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+      },
+      "jobId": "operations/EJqUxZq7LBjR76yMvZ7fx-MBILSY1bzKEyoPcHJvZHVjdGlvblF1ZXVl",
+      "backend": "google",
+      "end": "2018-05-31T08:41:54.887-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:849d0482dade8647af77b9e923b0619fc904bbc22ecb9ce26f8df78248448933",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/mapping-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping",
+      "attempt": 1,
+      "executionEvents": [{
+        "description": "waiting for quota",
+        "endTime": "2018-05-30T23:13:07Z",
+        "startTime": "2018-05-30T23:10:39Z"
+      }, {
+        "endTime": "2018-05-30T16:10:29.672-07:00",
+        "startTime": "2018-05-30T16:10:29.666-07:00",
+        "description": "PreparingJob"
+      }, {
+        "endTime": "2018-05-30T23:15:06.710247461Z",
+        "startTime": "2018-05-30T23:14:33.260170157Z",
+        "description": "pulling-image"
+      }, {
+        "endTime": "2018-05-30T23:52:14.177191864Z",
+        "startTime": "2018-05-30T23:15:06.710247461Z",
+        "description": "localizing-files"
+      }, {
+        "startTime": "2018-05-31T11:21:54.579629183Z",
+        "endTime": "2018-05-31T11:46:06.943704683Z",
+        "description": "delocalizing-files"
+      }, {
+        "endTime": "2018-05-31T11:21:54.579629183Z",
+        "startTime": "2018-05-30T23:52:14.177191864Z",
+        "description": "running-docker"
+      }, {
+        "endTime": "2018-05-30T23:14:33.260094891Z",
+        "startTime": "2018-05-30T23:13:07Z",
+        "description": "initializing VM"
+      }, {
+        "endTime": "2018-05-31T08:41:54.507-07:00",
+        "startTime": "2018-05-31T11:46:07Z",
+        "description": "cromwell poll interval"
+      }, {
+        "endTime": "2018-05-30T16:10:29.675-07:00",
+        "description": "CheckingCallCache",
+        "startTime": "2018-05-30T16:10:29.672-07:00"
+      }, {
+        "endTime": "2018-05-30T23:10:39Z",
+        "description": "RunningJob",
+        "startTime": "2018-05-30T16:10:29.675-07:00"
+      }, {
+        "startTime": "2018-05-31T08:41:54.507-07:00",
+        "description": "UpdatingCallCache",
+        "endTime": "2018-05-31T08:41:54.887-07:00"
+      }, {
+        "startTime": "2018-05-31T08:41:54.887-07:00",
+        "description": "UpdatingJobStore",
+        "endTime": "2018-05-31T08:41:54.887-07:00"
+      }, {
+        "endTime": "2018-05-30T23:14:33.260170157Z",
+        "description": "start",
+        "startTime": "2018-05-30T23:14:33.260094891Z"
+      }, {
+        "endTime": "2018-05-30T16:10:29.665-07:00",
+        "startTime": "2018-05-30T16:10:29.665-07:00",
+        "description": "Pending"
+      }, {
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-05-30T16:10:29.665-07:00",
+        "endTime": "2018-05-30T16:10:29.666-07:00"
+      }, {
+        "endTime": "2018-05-30T16:10:29.666-07:00",
+        "startTime": "2018-05-30T16:10:29.666-07:00",
+        "description": "WaitingForValueStore"
+      }, {
+        "endTime": "2018-05-31T11:46:07Z",
+        "description": "ok",
+        "startTime": "2018-05-31T11:46:06.943704683Z"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-mapping/mapping.log"
+      },
+      "start": "2018-05-30T16:10:29.665-07:00"
+    }],
+    "wgbs.bscall": [{
+      "retryableFailure": false,
+      "executionStatus": "Failed",
+      "subWorkflowMetadata": {
+        "workflowName": "bscall",
+        "calls": {
+          "bscall.bscall_task": [{
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 0,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.515-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.478-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.478-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.484-07:00",
+              "endTime": "2018-05-31T09:59:59.507-07:00",
+              "description": "PreparingJob"
+            }, {
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "startTime": "2018-05-31T09:59:59.478-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.478-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 1,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.518-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.483-07:00",
+              "endTime": "2018-05-31T09:59:59.512-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.483-07:00",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.478-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 2,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.515-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.477-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "endTime": "2018-05-31T09:59:59.483-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.507-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.483-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.477-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 3,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.518-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.485-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.485-07:00",
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.481-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.481-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.481-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "RequestingExecutionToken"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 4,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.518-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "Pending"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "endTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.484-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 5,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.514-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.482-07:00",
+              "endTime": "2018-05-31T09:59:59.502-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.477-07:00",
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "endTime": "2018-05-31T09:59:59.482-07:00"
+            }, {
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "endTime": "2018-05-31T09:59:59.477-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.477-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 6,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.513-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.477-07:00",
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "description": "Pending"
+            }, {
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.482-07:00",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "endTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.502-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.482-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.476-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 7,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }],
+              "message": "Call input and runtime attributes evaluation failed for bscall_task"
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.517-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.479-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.479-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "startTime": "2018-05-31T09:59:59.484-07:00",
+              "description": "PreparingJob"
+            }, {
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.484-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.479-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 8,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.515-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.507-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "startTime": "2018-05-31T09:59:59.479-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.479-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "description": "WaitingForValueStore"
+            }],
+            "start": "2018-05-31T09:59:59.479-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 9,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.520-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.516-07:00",
+              "startTime": "2018-05-31T09:59:59.485-07:00",
+              "description": "PreparingJob"
+            }, {
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.481-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.485-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 10,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.516-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "PreparingJob",
+              "endTime": "2018-05-31T09:59:59.508-07:00",
+              "startTime": "2018-05-31T09:59:59.483-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.483-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "Pending"
+            }, {
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "endTime": "2018-05-31T09:59:59.479-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.478-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 11,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }],
+              "message": "Call input and runtime attributes evaluation failed for bscall_task"
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.517-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.477-07:00",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "endTime": "2018-05-31T09:59:59.483-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "startTime": "2018-05-31T09:59:59.483-07:00",
+              "description": "PreparingJob"
+            }, {
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.477-07:00",
+              "endTime": "2018-05-31T09:59:59.477-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.477-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 12,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.517-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 13,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.513-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-05-31T09:59:59.481-07:00"
+            }, {
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.476-07:00",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.476-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.502-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "PreparingJob"
+            }],
+            "start": "2018-05-31T09:59:59.476-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 14,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.514-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.476-07:00",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.476-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.502-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "PreparingJob"
+            }],
+            "start": "2018-05-31T09:59:59.476-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 15,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }],
+              "message": "Call input and runtime attributes evaluation failed for bscall_task"
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.517-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.479-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "endTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.480-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.479-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 16,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.517-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.485-07:00",
+              "endTime": "2018-05-31T09:59:59.511-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending"
+            }, {
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "endTime": "2018-05-31T09:59:59.485-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 17,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }],
+              "message": "Call input and runtime attributes evaluation failed for bscall_task"
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.519-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "Pending"
+            }, {
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.484-07:00",
+              "endTime": "2018-05-31T09:59:59.512-07:00",
+              "description": "PreparingJob"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 18,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.515-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.507-07:00",
+              "startTime": "2018-05-31T09:59:59.484-07:00",
+              "description": "PreparingJob"
+            }, {
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "startTime": "2018-05-31T09:59:59.479-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "endTime": "2018-05-31T09:59:59.479-07:00",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "Pending"
+            }],
+            "start": "2018-05-31T09:59:59.479-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 19,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }],
+              "message": "Call input and runtime attributes evaluation failed for bscall_task"
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.519-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-05-31T09:59:59.481-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "endTime": "2018-05-31T09:59:59.485-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "endTime": "2018-05-31T09:59:59.516-07:00",
+              "startTime": "2018-05-31T09:59:59.485-07:00",
+              "description": "PreparingJob"
+            }, {
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.481-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.481-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 20,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: disks"
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.509-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "endTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "description": "RequestingExecutionToken",
+              "endTime": "2018-05-31T09:59:59.477-07:00",
+              "startTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.482-07:00",
+              "description": "WaitingForValueStore",
+              "startTime": "2018-05-31T09:59:59.477-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.501-07:00",
+              "startTime": "2018-05-31T09:59:59.482-07:00",
+              "description": "PreparingJob"
+            }],
+            "start": "2018-05-31T09:59:59.476-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 21,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.518-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "endTime": "2018-05-31T09:59:59.478-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.478-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.478-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.511-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-05-31T09:59:59.484-07:00"
+            }, {
+              "startTime": "2018-05-31T09:59:59.478-07:00",
+              "endTime": "2018-05-31T09:59:59.484-07:00",
+              "description": "WaitingForValueStore"
+            }],
+            "start": "2018-05-31T09:59:59.478-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 22,
+            "callCaching": {
+              "effectiveCallCachingMode": "ReadAndWriteCache",
+              "allowResultReuse": true
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "causedBy": [],
+                "message": ":\nkey not found: cpu"
+              }, {
+                "causedBy": [],
+                "message": ":\nkey not found: memory_gb"
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.502-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "endTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "description": "Pending",
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "endTime": "2018-05-31T09:59:59.476-07:00"
+            }, {
+              "endTime": "2018-05-31T09:59:59.503-07:00",
+              "startTime": "2018-05-31T09:59:59.481-07:00",
+              "description": "PreparingJob"
+            }, {
+              "startTime": "2018-05-31T09:59:59.476-07:00",
+              "endTime": "2018-05-31T09:59:59.476-07:00",
+              "description": "RequestingExecutionToken"
+            }],
+            "start": "2018-05-31T09:59:59.476-07:00"
+          }, {
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "shardIndex": 23,
+            "callCaching": {
+              "allowResultReuse": true,
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "failures": [{
+              "message": "Call input and runtime attributes evaluation failed for bscall_task",
+              "causedBy": [{
+                "message": ":\nkey not found: cpu",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: memory_gb",
+                "causedBy": []
+              }, {
+                "message": ":\nkey not found: disks",
+                "causedBy": []
+              }]
+            }],
+            "backend": "google",
+            "end": "2018-05-31T09:59:59.515-07:00",
+            "attempt": 1,
+            "executionEvents": [{
+              "startTime": "2018-05-31T09:59:59.480-07:00",
+              "endTime": "2018-05-31T09:59:59.485-07:00",
+              "description": "WaitingForValueStore"
+            }, {
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }, {
+              "description": "PreparingJob",
+              "endTime": "2018-05-31T09:59:59.507-07:00",
+              "startTime": "2018-05-31T09:59:59.485-07:00"
+            }, {
+              "description": "Pending",
+              "endTime": "2018-05-31T09:59:59.480-07:00",
+              "startTime": "2018-05-31T09:59:59.480-07:00"
+            }],
+            "start": "2018-05-31T09:59:59.480-07:00"
+          }]
+        },
+        "workflowRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/",
+        "id": "2b9ce920-4012-4b06-8933-6b7d1d82b3ba",
+        "inputs": {
+          "reference_fasta": "gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz",
+          "chromosomes": ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"],
+          "sample": "sample_ENCSR750CPN",
+          "organism": "Human",
+          "bai": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-3a28b840fa81b8d0fd468b1db31ea7bc/sample_ENCSR750CPN.bai",
+          "bam": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-f18f0b4e1b56183594a70d724b1ef631/sample_ENCSR750CPN.bam"
+        },
+        "status": "Failed",
+        "parentWorkflowId": "eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+        "end": "2018-05-31T10:00:00.478-07:00",
+        "start": "2018-05-31T09:59:55.452-07:00"
+      },
+      "shardIndex": 0,
+      "inputs": {
+        "reference_fasta": "gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz",
+        "chromosomes": ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"],
+        "sample": "sample_ENCSR750CPN",
+        "organism": "Human",
+        "bai": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-3a28b840fa81b8d0fd468b1db31ea7bc/sample_ENCSR750CPN.bai",
+        "bam": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/call-merging_sample/shard-0/glob-f18f0b4e1b56183594a70d724b1ef631/sample_ENCSR750CPN.bam"
+      },
+      "failures": [{
+        "causedBy": [{
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }]
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }]
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: memory_gb"
+          }, {
+            "causedBy": [],
+            "message": ":\nkey not found: disks"
+          }]
+        }, {
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }],
+          "message": "Call input and runtime attributes evaluation failed for bscall_task"
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "message": ":\nkey not found: cpu",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }, {
+          "message": "Call input and runtime attributes evaluation failed for bscall_task",
+          "causedBy": [{
+            "causedBy": [],
+            "message": ":\nkey not found: cpu"
+          }, {
+            "message": ":\nkey not found: memory_gb",
+            "causedBy": []
+          }, {
+            "message": ":\nkey not found: disks",
+            "causedBy": []
+          }]
+        }],
+        "message": "Workflow failed"
+      }],
+      "end": "2018-05-31T10:00:00.478-07:00",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-05-31T10:00:00.478-07:00",
+        "description": "SubWorkflowRunningState",
+        "startTime": "2018-05-31T09:59:55.462-07:00"
+      }, {
+        "description": "WaitingForValueStore",
+        "startTime": "2018-05-31T09:59:55.448-07:00",
+        "endTime": "2018-05-31T09:59:55.452-07:00"
+      }, {
+        "endTime": "2018-05-31T09:59:55.448-07:00",
+        "description": "SubWorkflowPendingState",
+        "startTime": "2018-05-31T09:59:55.436-07:00"
+      }, {
+        "endTime": "2018-05-31T09:59:55.462-07:00",
+        "description": "SubWorkflowPreparingState",
+        "startTime": "2018-05-31T09:59:55.452-07:00"
+      }],
+      "start": "2018-05-31T09:59:55.432-07:00"
+    }]
+  },
+  "outputs": {
+
+  },
+  "workflowRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/eb98484c-12b7-4bd4-8aa1-14bc951d88cb/",
+  "id": "eb98484c-12b7-4bd4-8aa1-14bc951d88cb",
+  "inputs": {
+    "wgbs.mapping.memory_gb": null,
+    "wgbs.mapping_outputs": null,
+    "wgbs.metadata": "gs://wgbs-pipeline/input_data/ENCSR750CPN/metadata.csv",
+    "wgbs.index.cpu": null,
+    "wgbs.mapping.disks": null,
+    "wgbs.bscall_concatenate.cpu": null,
+    "wgbs.chromosomes": ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"],
+    "wgbs.index.disks": null,
+    "wgbs.merging_sample.cpu": null,
+    "wgbs.bscall_concatenate.disks": null,
+    "wgbs.fastq_files": ["gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_2.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR750CPN/fastq/flowcell_1_1_1.fastq.gz"],
+    "wgbs.merging_sample.memory_gb": null,
+    "wgbs.merging_sample.disks": null,
+    "wgbs.methylation_filtering.disks": null,
+    "wgbs.methylation_filtering.cpu": null,
+    "wgbs.index.memory_gb": null,
+    "wgbs.bscall_concatenate.memory_gb": null,
+    "wgbs.organism": "Human",
+    "wgbs.indexed_reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+    "wgbs.methylation_filtering.memory_gb": null,
+    "wgbs.reference_fasta": "gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz",
+    "wgbs.mapping.cpu": null,
+    "wgbs.pyglob_nearness": 0,
+    "wgbs.indexed_reference_info": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.info"
+  },
+  "labels": {
+    "cromwell-workflow-id": "cromwell-eb98484c-12b7-4bd4-8aa1-14bc951d88cb"
+  },
+  "submission": "2018-05-30T16:05:47.258-07:00",
+  "status": "Failed",
+  "failures": [{
+    "message": "Workflow failed",
+    "causedBy": [{
+      "message": "Workflow failed",
+      "causedBy": [{
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }]
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }]
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }]
+      }, {
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }],
+        "message": "Call input and runtime attributes evaluation failed for bscall_task"
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: memory_gb"
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "causedBy": [],
+          "message": ":\nkey not found: disks"
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "causedBy": [],
+          "message": ":\nkey not found: cpu"
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }, {
+        "message": "Call input and runtime attributes evaluation failed for bscall_task",
+        "causedBy": [{
+          "message": ":\nkey not found: cpu",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: memory_gb",
+          "causedBy": []
+        }, {
+          "message": ":\nkey not found: disks",
+          "causedBy": []
+        }]
+      }]
+    }]
+  }],
+  "end": "2018-05-31T10:00:01.443-07:00",
+  "start": "2018-05-30T16:05:47.295-07:00"
+}
