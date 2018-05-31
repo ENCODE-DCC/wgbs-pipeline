@@ -13,7 +13,6 @@ workflow wgbs {
 	Array[Pair[String, Array[Pair[String,Array[File]]]]] fastq_files
 	Array[File]? mapping_outputs
 	Array[String] chromosomes
-	Array[String] samples
 
 
 	if (!defined(indexed_reference_gem)) {
