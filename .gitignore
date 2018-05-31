@@ -6,7 +6,6 @@ metadata.json
 
 help/ENC*
 
-test/ENC*
 # cromwell temp dirs
 cromwell-executions/
 cromwell-workflow-logs/
