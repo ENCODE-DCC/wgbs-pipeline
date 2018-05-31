@@ -42,12 +42,12 @@ workflow wgbs {
 	}
 
 	scatter(sample_files in fastq_files) {
-
+		
 		call mapper.mapping as map { input:
 			reference_gem = indexed_gem,
 			metadata_json = prepare_config.metadata_json,
 			sample_files = sample_files,
-			commands = flowcell_to_commands.commands
+			commands = flowcell_to_commands.paired_commands
 		}
 
 		call merging_sample { input:
@@ -80,7 +80,7 @@ workflow wgbs {
 		File reference_info = indexed_info
 		File reference_gem = indexed_gem
 		File metadata_json = prepare_config.metadata_json
-		Array[Array[File]] mapping_step_outputs = map.mapping_outputs
+		Array[Array[Array[File]]] mapping_step_outputs = map.mapping_outputs
 		Array[File] merged_bam = merging_sample.bam
 		Array[File] merged_bai = merging_sample.bai
 		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file
@@ -153,14 +153,14 @@ task flowcell_to_commands {
 											  value['index_name'], 
 											  value['lane_number']))
 		for name in set(lane_names):
-			for command in commands:
-				if name in commands:
-					print("{}\t{}".format(name, command))
+			for command_string in '${sep="<>" commands}'.split('<>'):
+				if name in command_string:
+					print("{}\t{}".format(name, command_string))
 		CODE
 	>>>
 
 	output {
-		Map[String, String] commands = read_map(stdout())
+		Map[String,String] paired_commands = read_map(stdout())
 	}
 }
 
@@ -234,7 +234,7 @@ task bscall_concatenate {
 
 	runtime {
 		cpu: select_first([cpu,2])
-		memory : "${select_first([memory_gb,'7.5'])} GB"
+		memory : "${select_first([memory_gb,'7'])} GB"
 		disks : select_first([disks,"local-disk 100 HDD"])
 	}
 }
