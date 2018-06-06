@@ -42,9 +42,10 @@ task mapping_job {
 	}
 
 	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
+		cpu: select_first([cpu,64])
+		memory : "${select_first([memory_gb,'240'])} GB"
 		disks : select_first([disks,"local-disk 500 HDD"])
+		preemptible: 0
 	}
 
 	output {

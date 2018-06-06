@@ -40,15 +40,16 @@ task bscall_job {
 	command {
 		mkdir -p data/chr_snp_calls
 		mkdir -p data/sample_mappings
-		ln -s ${bam} data/sample_mappings/
-		ln -s ${bai} data/sample_mappings/
+		ln ${bam} data/sample_mappings/
+		ln ${bai} data/sample_mappings/
 		gemBS bscall \
 			-r ${reference_fasta} \
 			-e ${organism} \
 			-s ${sample} \
 			-c ${chromosome} \
 			-i data/sample_mappings/$(basename ${bam}) \
-			-o data/chr_snp_calls
+			-o data/chr_snp_calls \
+			-t 8
 	}
 
 	output {
@@ -60,5 +61,6 @@ task bscall_job {
 		cpu: select_first([cpu,8])
 		memory : "${select_first([memory_gb,'30'])} GB"
 		disks : select_first([disks,"local-disk 200 HDD"])
+		preemptible: 0
 	}
 }

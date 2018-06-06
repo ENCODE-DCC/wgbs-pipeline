@@ -70,7 +70,9 @@ workflow wgbs {
 		}
 
 		call methylation_filtering {input:
-			merged_call_file = bscall_concatenate.merged_file
+			merged_file_bcf = bscall_concatenate.merged_file_bcf,
+			merged_file_bcf_csi = bscall_concatenate.merged_file_bcf_csi,
+			merged_file_md5 = bscall_concatenate.merged_file_md5,
 		}
 	}
 
@@ -82,7 +84,7 @@ workflow wgbs {
 		Array[Array[Array[File]]] mapping_step_outputs = map.mapping_outputs
 		Array[File] merged_bam = merging_sample.bam
 		Array[File] merged_bai = merging_sample.bai
-		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file
+		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file_bcf
 		Array[File] methylation_filtered_file = methylation_filtering.filtered_meth_file
 	}
 }
@@ -122,6 +124,7 @@ task index {
 		cpu: select_first([cpu,16])
 		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 100 HDD"])
+		preemptible: 0
 	}
 }
 
@@ -148,9 +151,9 @@ task flowcell_to_commands {
 			metadata_json = json.load(file)
 		lane_names = []
 		for key, value in metadata_json.items():
-			lane_names.append("{}_{}_{}".format(value['flowcell_name'], 
-											  value['index_name'], 
-											  value['lane_number']))
+			lane_names.append("{}_{}_{}".format(value['flowcell_name'],
+											 	value['lane_number'],
+												value['index_name']))
 		for name in set(lane_names):
 			for command_string in '${sep="<>" commands}'.split('<>'):
 				if name in command_string:
@@ -175,7 +178,7 @@ task generate_mapping_commands {
 		mkdir reference
 		ln -s ${reference_gem} reference/
 		ln -s ${metadata_json} .
-		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p
+		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 62 -p
 	}
 
 	output {
@@ -210,6 +213,7 @@ task merging_sample {
 		cpu: select_first([cpu,16])
 		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 500 HDD"])
+		preemptible: 0
 	}
 }
 
@@ -228,18 +232,23 @@ task bscall_concatenate {
 	}
 
 	output {
-		File merged_file = glob("data/merged_calls/*.raw.bcf")[0]
+		File merged_file_bcf = glob("data/merged_calls/*.raw.bcf")[0]
+		File merged_file_bcf_csi = glob("data/merged_calls/*.raw.bcf.csi")[0]
+		File merged_file_md5 = glob("data/merged_calls/*.raw.md5")[0]
 	}
 
 	runtime {
 		cpu: select_first([cpu,2])
 		memory : "${select_first([memory_gb,'7'])} GB"
 		disks : select_first([disks,"local-disk 100 HDD"])
+		preemptible: 0
 	}
 }
 
 task methylation_filtering {
-	File merged_call_file
+	File merged_file_bcf
+	File merged_file_bcf_csi
+	File merged_file_md5
 
 	Int? memory_gb
 	Int? cpu
@@ -247,7 +256,11 @@ task methylation_filtering {
 
 	command {
 		mkdir -p data/filtered_meth_calls
-		gemBS methylation-filtering -b ${merged_call_file} -o data/filtered_meth_calls
+		mkdir -p data/merged_calls
+		ln ${merged_file_bcf} data/merged_calls
+		ln ${merged_file_bcf_csi} data/merged_calls
+		ln ${merged_file_md5} data/merged_calls
+		gemBS methylation-filtering -b data/merged_calls/$(basename ${merged_file_bcf}) -o data/filtered_meth_calls
 	}
 
 	output {
@@ -258,5 +271,6 @@ task methylation_filtering {
 		cpu: select_first([cpu,16])
 		memory : "${select_first([memory_gb,'60'])} GB"
 		disks : select_first([disks,"local-disk 500 HDD"])
+		preemptible: 0
 	}
 }
