@@ -1,0 +1,1103 @@
+{
+  "workflowName": "wgbs",
+  "submittedFiles": {
+    "workflow": "# ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS\n# Maintainer: Ulugbek Baymuradov\nimport 'bs-call.wdl' as bscaller\nimport 'mapping.wdl' as mapper\n\nworkflow wgbs {\n\tString organism\n\tFile reference_fasta\n\tFile? indexed_reference_gem\n\tFile? indexed_reference_info\n\tFile metadata \n\tInt pyglob_nearness\n\tArray[Pair[String, Array[Pair[String,Array[File]]]]] fastq_files\n\tArray[File]? mapping_outputs\n\tArray[String] chromosomes\n\n\n\tif (!defined(indexed_reference_gem)) {\n\t\tcall index { input:\n\t\t\treference_fasta = reference_fasta,\n\t\t\tnearness = pyglob_nearness\n\t\t}\n\t}\n\n\tFile indexed_gem = select_first([indexed_reference_gem, index.reference_gem])\n\tFile indexed_info = select_first([indexed_reference_info, index.reference_info])\n\n\tcall prepare_config { input:\n\t\tmetadata_csv = metadata\n\t}\n\n\n\tcall generate_mapping_commands { input:\n\t\treference_gem = indexed_gem,\n\t\tmetadata_json = prepare_config.metadata_json\n\t}\n\n\tcall flowcell_to_commands { input:\n\t\tmetadata_json = prepare_config.metadata_json,\n\t\tcommands = generate_mapping_commands.mapping_commands\n\t}\n\n\tscatter(sample_files in fastq_files) {\n\t\t\n\t\tcall mapper.mapping as map { input:\n\t\t\treference_gem = indexed_gem,\n\t\t\tmetadata_json = prepare_config.metadata_json,\n\t\t\tsample_files = sample_files,\n\t\t\tcommands = flowcell_to_commands.paired_commands\n\t\t}\n\n\t\tcall merging_sample { input:\n\t\t\tmapping_outputs = map.mapping_outputs,\n\t\t\tmetadata_json = prepare_config.metadata_json,\n\t\t\tsample = sample_files.left\n\t\t}\n\n\t\tcall bscaller.bscall { input:\n\t\t\torganism = organism,\n\t\t\treference_fasta = reference_fasta,\n\t\t\tbam = merging_sample.bam,\n\t\t\tbai = merging_sample.bai,\n\t\t\tsample = sample_files.left,\n\t\t\tchromosomes = chromosomes\n\t\t}\n\n\t\tcall bscall_concatenate { input:\n\t\t\tsample = sample_files.left,\n\t\t\tbcf_files = bscall.bcf_files\n\t\t}\n\n\t\tcall methylation_filtering {input:\n\t\t\tmerged_call_file = bscall_concatenate.merged_file\n\t\t}\n\t}\n\n\n\toutput {\n\t\tFile reference_info = indexed_info\n\t\tFile reference_gem = indexed_gem\n\t\tFile metadata_json = prepare_config.metadata_json\n\t\tArray[Array[Array[File]]] mapping_step_outputs = map.mapping_outputs\n\t\tArray[File] merged_bam = merging_sample.bam\n\t\tArray[File] merged_bai = merging_sample.bai\n\t\tArray[File] bscall_concatenated_file = bscall_concatenate.merged_file\n\t\tArray[File] methylation_filtered_file = methylation_filtering.filtered_meth_file\n\t}\n}\n\n\ntask index {\n\n\tFile reference_fasta\n\tInt nearness\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tgemBS index -i ${reference_fasta}\n\t\tpyglob.py \\\n\t\t\t${\"--pattern '*.BS.info'\"} \\\n\t\t\t${\"--nearness \" + nearness} \\\n\t\t\t${\"--matched-files-name info\"}\n\t\tpyglob.py \\\n\t\t\t${\"--pattern '*.BS.gem'\"} \\\n\t\t\t${\"--nearness \" + nearness} \\\n\t\t\t${\"--matched-files-name gem\"}\n\t\tmkdir index_out\n\t\tcat info.txt | xargs -I % ln -s % index_out\n\t\tcat gem.txt | xargs -I % ln -s % index_out\n\t}\n\n\toutput {\n\t\tFile reference_info = glob(\"index_out/*.BS.info\")[0]\n\t\tFile reference_gem = glob(\"index_out/*.BS.gem\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 100 HDD\"])\n\t}\n}\n\ntask prepare_config {\n\tFile metadata_csv\n\n\tcommand {\n\t\tgemBS prepare-config -t ${metadata_csv} -j metadata.json\n\t}\n\n\toutput {\n\t\tFile metadata_json = glob(\"metadata.json\")[0]\n\t}\n}\n\ntask flowcell_to_commands {\n\tFile metadata_json\n\tArray[String] commands\n\n\tcommand <<<\n\t\tpython3 <<CODE\n\t\timport json\n\t\twith open('${metadata_json}') as file:\n\t\t\tmetadata_json = json.load(file)\n\t\tlane_names = []\n\t\tfor key, value in metadata_json.items():\n\t\t\tlane_names.append(\"{}_{}_{}\".format(value['flowcell_name'],\n\t\t\t\t\t\t\t\t\t\t\t \tvalue['lane_number'],\n\t\t\t\t\t\t\t\t\t\t\t\tvalue['index_name']))\n\t\tfor name in set(lane_names):\n\t\t\tfor command_string in '${sep=\"<>\" commands}'.split('<>'):\n\t\t\t\tif name in command_string:\n\t\t\t\t\tprint(\"{}\\t{}\".format(name, command_string))\n\t\tCODE\n\t>>>\n\n\toutput {\n\t\tMap[String,String] paired_commands = read_map(stdout())\n\t}\n}\n\ntask generate_mapping_commands {\n\n\tString reference_gem\n\tFile metadata_json\n\n\tcommand {\n\t\tmkdir fastqs\n\t\tmkdir -p data/mappings \n\t\tmkdir tmp\n\t\tmkdir reference\n\t\tln -s ${reference_gem} reference/\n\t\tln -s ${metadata_json} .\n\t\tgemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p\n\t}\n\n\toutput {\n\t\tArray[String] mapping_commands = read_lines(stdout())\n\t}\n}\n\n\ntask merging_sample {\n\tArray[Array[File]] mapping_outputs\n\tFile metadata_json\n\tString sample \n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir temp\n\t\tmkdir -p data/mappings\n\t\tcat ${write_lines(mapping_outputs[0])} | xargs -I % ln % data/mappings\n\t\tgemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d tmp/\n\t}\n\n\toutput {\n\t\tFile bam = glob(\"data/sample_mappings/*.bam\")[0]\n\t\tFile bai = glob(\"data/sample_mappings/*.bai\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n}\n\ntask bscall_concatenate {\n\tString sample\n\tArray[File] bcf_files\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir -p data/merged_calls\n\t\tgemBS bscall-concatenate -s ${sample} -l ${sep=\" \" bcf_files} -o data/merged_calls\n\t}\n\n\toutput {\n\t\tFile merged_file = glob(\"data/merged_calls/*.raw.bcf\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,2])\n\t\tmemory : \"${select_first([memory_gb,'7'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 100 HDD\"])\n\t}\n}\n\ntask methylation_filtering {\n\tFile merged_call_file\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\tcommand {\n\t\tmkdir -p data/filtered_meth_calls\n\t\tgemBS methylation-filtering -b ${merged_call_file} -o data/filtered_meth_calls\n\t}\n\n\toutput {\n\t\tFile filtered_meth_file = glob(\"data/filtered_meth_calls/*.txt.gz\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n}",
+    "workflowType": "WDL",
+    "options": "{\n  \"default_runtime_attributes\": {\n    \"preemptible\": \"0\",\n    \"bootDiskSizeGb\": \"10\",\n    \"disks\": \"local-disk 100 HDD\",\n    \"docker\": \"quay.io/encode-dcc/wgbs-pipeline:latest\",\n    \"cpu\": \"1\",\n    \"noAddress\": \"false\",\n    \"zones\": \"us-west1-a us-west1-b us-west1-c\",\n    \"memory\": \"2 GB\"\n  }\n}",
+    "inputs": "{\n  \"wgbs.reference_fasta\": \"gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz\",\n  \"wgbs.indexed_reference_gem\": \"gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem\",\n  \"wgbs.indexed_reference_info\": \"gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.info\",\n  \"wgbs.metadata\": \"gs://wgbs-pipeline/input_data/ENCSR786DCL/metadata.csv\",\n  \"wgbs.fastq_files\": [{\"left\": \"sample_1\", \n  \t\t\t\t\t\t\"right\": [{\n  \t\t\t\t\t\t\t\t\t\"left\": \"flowcell_1_1\", \n  \t\t\t\t\t\t\t\t   \t\"right\": [\"gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_1.fastq.gz\",\n  \t\t\t\t  \t\t\t\t\t\t\t  \"gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_2.fastq.gz\"]\n  \t\t\t\t\t\t\t\t }]\n  \t\t\t\t\t    },\n  \t\t\t\t\t    {\"left\": \"sample_2\", \n  \t\t\t\t\t\t\"right\": [{\n  \t\t\t\t\t\t\t\t\t\"left\": \"flowcell_2_1\",\n  \t\t\t\t\t\t\t\t   \t\"right\": [\"gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_1.fastq.gz\",\n  \t\t\t\t  \t\t\t\t\t\t\t  \"gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_2.fastq.gz\"]\n  \t\t\t\t\t\t\t\t }]\n  \t\t\t\t\t    }],\n  \"wgbs.chromosomes\": [\"chr1\", \"chr2\", \"chr3\", \"chr4\", \"chr5\", \"chr6\", \"chr7\", \"chr8\", \"chr9\", \"chr10\", \"chr11\", \"chr12\", \"chr13\", \"chr14\", \"chr15\", \"chr16\", \"chr17\", \"chr18\", \"chr19\", \"chr20\", \"chr21\", \"chr22\", \"chrX\", \"chrY\"],\n  \"wgbs.organism\": \"Human\",\n  \"wgbs.pyglob_nearness\": 0\n}",
+    "labels": "{}",
+    "imports": {
+      "bs-call.wdl": "workflow bscall {\n\tFile reference_fasta\n\tFile bam\n\tFile bai\n\tString organism\n\tString sample\n\tArray[String] chromosomes\n\n\tscatter(chromosome in chromosomes) {\n\t\tcall bscall_job { input:\n\t\t\torganism = organism,\n\t\t\treference_fasta = reference_fasta,\n\t\t\tbam = bam,\n\t\t\tbai = bai,\n\t\t\tsample = sample,\n\t\t\tchromosome = chromosome\n\t\t}\n\t}\n\n\toutput {\n\t\tArray[File] bcf_files = bscall_job.bcf\n\t\tArray[File] json_files = bscall_job.json\n\t}\n\n}\n\ntask bscall_job {\n\tFile reference_fasta\n\tFile bam\n\tFile bai\n\tString organism\n\tString sample\n\tString chromosome\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\t\n\tcommand {\n\t\tmkdir -p data/chr_snp_calls\n\t\tmkdir -p data/sample_mappings\n\t\tln -s ${bam} data/sample_mappings/\n\t\tln -s ${bai} data/sample_mappings/\n\t\tgemBS bscall \\\n\t\t\t-r ${reference_fasta} \\\n\t\t\t-e ${organism} \\\n\t\t\t-s ${sample} \\\n\t\t\t-c ${chromosome} \\\n\t\t\t-i data/sample_mappings/$(basename ${bam}) \\\n\t\t\t-o data/chr_snp_calls\n\t}\n\n\toutput {\n\t\tFile json = glob(\"data/chr_snp_calls/*.json\")[0]\n\t\tFile bcf = glob(\"data/chr_snp_calls/*.bcf\")[0]\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,8])\n\t\tmemory : \"${select_first([memory_gb,'30'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 200 HDD\"])\n\t}\n}\n",
+      "mapping.wdl": "workflow mapping {\n\tFile reference_gem\n\tFile metadata_json\n\tMap[String, String] commands\n\n\tPair[String, Array[Pair[String,Array[File]]]] sample_files\n\n\tscatter(lane_index in sample_files.right) {\n\t\tcall mapping_job { input:\n\t\t\tfastq_files = lane_index.right,\n\t\t\treference_gem = reference_gem,\n\t\t\tmetadata_json = metadata_json,\n\t\t\tcommand_string = commands[lane_index.left]\n\t\t}\n\t}\n\n\toutput {\n\t\tArray[Array[File]] mapping_outputs = mapping_job.all_outputs\n\t}\n}\n\ntask mapping_job {\n\tFile reference_gem\n\tFile metadata_json\n\tString command_string\n\tArray[File] fastq_files\n\n\tInt? memory_gb\n\tInt? cpu\n\tString? disks\n\n\n\tcommand {\n\t\tmkdir tmp\n\t\tmkdir fastqs\n\t\tmkdir -p data/mappings \n\t\tmkdir reference\n\t\tln -s ${reference_gem} reference/\n\t\tln -s ${metadata_json} .\n\t\tcat ${write_lines(fastq_files)} | xargs -I % ln -s % fastqs\n\t\t${command_string}\n\t}\n\n\truntime {\n\t\tcpu: select_first([cpu,16])\n\t\tmemory : \"${select_first([memory_gb,'60'])} GB\"\n\t\tdisks : select_first([disks,\"local-disk 500 HDD\"])\n\t}\n\n\toutput {\n\t\t# May need individual outputs for testing purposes\n\t\t# File mapping_bai_file = glob(\"data/mappings/*.bai\")[0]\n\t\t# File mapping_bam_file = glob(\"data/mappings/*.bam\")[0]\n\t\t# File mapping_json_file = glob(\"data/mappings/*.json\")[0]\n\t\tArray[File] all_outputs = glob(\"data/mappings/*\")\n\t}\n}"
+    }
+  },
+  "calls": {
+    "wgbs.generate_mapping_commands": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-generate_mapping_commands/generate_mapping_commands-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-a/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-a",
+        "instanceName": "ggp-6093225353563259807"
+      },
+      "outputs": {
+        "mapping_commands": ["gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  ", "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "]
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "92685DCE529EF9B783967C423B10535A",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "Array": "EFE386CE68D702F4E73611BD6D6F4549"
+          },
+          "input count": "C81E728D9D4C2F636F067F89CC14862C",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "E8055C630E08F9A91BB82F1FD6FB0A88",
+          "input": {
+            "File metadata_json": "X+Sbrg==",
+            "String reference_gem": "DF184DF5707F9B83173E7AD3613E5F35"
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json"
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "wdl-task-name": "generate-mapping-commands"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "generate_mapping_commands",
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc"
+      },
+      "jobId": "operations/EOCzqeO7LBifh6v8z4Xfx1QgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-06-01T10:36:18.992-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:b77ed772288307247710edf52c1e8253d26f1b938e5c83a5555e1a07f943c7c2",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-generate_mapping_commands/generate_mapping_commands-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-generate_mapping_commands",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-06-01T10:36:18.031-07:00",
+        "description": "cromwell poll interval",
+        "startTime": "2018-06-01T17:36:14.249023171Z"
+      }, {
+        "endTime": "2018-06-01T10:34:29.233-07:00",
+        "description": "Pending",
+        "startTime": "2018-06-01T10:34:29.233-07:00"
+      }, {
+        "endTime": "2018-06-01T10:36:18.992-07:00",
+        "startTime": "2018-06-01T10:36:18.992-07:00",
+        "description": "UpdatingJobStore"
+      }, {
+        "endTime": "2018-06-01T10:34:29.236-07:00",
+        "startTime": "2018-06-01T10:34:29.234-07:00",
+        "description": "PreparingJob"
+      }, {
+        "description": "UpdatingCallCache",
+        "startTime": "2018-06-01T10:36:18.031-07:00",
+        "endTime": "2018-06-01T10:36:18.992-07:00"
+      }, {
+        "endTime": "2018-06-01T17:34:39Z",
+        "description": "waiting for quota",
+        "startTime": "2018-06-01T17:34:36Z"
+      }, {
+        "endTime": "2018-06-01T10:34:29.234-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-06-01T10:34:29.233-07:00"
+      }, {
+        "description": "CheckingCallCache",
+        "endTime": "2018-06-01T10:34:29.239-07:00",
+        "startTime": "2018-06-01T10:34:29.236-07:00"
+      }, {
+        "endTime": "2018-06-01T17:35:15.222167509Z",
+        "startTime": "2018-06-01T17:34:39Z",
+        "description": "initializing VM"
+      }, {
+        "description": "running-docker",
+        "startTime": "2018-06-01T17:36:10.335061821Z",
+        "endTime": "2018-06-01T17:36:12.095273962Z"
+      }, {
+        "description": "delocalizing-files",
+        "startTime": "2018-06-01T17:36:12.095273962Z",
+        "endTime": "2018-06-01T17:36:14.249023171Z"
+      }, {
+        "description": "WaitingForValueStore",
+        "startTime": "2018-06-01T10:34:29.234-07:00",
+        "endTime": "2018-06-01T10:34:29.234-07:00"
+      }, {
+        "description": "pulling-image",
+        "endTime": "2018-06-01T17:36:07.209521776Z",
+        "startTime": "2018-06-01T17:35:15.222828082Z"
+      }, {
+        "endTime": "2018-06-01T17:36:14.249023171Z",
+        "startTime": "2018-06-01T17:36:14.249023171Z",
+        "description": "ok"
+      }, {
+        "endTime": "2018-06-01T17:36:10.335061821Z",
+        "startTime": "2018-06-01T17:36:07.209521776Z",
+        "description": "localizing-files"
+      }, {
+        "endTime": "2018-06-01T17:35:15.222828082Z",
+        "startTime": "2018-06-01T17:35:15.222167509Z",
+        "description": "start"
+      }, {
+        "startTime": "2018-06-01T10:34:29.239-07:00",
+        "description": "RunningJob",
+        "endTime": "2018-06-01T17:34:36Z"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-generate_mapping_commands/generate_mapping_commands.log"
+      },
+      "start": "2018-06-01T10:34:29.233-07:00"
+    }],
+    "wgbs.merging_sample": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1/merging_sample-1-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": 1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-16",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-13336679635407397659"
+      },
+      "outputs": {
+        "bai": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1/glob-3a28b840fa81b8d0fd468b1db31ea7bc/sample_2.bai",
+        "bam": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1/glob-f18f0b4e1b56183594a70d724b1ef631/sample_2.bam"
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 500 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "16",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "60 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C81E728D9D4C2F636F067F89CC14862C",
+          "runtime attribute": {
+            "docker": "92685DCE529EF9B783967C423B10535A",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "File bai": "2E9A37A31F75938B0EFA489CAFE045BC",
+            "File bam": "B277408D3A90B39285BBC28520C18253"
+          },
+          "input count": "E4DA3B7FBBCE2345D7772B0674A318D5",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "048224BEA2DC849E82CF5FDE9E42BE88",
+          "input": {
+            "File metadata_json": "X+Sbrg==",
+            "String sample": "F9B993F873FA069ED14B81685F0028A3",
+            "File mapping_outputs": [["Wh6dHA==", "BHM62g==", "ycFrWA=="]]
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "mapping_outputs": [["gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.json"]],
+        "disks": null,
+        "cpu": null,
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "sample": "sample_2",
+        "memory_gb": null
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "wdl-task-name": "merging-sample"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "merging_sample",
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc"
+      },
+      "jobId": "operations/EIClovy7LBibxpO9--7ZirkBILSY1bzKEyoPcHJvZHVjdGlvblF1ZXVl",
+      "backend": "google",
+      "end": "2018-06-02T02:12:25.867-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:b77ed772288307247710edf52c1e8253d26f1b938e5c83a5555e1a07f943c7c2",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1/merging_sample-1-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-06-02T01:06:23.716-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-06-02T01:06:23.716-07:00"
+      }, {
+        "startTime": "2018-06-02T08:08:46.107467282Z",
+        "description": "localizing-files",
+        "endTime": "2018-06-02T08:29:49.340049462Z"
+      }, {
+        "startTime": "2018-06-02T08:08:05.072034546Z",
+        "description": "pulling-image",
+        "endTime": "2018-06-02T08:08:46.107467282Z"
+      }, {
+        "startTime": "2018-06-02T08:54:39.226476039Z",
+        "description": "ok",
+        "endTime": "2018-06-02T08:54:39.226476039Z"
+      }, {
+        "startTime": "2018-06-02T01:06:23.727-07:00",
+        "endTime": "2018-06-02T08:06:28Z",
+        "description": "RunningJob"
+      }, {
+        "startTime": "2018-06-02T08:30:10.350457315Z",
+        "endTime": "2018-06-02T08:54:39.226476039Z",
+        "description": "delocalizing-files"
+      }, {
+        "description": "start",
+        "startTime": "2018-06-02T08:08:05.071944311Z",
+        "endTime": "2018-06-02T08:08:05.072034546Z"
+      }, {
+        "startTime": "2018-06-02T02:12:23.630-07:00",
+        "description": "UpdatingCallCache",
+        "endTime": "2018-06-02T02:12:25.867-07:00"
+      }, {
+        "endTime": "2018-06-02T08:06:33Z",
+        "description": "waiting for quota",
+        "startTime": "2018-06-02T08:06:28Z"
+      }, {
+        "endTime": "2018-06-02T01:06:23.717-07:00",
+        "description": "WaitingForValueStore",
+        "startTime": "2018-06-02T01:06:23.716-07:00"
+      }, {
+        "startTime": "2018-06-02T01:06:23.716-07:00",
+        "description": "Pending",
+        "endTime": "2018-06-02T01:06:23.716-07:00"
+      }, {
+        "description": "initializing VM",
+        "endTime": "2018-06-02T08:08:05.071944311Z",
+        "startTime": "2018-06-02T08:06:33Z"
+      }, {
+        "startTime": "2018-06-02T01:06:23.723-07:00",
+        "description": "CheckingCallCache",
+        "endTime": "2018-06-02T01:06:23.727-07:00"
+      }, {
+        "endTime": "2018-06-02T02:12:25.867-07:00",
+        "description": "UpdatingJobStore",
+        "startTime": "2018-06-02T02:12:25.867-07:00"
+      }, {
+        "endTime": "2018-06-02T08:30:10.350457315Z",
+        "startTime": "2018-06-02T08:29:49.340049462Z",
+        "description": "running-docker"
+      }, {
+        "endTime": "2018-06-02T01:06:23.723-07:00",
+        "startTime": "2018-06-02T01:06:23.717-07:00",
+        "description": "PreparingJob"
+      }, {
+        "startTime": "2018-06-02T08:54:39.226476039Z",
+        "description": "cromwell poll interval",
+        "endTime": "2018-06-02T02:12:23.630-07:00"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-merging_sample/shard-1/merging_sample-1.log"
+      },
+      "start": "2018-06-02T01:06:23.715-07:00"
+    }],
+    "wgbs.prepare_config": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/prepare_config-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-c/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-c",
+        "instanceName": "ggp-13497864079246812117"
+      },
+      "outputs": {
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json"
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "docker": "92685DCE529EF9B783967C423B10535A",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "File metadata_json": "C3511F71C2A3F33FFE1A0E4E12102522"
+          },
+          "input count": "C4CA4238A0B923820DCC509A6F75849B",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "A9E600E4D0E09F10AEBEBDF544E5574A",
+          "input": {
+            "File metadata_csv": "1DjBTQ=="
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "metadata_csv": "gs://wgbs-pipeline/input_data/ENCSR786DCL/metadata.csv"
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "wdl-task-name": "prepare-config"
+      },
+      "returnCode": 0,
+      "labels": {
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "wdl-task-name": "prepare_config"
+      },
+      "jobId": "operations/EOSXn-O7LBjVx4uw2PuCqbsBILSY1bzKEyoPcHJvZHVjdGlvblF1ZXVl",
+      "backend": "google",
+      "end": "2018-06-01T10:34:28.018-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:b77ed772288307247710edf52c1e8253d26f1b938e5c83a5555e1a07f943c7c2",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/prepare_config-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-06-01T17:34:01.757744252Z",
+        "description": "delocalizing-files",
+        "startTime": "2018-06-01T17:33:57.098118137Z"
+      }, {
+        "endTime": "2018-06-01T17:32:33.063243217Z",
+        "description": "initializing VM",
+        "startTime": "2018-06-01T17:31:52Z"
+      }, {
+        "endTime": "2018-06-01T10:31:42.218-07:00",
+        "description": "CheckingCallCache",
+        "startTime": "2018-06-01T10:31:42.170-07:00"
+      }, {
+        "description": "Pending",
+        "startTime": "2018-06-01T10:31:41.253-07:00",
+        "endTime": "2018-06-01T10:31:41.262-07:00"
+      }, {
+        "description": "pulling-image",
+        "startTime": "2018-06-01T17:32:33.063816755Z",
+        "endTime": "2018-06-01T17:33:43.169471540Z"
+      }, {
+        "endTime": "2018-06-01T10:31:42.170-07:00",
+        "startTime": "2018-06-01T10:31:41.285-07:00",
+        "description": "PreparingJob"
+      }, {
+        "endTime": "2018-06-01T17:31:49Z",
+        "startTime": "2018-06-01T10:31:42.218-07:00",
+        "description": "RunningJob"
+      }, {
+        "endTime": "2018-06-01T10:34:25.758-07:00",
+        "description": "cromwell poll interval",
+        "startTime": "2018-06-01T17:34:02Z"
+      }, {
+        "endTime": "2018-06-01T17:34:02Z",
+        "description": "ok",
+        "startTime": "2018-06-01T17:34:01.757744252Z"
+      }, {
+        "endTime": "2018-06-01T10:34:28.017-07:00",
+        "description": "UpdatingCallCache",
+        "startTime": "2018-06-01T10:34:25.758-07:00"
+      }, {
+        "startTime": "2018-06-01T17:33:51.220317965Z",
+        "endTime": "2018-06-01T17:33:57.098118137Z",
+        "description": "running-docker"
+      }, {
+        "description": "waiting for quota",
+        "startTime": "2018-06-01T17:31:49Z",
+        "endTime": "2018-06-01T17:31:52Z"
+      }, {
+        "endTime": "2018-06-01T17:32:33.063816755Z",
+        "startTime": "2018-06-01T17:32:33.063243217Z",
+        "description": "start"
+      }, {
+        "startTime": "2018-06-01T10:31:41.262-07:00",
+        "description": "RequestingExecutionToken",
+        "endTime": "2018-06-01T10:31:41.278-07:00"
+      }, {
+        "endTime": "2018-06-01T10:31:41.285-07:00",
+        "description": "WaitingForValueStore",
+        "startTime": "2018-06-01T10:31:41.278-07:00"
+      }, {
+        "startTime": "2018-06-01T17:33:43.169471540Z",
+        "endTime": "2018-06-01T17:33:51.220317965Z",
+        "description": "localizing-files"
+      }, {
+        "endTime": "2018-06-01T10:34:28.020-07:00",
+        "description": "UpdatingJobStore",
+        "startTime": "2018-06-01T10:34:28.017-07:00"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/prepare_config.log"
+      },
+      "start": "2018-06-01T10:31:41.242-07:00"
+    }],
+    "wgbs.map": [{
+      "retryableFailure": false,
+      "executionStatus": "Failed",
+      "subWorkflowMetadata": {
+        "workflowName": "mapping",
+        "calls": {
+          "mapping.mapping_job": [{
+            "preemptible": false,
+            "retryableFailure": false,
+            "executionStatus": "Failed",
+            "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-0/mapping/e23b3e77-6fac-4ddd-9cde-2ac031a908cd/call-mapping_job/shard-0/mapping_job-0-stdout.log",
+            "backendStatus": "Success",
+            "shardIndex": 0,
+            "jes": {
+              "endpointUrl": "https://genomics.googleapis.com/",
+              "machineType": "us-west1-b/n1-standard-16",
+              "googleProject": "wgbs-pipeline",
+              "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+              "zone": "us-west1-b",
+              "instanceName": "ggp-431778561922658169"
+            },
+            "runtimeAttributes": {
+              "preemptible": "0",
+              "failOnStderr": "false",
+              "bootDiskSizeGb": "10",
+              "disks": "local-disk 500 HDD",
+              "continueOnReturnCode": "0",
+              "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+              "cpu": "16",
+              "noAddress": "false",
+              "zones": "us-west1-a,us-west1-b,us-west1-c",
+              "memory": "60 GB"
+            },
+            "callCaching": {
+              "allowResultReuse": false,
+              "hit": false,
+              "result": "Cache Miss",
+              "hashes": {
+                "output count": "C4CA4238A0B923820DCC509A6F75849B",
+                "runtime attribute": {
+                  "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+                  "docker": "92685DCE529EF9B783967C423B10535A",
+                  "failOnStderr": "68934A3E9455FA72420237EB05902327"
+                },
+                "output expression": {
+                  "Array": "543008CF180DD2075B53B72B9071CECF"
+                },
+                "input count": "E4DA3B7FBBCE2345D7772B0674A318D5",
+                "backend name": "C822C1B63853ED273B89687AC505F9FA",
+                "command template": "762E56461B9E4969DF084E1E25B51F6A",
+                "input": {
+                  "String command_string": "F5538957C712078963838D91CD457E17",
+                  "File fastq_files": ["AImv4Q==", "ViG2vg=="],
+                  "File metadata_json": "X+Sbrg==",
+                  "File reference_gem": "Np/1sg=="
+                }
+              },
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "inputs": {
+              "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+              "command_string": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p",
+              "disks": null,
+              "cpu": null,
+              "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+              "memory_gb": null,
+              "fastq_files": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_2.fastq.gz"]
+            },
+            "backendLabels": {
+              "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+              "wdl-task-name": "mapping-job",
+              "cromwell-sub-workflow-name": "mapping"
+            },
+            "returnCode": 1,
+            "labels": {
+              "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+              "cromwell-sub-workflow-name": "mapping",
+              "wdl-task-name": "mapping_job"
+            },
+            "failures": [{
+              "message": "Job mapping.mapping_job:0:1 exited with return code 1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.",
+              "causedBy": []
+            }],
+            "jobId": "operations/EIu8uOO7LBj53p3oh4r__gUgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+            "backend": "google",
+            "end": "2018-06-02T01:07:35.292-07:00",
+            "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-0/mapping/e23b3e77-6fac-4ddd-9cde-2ac031a908cd/call-mapping_job/shard-0/mapping_job-0-stderr.log",
+            "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-0/mapping/e23b3e77-6fac-4ddd-9cde-2ac031a908cd/call-mapping_job/shard-0",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-06-01T10:38:39.280-07:00",
+              "description": "RequestingExecutionToken",
+              "startTime": "2018-06-01T10:38:39.280-07:00"
+            }, {
+              "startTime": "2018-06-02T01:07:35.292-07:00",
+              "description": "UpdatingJobStore",
+              "endTime": "2018-06-02T01:07:35.292-07:00"
+            }, {
+              "endTime": "2018-06-01T10:38:39.294-07:00",
+              "startTime": "2018-06-01T10:38:39.290-07:00",
+              "description": "CheckingCallCache"
+            }, {
+              "description": "RunningJob",
+              "startTime": "2018-06-01T10:38:39.294-07:00",
+              "endTime": "2018-06-02T01:07:35.292-07:00"
+            }, {
+              "endTime": "2018-06-01T10:38:39.290-07:00",
+              "description": "PreparingJob",
+              "startTime": "2018-06-01T10:38:39.280-07:00"
+            }, {
+              "startTime": "2018-06-01T10:38:39.280-07:00",
+              "description": "WaitingForValueStore",
+              "endTime": "2018-06-01T10:38:39.280-07:00"
+            }, {
+              "description": "Pending",
+              "startTime": "2018-06-01T10:38:39.279-07:00",
+              "endTime": "2018-06-01T10:38:39.280-07:00"
+            }],
+            "backendLogs": {
+              "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-0/mapping/e23b3e77-6fac-4ddd-9cde-2ac031a908cd/call-mapping_job/shard-0/mapping_job-0.log"
+            },
+            "start": "2018-06-01T10:38:39.279-07:00"
+          }]
+        },
+        "workflowRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/",
+        "id": "e23b3e77-6fac-4ddd-9cde-2ac031a908cd",
+        "inputs": {
+          "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+          "mapping_job.disks": null,
+          "mapping_job.memory_gb": null,
+          "sample_files": {
+            "left": "sample_1",
+            "right": [{
+              "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_2.fastq.gz"],
+              "left": "flowcell_1_1"
+            }]
+          },
+          "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+          "mapping_job.cpu": null,
+          "commands": {
+            "flowcell_2_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  ",
+            "flowcell_1_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p"
+          }
+        },
+        "status": "Failed",
+        "parentWorkflowId": "69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "end": "2018-06-02T01:07:35.756-07:00",
+        "start": "2018-06-01T10:38:35.254-07:00"
+      },
+      "shardIndex": 0,
+      "inputs": {
+        "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+        "mapping_job.disks": null,
+        "mapping_job.memory_gb": null,
+        "sample_files": {
+          "left": "sample_1",
+          "right": [{
+            "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_2.fastq.gz"],
+            "left": "flowcell_1_1"
+          }]
+        },
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "mapping_job.cpu": null,
+        "commands": {
+          "flowcell_1_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p",
+          "flowcell_2_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "
+        }
+      },
+      "failures": [{
+        "message": "Workflow failed",
+        "causedBy": [{
+          "message": "Job mapping.mapping_job:0:1 exited with return code 1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.",
+          "causedBy": []
+        }]
+      }],
+      "end": "2018-06-02T01:07:35.756-07:00",
+      "attempt": 1,
+      "executionEvents": [{
+        "description": "WaitingForValueStore",
+        "startTime": "2018-06-01T10:38:35.252-07:00",
+        "endTime": "2018-06-01T10:38:35.254-07:00"
+      }, {
+        "description": "SubWorkflowPendingState",
+        "endTime": "2018-06-01T10:38:35.252-07:00",
+        "startTime": "2018-06-01T10:38:35.246-07:00"
+      }, {
+        "endTime": "2018-06-02T01:07:35.756-07:00",
+        "startTime": "2018-06-01T10:38:35.263-07:00",
+        "description": "SubWorkflowRunningState"
+      }, {
+        "endTime": "2018-06-01T10:38:35.263-07:00",
+        "startTime": "2018-06-01T10:38:35.254-07:00",
+        "description": "SubWorkflowPreparingState"
+      }],
+      "start": "2018-06-01T10:38:35.244-07:00"
+    }, {
+      "executionStatus": "Done",
+      "subWorkflowMetadata": {
+        "workflowName": "mapping",
+        "calls": {
+          "mapping.mapping_job": [{
+            "preemptible": false,
+            "executionStatus": "Done",
+            "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/mapping_job-0-stdout.log",
+            "backendStatus": "Success",
+            "shardIndex": 0,
+            "jes": {
+              "endpointUrl": "https://genomics.googleapis.com/",
+              "machineType": "us-west1-c/n1-standard-16",
+              "googleProject": "wgbs-pipeline",
+              "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+              "zone": "us-west1-c",
+              "instanceName": "ggp-5192302691681221401"
+            },
+            "outputs": {
+              "all_outputs": ["gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.json"]
+            },
+            "runtimeAttributes": {
+              "preemptible": "0",
+              "failOnStderr": "false",
+              "bootDiskSizeGb": "10",
+              "disks": "local-disk 500 HDD",
+              "continueOnReturnCode": "0",
+              "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+              "cpu": "16",
+              "noAddress": "false",
+              "zones": "us-west1-a,us-west1-b,us-west1-c",
+              "memory": "60 GB"
+            },
+            "callCaching": {
+              "allowResultReuse": true,
+              "hit": false,
+              "result": "Cache Miss",
+              "hashes": {
+                "output count": "C4CA4238A0B923820DCC509A6F75849B",
+                "runtime attribute": {
+                  "failOnStderr": "68934A3E9455FA72420237EB05902327",
+                  "docker": "92685DCE529EF9B783967C423B10535A",
+                  "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA"
+                },
+                "output expression": {
+                  "Array": "543008CF180DD2075B53B72B9071CECF"
+                },
+                "input count": "E4DA3B7FBBCE2345D7772B0674A318D5",
+                "backend name": "C822C1B63853ED273B89687AC505F9FA",
+                "command template": "762E56461B9E4969DF084E1E25B51F6A",
+                "input": {
+                  "File reference_gem": "Np/1sg==",
+                  "String command_string": "A13CF2761117B45882CC765FED9FBF88",
+                  "File fastq_files": ["QghuSA==", "LNAzxQ=="],
+                  "File metadata_json": "X+Sbrg=="
+                }
+              },
+              "effectiveCallCachingMode": "ReadAndWriteCache"
+            },
+            "inputs": {
+              "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+              "command_string": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  ",
+              "disks": null,
+              "cpu": null,
+              "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+              "memory_gb": null,
+              "fastq_files": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_2.fastq.gz"]
+            },
+            "backendLabels": {
+              "cromwell-sub-workflow-name": "mapping",
+              "wdl-task-name": "mapping-job",
+              "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc"
+            },
+            "returnCode": 0,
+            "labels": {
+              "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+              "wdl-task-name": "mapping_job",
+              "cromwell-sub-workflow-name": "mapping"
+            },
+            "jobId": "operations/EJC8uOO7LBiZ9tr_m_mwh0ggtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+            "backend": "google",
+            "end": "2018-06-02T01:06:19.486-07:00",
+            "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:b77ed772288307247710edf52c1e8253d26f1b938e5c83a5555e1a07f943c7c2",
+            "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/mapping_job-0-stderr.log",
+            "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0",
+            "attempt": 1,
+            "executionEvents": [{
+              "endTime": "2018-06-01T17:38:47Z",
+              "startTime": "2018-06-01T17:38:43Z",
+              "description": "waiting for quota"
+            }, {
+              "startTime": "2018-06-01T10:38:39.294-07:00",
+              "description": "RunningJob",
+              "endTime": "2018-06-01T17:38:43Z"
+            }, {
+              "endTime": "2018-06-02T06:51:47.310210172Z",
+              "startTime": "2018-06-02T06:51:47.310210172Z",
+              "description": "ok"
+            }, {
+              "startTime": "2018-06-01T17:40:22.760710033Z",
+              "description": "pulling-image",
+              "endTime": "2018-06-01T17:41:02.047843327Z"
+            }, {
+              "endTime": "2018-06-02T01:06:19.486-07:00",
+              "startTime": "2018-06-02T01:06:19.486-07:00",
+              "description": "UpdatingJobStore"
+            }, {
+              "endTime": "2018-06-01T18:15:00.443153776Z",
+              "startTime": "2018-06-01T17:41:02.047843327Z",
+              "description": "localizing-files"
+            }, {
+              "description": "CheckingCallCache",
+              "startTime": "2018-06-01T10:38:39.290-07:00",
+              "endTime": "2018-06-01T10:38:39.294-07:00"
+            }, {
+              "startTime": "2018-06-01T10:38:39.280-07:00",
+              "endTime": "2018-06-01T10:38:39.280-07:00",
+              "description": "RequestingExecutionToken"
+            }, {
+              "description": "cromwell poll interval",
+              "startTime": "2018-06-02T06:51:47.310210172Z",
+              "endTime": "2018-06-02T01:06:17.867-07:00"
+            }, {
+              "endTime": "2018-06-01T10:38:39.280-07:00",
+              "description": "WaitingForValueStore",
+              "startTime": "2018-06-01T10:38:39.280-07:00"
+            }, {
+              "endTime": "2018-06-01T17:40:22.760632061Z",
+              "startTime": "2018-06-01T17:38:47Z",
+              "description": "initializing VM"
+            }, {
+              "description": "Pending",
+              "endTime": "2018-06-01T10:38:39.280-07:00",
+              "startTime": "2018-06-01T10:38:39.279-07:00"
+            }, {
+              "startTime": "2018-06-01T18:15:00.443153776Z",
+              "description": "running-docker",
+              "endTime": "2018-06-02T06:23:41.335925345Z"
+            }, {
+              "endTime": "2018-06-01T10:38:39.290-07:00",
+              "startTime": "2018-06-01T10:38:39.280-07:00",
+              "description": "PreparingJob"
+            }, {
+              "endTime": "2018-06-02T06:51:47.310210172Z",
+              "startTime": "2018-06-02T06:23:41.335925345Z",
+              "description": "delocalizing-files"
+            }, {
+              "endTime": "2018-06-02T01:06:19.486-07:00",
+              "startTime": "2018-06-02T01:06:17.867-07:00",
+              "description": "UpdatingCallCache"
+            }, {
+              "endTime": "2018-06-01T17:40:22.760710033Z",
+              "startTime": "2018-06-01T17:40:22.760632061Z",
+              "description": "start"
+            }],
+            "backendLogs": {
+              "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/mapping_job-0.log"
+            },
+            "start": "2018-06-01T10:38:39.279-07:00"
+          }]
+        },
+        "outputs": {
+          "mapping.mapping_outputs": [["gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.json"]]
+        },
+        "workflowRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/",
+        "id": "7ff69a93-a519-442f-99ca-5a56f2ee34d2",
+        "inputs": {
+          "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+          "mapping_job.disks": null,
+          "mapping_job.memory_gb": null,
+          "sample_files": {
+            "left": "sample_2",
+            "right": [{
+              "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_2.fastq.gz"],
+              "left": "flowcell_2_1"
+            }]
+          },
+          "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+          "mapping_job.cpu": null,
+          "commands": {
+            "flowcell_2_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  ",
+            "flowcell_1_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p"
+          }
+        },
+        "status": "Succeeded",
+        "parentWorkflowId": "69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "end": "2018-06-02T01:06:21.775-07:00",
+        "start": "2018-06-01T10:38:35.254-07:00"
+      },
+      "shardIndex": 1,
+      "outputs": {
+        "mapping_outputs": [["gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bai", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.bam", "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-map/shard-1/mapping/7ff69a93-a519-442f-99ca-5a56f2ee34d2/call-mapping_job/shard-0/glob-eb405632777facee831d536a4f7c2f85/flowcell_2_1.json"]]
+      },
+      "inputs": {
+        "reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+        "mapping_job.disks": null,
+        "mapping_job.memory_gb": null,
+        "sample_files": {
+          "left": "sample_2",
+          "right": [{
+            "left": "flowcell_2_1",
+            "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_2.fastq.gz"]
+          }]
+        },
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "mapping_job.cpu": null,
+        "commands": {
+          "flowcell_1_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p",
+          "flowcell_2_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "
+        }
+      },
+      "end": "2018-06-02T01:06:21.777-07:00",
+      "attempt": 1,
+      "executionEvents": [{
+        "description": "SubWorkflowPendingState",
+        "startTime": "2018-06-01T10:38:35.246-07:00",
+        "endTime": "2018-06-01T10:38:35.252-07:00"
+      }, {
+        "endTime": "2018-06-02T01:06:21.775-07:00",
+        "description": "SubWorkflowRunningState",
+        "startTime": "2018-06-01T10:38:35.263-07:00"
+      }, {
+        "endTime": "2018-06-01T10:38:35.263-07:00",
+        "description": "SubWorkflowPreparingState",
+        "startTime": "2018-06-01T10:38:35.254-07:00"
+      }, {
+        "description": "WaitingForValueStore",
+        "endTime": "2018-06-01T10:38:35.254-07:00",
+        "startTime": "2018-06-01T10:38:35.252-07:00"
+      }],
+      "start": "2018-06-01T10:38:35.244-07:00"
+    }],
+    "wgbs.flowcell_to_commands": [{
+      "preemptible": false,
+      "executionStatus": "Done",
+      "stdout": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-flowcell_to_commands/flowcell_to_commands-stdout.log",
+      "backendStatus": "Success",
+      "shardIndex": -1,
+      "jes": {
+        "endpointUrl": "https://genomics.googleapis.com/",
+        "machineType": "us-west1-a/n1-standard-1",
+        "googleProject": "wgbs-pipeline",
+        "executionBucket": "gs://wgbs-pipeline/pipeline-runs",
+        "zone": "us-west1-a",
+        "instanceName": "ggp-6215088766568455600"
+      },
+      "outputs": {
+        "paired_commands": {
+          "flowcell_1_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p",
+          "flowcell_2_1": "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "
+        }
+      },
+      "runtimeAttributes": {
+        "preemptible": "0",
+        "failOnStderr": "false",
+        "bootDiskSizeGb": "10",
+        "disks": "local-disk 100 HDD",
+        "continueOnReturnCode": "0",
+        "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
+        "cpu": "1",
+        "noAddress": "false",
+        "zones": "us-west1-a,us-west1-b,us-west1-c",
+        "memory": "2 GB"
+      },
+      "callCaching": {
+        "allowResultReuse": true,
+        "hit": false,
+        "result": "Cache Miss",
+        "hashes": {
+          "output count": "C4CA4238A0B923820DCC509A6F75849B",
+          "runtime attribute": {
+            "docker": "92685DCE529EF9B783967C423B10535A",
+            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+          },
+          "output expression": {
+            "Map": "A6BF4CCECBC4C1EC7F326695691C62AC"
+          },
+          "input count": "ECCBC87E4B5CE2FE28308FD9F2A7BAF3",
+          "backend name": "C822C1B63853ED273B89687AC505F9FA",
+          "command template": "E03F389B2C42330D411D83CF518655EC",
+          "input": {
+            "String commands": ["3EFBA44E2FF87C115D519700850EEE54", "A13CF2761117B45882CC765FED9FBF88"],
+            "File metadata_json": "X+Sbrg=="
+          }
+        },
+        "effectiveCallCachingMode": "ReadAndWriteCache"
+      },
+      "inputs": {
+        "metadata_json": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-prepare_config/glob-490694a9db8f7a371538da1abe484314/metadata.json",
+        "commands": ["gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_1_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  ", "gemBS mapping -I reference/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem -f flowcell_2_1 -j metadata.json -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p  "]
+      },
+      "backendLabels": {
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+        "wdl-task-name": "flowcell-to-commands"
+      },
+      "returnCode": 0,
+      "labels": {
+        "wdl-task-name": "flowcell_to_commands",
+        "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc"
+      },
+      "jobId": "operations/EN2gsOO7LBiwu9WW3smboFYgtJjVvMoTKg9wcm9kdWN0aW9uUXVldWU",
+      "backend": "google",
+      "end": "2018-06-01T10:38:33.997-07:00",
+      "dockerImageUsed": "quay.io/encode-dcc/wgbs-pipeline@sha256:b77ed772288307247710edf52c1e8253d26f1b938e5c83a5555e1a07f943c7c2",
+      "stderr": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-flowcell_to_commands/flowcell_to_commands-stderr.log",
+      "callRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-flowcell_to_commands",
+      "attempt": 1,
+      "executionEvents": [{
+        "startTime": "2018-06-01T10:38:33.997-07:00",
+        "description": "UpdatingJobStore",
+        "endTime": "2018-06-01T10:38:33.997-07:00"
+      }, {
+        "endTime": "2018-06-01T10:38:32.625-07:00",
+        "startTime": "2018-06-01T17:38:23Z",
+        "description": "cromwell poll interval"
+      }, {
+        "endTime": "2018-06-01T17:38:14.996462460Z",
+        "startTime": "2018-06-01T17:38:11.380425829Z",
+        "description": "localizing-files"
+      }, {
+        "startTime": "2018-06-01T10:36:20.236-07:00",
+        "description": "WaitingForValueStore",
+        "endTime": "2018-06-01T10:36:20.237-07:00"
+      }, {
+        "startTime": "2018-06-01T10:36:20.242-07:00",
+        "description": "RunningJob",
+        "endTime": "2018-06-01T17:36:28Z"
+      }, {
+        "endTime": "2018-06-01T17:37:07.968189369Z",
+        "description": "start",
+        "startTime": "2018-06-01T17:37:07.967436799Z"
+      }, {
+        "startTime": "2018-06-01T10:38:32.625-07:00",
+        "description": "UpdatingCallCache",
+        "endTime": "2018-06-01T10:38:33.997-07:00"
+      }, {
+        "endTime": "2018-06-01T10:36:20.236-07:00",
+        "description": "RequestingExecutionToken",
+        "startTime": "2018-06-01T10:36:20.236-07:00"
+      }, {
+        "endTime": "2018-06-01T17:38:20.109892145Z",
+        "startTime": "2018-06-01T17:38:14.996462460Z",
+        "description": "running-docker"
+      }, {
+        "startTime": "2018-06-01T17:36:32Z",
+        "description": "initializing VM",
+        "endTime": "2018-06-01T17:37:07.967436799Z"
+      }, {
+        "endTime": "2018-06-01T10:36:20.242-07:00",
+        "startTime": "2018-06-01T10:36:20.239-07:00",
+        "description": "CheckingCallCache"
+      }, {
+        "endTime": "2018-06-01T10:36:20.236-07:00",
+        "description": "Pending",
+        "startTime": "2018-06-01T10:36:20.236-07:00"
+      }, {
+        "endTime": "2018-06-01T17:38:23Z",
+        "description": "ok",
+        "startTime": "2018-06-01T17:38:22.835350746Z"
+      }, {
+        "endTime": "2018-06-01T17:38:11.380425829Z",
+        "description": "pulling-image",
+        "startTime": "2018-06-01T17:37:07.968189369Z"
+      }, {
+        "endTime": "2018-06-01T10:36:20.239-07:00",
+        "startTime": "2018-06-01T10:36:20.237-07:00",
+        "description": "PreparingJob"
+      }, {
+        "description": "delocalizing-files",
+        "startTime": "2018-06-01T17:38:20.109892145Z",
+        "endTime": "2018-06-01T17:38:22.835350746Z"
+      }, {
+        "endTime": "2018-06-01T17:36:32Z",
+        "startTime": "2018-06-01T17:36:28Z",
+        "description": "waiting for quota"
+      }],
+      "backendLogs": {
+        "log": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/call-flowcell_to_commands/flowcell_to_commands.log"
+      },
+      "start": "2018-06-01T10:36:20.235-07:00"
+    }]
+  },
+  "outputs": {
+
+  },
+  "workflowRoot": "gs://wgbs-pipeline/pipeline-runs/wgbs/69dbf734-359e-42d3-b9aa-bd3a25b0bedc/",
+  "id": "69dbf734-359e-42d3-b9aa-bd3a25b0bedc",
+  "inputs": {
+    "wgbs.mapping_outputs": null,
+    "wgbs.metadata": "gs://wgbs-pipeline/input_data/ENCSR786DCL/metadata.csv",
+    "wgbs.index.cpu": null,
+    "wgbs.bscall_concatenate.cpu": null,
+    "wgbs.chromosomes": ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"],
+    "wgbs.bscall.bscall_job.memory_gb": null,
+    "wgbs.index.disks": null,
+    "wgbs.map.mapping_job.cpu": null,
+    "wgbs.bscall.bscall_job.cpu": null,
+    "wgbs.merging_sample.cpu": null,
+    "wgbs.map.mapping_job.memory_gb": null,
+    "wgbs.bscall_concatenate.disks": null,
+    "wgbs.fastq_files": [{
+      "left": "sample_1",
+      "right": [{
+        "left": "flowcell_1_1",
+        "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_1_1_2.fastq.gz"]
+      }]
+    }, {
+      "right": [{
+        "left": "flowcell_2_1",
+        "right": ["gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_1.fastq.gz", "gs://wgbs-pipeline/input_data/ENCSR786DCL/fastq/flowcell_2_1_2.fastq.gz"]
+      }],
+      "left": "sample_2"
+    }],
+    "wgbs.bscall.bscall_job.disks": null,
+    "wgbs.merging_sample.memory_gb": null,
+    "wgbs.map.mapping_job.disks": null,
+    "wgbs.merging_sample.disks": null,
+    "wgbs.methylation_filtering.disks": null,
+    "wgbs.methylation_filtering.cpu": null,
+    "wgbs.index.memory_gb": null,
+    "wgbs.bscall_concatenate.memory_gb": null,
+    "wgbs.organism": "Human",
+    "wgbs.indexed_reference_gem": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.gem",
+    "wgbs.methylation_filtering.memory_gb": null,
+    "wgbs.reference_fasta": "gs://wgbs-pipeline/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz",
+    "wgbs.pyglob_nearness": 0,
+    "wgbs.indexed_reference_info": "gs://wgbs-pipeline/hg38/gemBS_index/GRCh38_no_alt_analysis_set_GCA_000001405.15.BS.info"
+  },
+  "labels": {
+    "cromwell-workflow-id": "cromwell-69dbf734-359e-42d3-b9aa-bd3a25b0bedc"
+  },
+  "submission": "2018-06-01T10:31:37.701-07:00",
+  "status": "Failed",
+  "failures": [{
+    "message": "Workflow failed",
+    "causedBy": [{
+      "message": "Workflow failed",
+      "causedBy": [{
+        "causedBy": [],
+        "message": "Job mapping.mapping_job:0:1 exited with return code 1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details."
+      }]
+    }]
+  }],
+  "end": "2018-06-02T02:12:26.186-07:00",
+  "start": "2018-06-01T10:31:37.743-07:00"
+}
