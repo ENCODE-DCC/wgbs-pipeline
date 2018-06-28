@@ -1,7 +1,6 @@
 {
   "wgbs.reference_fasta": "/Users/bek/wgbs-pipeline/test/yeast.fa",
   "wgbs.metadata": "/Users/bek/wgbs-pipeline/test/metadata.csv",
-  "wgbs.samples": ["test"],
   "wgbs.fastq_files": [{"left": "test", 
   						"right": [{
   									"left": "flowcell_1_1", 

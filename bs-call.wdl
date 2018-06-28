@@ -40,16 +40,15 @@ task bscall_job {
 	command {
 		mkdir -p data/chr_snp_calls
 		mkdir -p data/sample_mappings
-		ln ${bam} data/sample_mappings/
-		ln ${bai} data/sample_mappings/
+		ln -s ${bam} data/sample_mappings/
+		ln -s ${bai} data/sample_mappings/
 		gemBS bscall \
 			-r ${reference_fasta} \
 			-e ${organism} \
 			-s ${sample} \
 			-c ${chromosome} \
 			-i data/sample_mappings/$(basename ${bam}) \
-			-o data/chr_snp_calls \
-			-t 8
+			-o data/chr_snp_calls
 	}
 
 	output {

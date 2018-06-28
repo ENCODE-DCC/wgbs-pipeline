@@ -111,8 +111,8 @@ task index {
 			${"--nearness " + nearness} \
 			${"--matched-files-name gem"}
 		mkdir index_out
-		cat info.txt | xargs -I % ln -s % index_out
-		cat gem.txt | xargs -I % ln -s % index_out
+		cat info.txt | xargs -I % ln % index_out
+		cat gem.txt | xargs -I % ln % index_out
 	}
 
 	output {
@@ -178,7 +178,7 @@ task generate_mapping_commands {
 		mkdir reference
 		ln -s ${reference_gem} reference/
 		ln -s ${metadata_json} .
-		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 62 -p
+		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p
 	}
 
 	output {
@@ -201,7 +201,7 @@ task merging_sample {
 		mkdir temp
 		mkdir -p data/mappings
 		cat ${write_lines(mapping_outputs[0])} | xargs -I % ln % data/mappings
-		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d tmp/
+		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d temp/
 	}
 
 	output {

@@ -35,16 +35,16 @@ task mapping_job {
 		mkdir fastqs
 		mkdir -p data/mappings 
 		mkdir reference
-		ln -s ${reference_gem} reference/
-		ln -s ${metadata_json} .
-		cat ${write_lines(fastq_files)} | xargs -I % ln -s % fastqs
+		ln ${reference_gem} reference/
+		ln ${metadata_json} .
+		cat ${write_lines(fastq_files)} | xargs -I % ln % fastqs
 		${command_string}
 	}
 
 	runtime {
-		cpu: select_first([cpu,64])
-		memory : "${select_first([memory_gb,'240'])} GB"
-		disks : select_first([disks,"local-disk 500 HDD"])
+		cpu: select_first([cpu,16])
+		memory : "${select_first([memory_gb,'60'])} GB"
+		disks : select_first([disks,"local-disk 700 HDD"])
 		preemptible: 0
 	}
 
