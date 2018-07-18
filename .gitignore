@@ -1,6 +1,8 @@
 # Test files can be large
 helpers/__pycache__
 
+.python-version
+
 # Cromwell run metadata output
 metadata.json
 
