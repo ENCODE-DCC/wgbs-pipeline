@@ -1,5 +1,6 @@
 workflow wgbs {
 	File reference
+	File? indexed_reference
 	File? extra_reference
 	Array[Array[File]] fastqs
 	Array[String] samples
@@ -9,12 +10,19 @@ workflow wgbs {
 		extra_reference = extra_reference
 	}
 
-	call index {input:
-		reference = reference,
-		extra_reference = extra_reference,
-		gemBS_json = prepare.gemBS_json
+	if (!defined(indexed_reference)) {
+		call index {input:
+			reference = reference,
+			extra_reference = extra_reference,
+			gemBS_json = prepare.gemBS_json
 		}
-	
+	}
+
+	File index = select_first([indexed_reference, index.BS_gem])
+
+	output {
+
+	}
 }
 
 task prepare {
@@ -23,9 +31,9 @@ task prepare {
 	String reference
 	String? extra_reference
 
-
 	command {
-		mkdir reference && touch reference/$(basename ${reference})
+		mkdir reference
+		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
@@ -44,7 +52,8 @@ task index {
 	File gemBS_json
 
 	command {
-		mkdir reference && ln -s ${reference} reference && ln ${extra_reference} reference
+		mkdir reference
+		ln -s ${reference} reference && ln ${extra_reference} reference
 		gemBS -j ${gemBS_json} index
 	}
 
