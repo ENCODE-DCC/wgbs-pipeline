@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import argparse
+import pdb
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Flatten Array[Array[File]] into Array[File]')
@@ -11,6 +12,6 @@ if __name__ == '__main__':
 		for line in tsv_file:
 			for file in line.split('\t'):
 				if file:
-					files.append(file)
+					files.append(file.replace('\n',''))
 	for file in files:
 		print(file)
