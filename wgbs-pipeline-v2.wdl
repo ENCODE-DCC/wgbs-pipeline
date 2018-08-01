@@ -220,9 +220,11 @@ task qc_report {
 
 	command {
 		mkdir mapping && mkdir calls
+		cat ${write_lines(map_qc_json)}
 	}
 
 	output {
 		Array[Array[File]] files = map_qc_json
+		Array[String] lines = read_lines(stdout())
 	}
 }
