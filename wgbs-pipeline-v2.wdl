@@ -56,8 +56,10 @@ workflow wgbs {
 
 	call qc_report { input:
 		map_qc_json = map.qc_json,
-		bscaller_qc_json = bscaller.qc_json
-		gemBS_json = prepare.gemBS_json
+		bscaller_qc_json = bscaller.qc_json,
+		gemBS_json = prepare.gemBS_json,
+		sample_names = sample_names,
+		sample_barcodes = sample_barcodes
 	}
 
 
@@ -211,11 +213,16 @@ task extract {
 task qc_report {
 	Array[Array[File]] map_qc_json 
 	Array[Array[File]] bscaller_qc_json
+	Array[String] sample_names
+	Array[String] sample_barcodes
 	File gemBS_json
 
 
 	command {
-		
-	
+		mkdir mapping && mkdir calls
+	}
+
+	output {
+		Array[Array[File]] files = map_qc_json
 	}
 }
