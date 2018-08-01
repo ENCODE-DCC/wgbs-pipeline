@@ -7,18 +7,20 @@ workflow wgbs {
 	Array[String] sample_names
 	Array[String] sample_barcodes
 
-	call flatten { input:
-		fastqs = fastqs
+	Array[File] fastqs_ = flatten(fastqs)
+
+	call flatten_ { input:
+		fastqs = fastqs_
 	}
 
 }
 
-task flatten {
-	Array[Array[File]] fastqs
+task flatten_ {
+	Array[File] fastqs
 
 	command { 
 		mkdir mapping
-		flatten.py --tsv=${write_tsv(fastqs)} | xargs -I % ln -s % mapping
+		cat ${write_lines(fastqs)} | xargs -I % ln -s % mapping
 		ls mapping
 	}
 

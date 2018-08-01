@@ -54,12 +54,16 @@ workflow wgbs {
 		}
 	}
 
+	Array[File] map_qc_json_ = flatten(map.qc_json)
+	Array[File] bscaller_qc_json_ = flatten(bscaller.qc_json)
+
 	call qc_report { input:
-		map_qc_json = map.qc_json,
-		bscaller_qc_json = bscaller.qc_json,
+		map_qc_json = map_qc_json_,
+		bscaller_qc_json = bscaller_qc_json_,
 		gemBS_json = prepare.gemBS_json,
 		sample_names = sample_names,
-		sample_barcodes = sample_barcodes
+		sample_barcodes = sample_barcodes,
+		reference = reference
 	}
 
 
@@ -211,20 +215,26 @@ task extract {
 }
 
 task qc_report {
-	Array[Array[File]] map_qc_json 
-	Array[Array[File]] bscaller_qc_json
+	Array[File] map_qc_json 
+	Array[File] bscaller_qc_json
 	Array[String] sample_names
 	Array[String] sample_barcodes
+	File reference
 	File gemBS_json
 
 
 	command {
-		mkdir mapping && mkdir calls
-		cat ${write_lines(map_qc_json)}
+		mkdir mapping && mkdir calls && mkdir reference
+		mkdir mapping_reports && mkdir calls_reports
+		ln -s ${reference} reference
+		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping
+		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls
+		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
+		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}
 
 	output {
-		Array[Array[File]] files = map_qc_json
-		Array[String] lines = read_lines(stdout())
+		File map_html = glob("mapping_reports/*.html")[0]
+		File bscaller_html = glob("calls_reports/variant_calling/*.html")[0]
 	}
 }
