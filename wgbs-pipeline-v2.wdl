@@ -143,8 +143,8 @@ task map {
 		File bam = glob("mapping/**/*.bam")[0]
 		File bai = glob("mapping/**/*.bai")[0]
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
-		File qc_html = glob("*.html")
-		File qc_pdf = glob("SPHINX/*.pdf")
+		File qc_html = glob("*.html")[0]
+		File qc_pdf = glob("SPHINX/*.pdf")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
 
@@ -174,8 +174,8 @@ task bscaller {
 		File bcf = glob("calls/**/*.bcf")[0]
 		File bcf_csi = glob("calls/**/*.bcf.csi")[0]
 		File bcf_md5 = glob("calls/**/*.bcf.md5")[0]
-		File qc_html = glob("*.html")
-		File qc_pdf = glob("SPHINX/*.pdf")
+		File qc_html = glob("*.html")[0]
+		File qc_pdf = glob("SPHINX/*.pdf")[0]
 		Array[File] qc_json = glob("calls/**/*.json")
 	}
 }
@@ -213,10 +213,3 @@ task extract {
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
 	}
 }
-
-
-
-
-
-
-
