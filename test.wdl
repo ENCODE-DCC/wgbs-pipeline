@@ -17,11 +17,13 @@ task flatten {
 	Array[Array[File]] fastqs
 
 	command { 
-		flatten.py --tsv=${write_tsv(fastqs)}
+		mkdir mapping
+		flatten.py --tsv=${write_tsv(fastqs)} | xargs -I % ln -s % mapping
+		ls mapping
 	}
 
-	output{
-		Array[String] stdout = read_lines(stdout())
+	output {
+		
 	}
 
 }
