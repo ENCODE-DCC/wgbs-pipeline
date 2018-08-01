@@ -52,21 +52,23 @@ workflow wgbs {
 			bcf_csi = bscaller.bcf_csi,
 			contig_sizes = contig_sizes
 		}
-
 	}
+
+	call qc_report { input:
+		map_qc_json = map.qc_json,
+		bscaller_qc_json = bscaller.qc_json
+		gemBS_json = prepare.gemBS_json
+	}
+
 
 	output {
 		File index_used = index
 		Array[File] bams = map.bam
 		Array[File] bais = map.bai
 		Array[File] bam_md5s = map.bam_md5
-		Array[File] map_qc_html = map.qc_html
-		Array[File] map_qc_pdf = map.qc_pdf
 		Array[File] bscaller_bcf = bscaller.bcf
 		Array[File] bscaller_bcf_csi = bscaller.bcf_csi
 		Array[File] bscaller_bcf_md5 = bscaller.bcf_md5
-		Array[File] bscaller_qc_html = bscaller.qc_html
-		Array[File] bscaller_qc_pdf = bscaller.qc_pdf
 		Array[File] extracted_bw = extract.bw
 		Array[File] extracted_chg_bb = extract.chg_bb
 		Array[File] extracted_chh_bb = extract.chh_bb
@@ -135,16 +137,12 @@ task map {
 		cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
 		mkdir -p mapping/${sample_barcode}
 		gemBS -j ${gemBS_json} map -b ${sample_barcode} --ignore-db
-		gemBS -j ${gemBS_json} map-report -p ${sample_name} -o .
-		cd SPHINX && make latexpdf
 	}
 
 	output {
 		File bam = glob("mapping/**/*.bam")[0]
 		File bai = glob("mapping/**/*.bai")[0]
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
-		File qc_html = glob("*.html")[0]
-		File qc_pdf = glob("SPHINX/*.pdf")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
 
@@ -166,16 +164,12 @@ task bscaller {
 		ln -s ${bam} mapping/${sample_barcode}
 		ln -s ${bai} mapping/${sample_barcode}
 		gemBS -j ${gemBS_json} call --ignore-db --ignore-dep
-		gemBS -j ${gemBS_json} call-report -p ${sample_name} -o .
-		cd SPHINX && make latexpdf
 	}
 
 	output {
 		File bcf = glob("calls/**/*.bcf")[0]
 		File bcf_csi = glob("calls/**/*.bcf.csi")[0]
 		File bcf_md5 = glob("calls/**/*.bcf.md5")[0]
-		File qc_html = glob("*.html")[0]
-		File qc_pdf = glob("SPHINX/*.pdf")[0]
 		Array[File] qc_json = glob("calls/**/*.json")
 	}
 }
@@ -211,5 +205,17 @@ task extract {
 		File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
 		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
+	}
+}
+
+task qc_report {
+	Array[Array[File]] map_qc_json 
+	Array[Array[File]] bscaller_qc_json
+	File gemBS_json
+
+
+	command {
+		
+	
 	}
 }
