@@ -98,7 +98,6 @@ task prepare {
 	command {
 		mkdir reference
 		touch reference/$(basename ${reference})
-		touch reference/$(basename ${extra_reference})
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
 					  -o gemBS.json \
