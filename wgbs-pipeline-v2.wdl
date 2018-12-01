@@ -98,6 +98,7 @@ task prepare {
 	command {
 		mkdir reference
 		touch reference/$(basename ${reference})
+		touch reference/$(basename ${extra_reference})
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
 					  -o gemBS.json \
@@ -116,7 +117,7 @@ task index {
 
 	command {
 		mkdir reference
-		ln -s ${reference} reference && ln ${extra_reference} reference
+		ln -s ${reference} reference && ln -s ${extra_reference} reference
 		gemBS -j ${gemBS_json} index
 	}
 
@@ -136,8 +137,8 @@ task map {
 	String sample_name
 
 	command {
-		mkdir reference && ln -s ${reference} reference
-		mkdir indexes && ln -s ${index} indexes
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${index} indexes
 		mkdir -p fastq/${sample_name}
 		cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
 		mkdir -p mapping/${sample_barcode}

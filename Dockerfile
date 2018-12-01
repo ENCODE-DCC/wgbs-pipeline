@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip3 install matplotlib multiprocess
 
-# Make directory for all softwares
+# Make directory for all  softwares
 RUN mkdir /software
 WORKDIR /software
 ENV PATH="/software:${PATH}"
