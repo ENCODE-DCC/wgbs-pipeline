@@ -228,8 +228,8 @@ task qc_report {
 		ln -s ${reference} reference
 		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p mapping/%
 		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p calls/%
-		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping/$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' %)
-		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls/$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' %)
+		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping/$(cat % | jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]')
+		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls/$(cat % | jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]')
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
 		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}
