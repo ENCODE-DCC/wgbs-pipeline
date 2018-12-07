@@ -164,8 +164,8 @@ task bscaller {
 	String sample_name
 
 	command {
-		mkdir reference && ln -s ${reference} reference
-		mkdir indexes && ln -s ${contig_sizes} indexes
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p mapping/${sample_barcode}
 		ln -s ${bam} mapping/${sample_barcode}
 		ln -s ${bai} mapping/${sample_barcode}
@@ -224,11 +224,12 @@ task qc_report {
 
 
 	command {
-		mkdir mapping && mkdir calls && mkdir reference
-		mkdir mapping_reports && mkdir calls_reports
+		mkdir reference && mkdir mapping_reports && mkdir calls_reports
 		ln -s ${reference} reference
-		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping
-		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls
+		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p mapping/%
+		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p calls/%
+		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping/$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' %)
+		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls/$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' %)
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
 		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}

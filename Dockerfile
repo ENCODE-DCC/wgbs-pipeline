@@ -16,7 +16,8 @@ RUN apt-get update && apt-get install -y \
 	libncurses5-dev \
 	liblzma-dev \
 	libssl-dev \
-	libcurl4-openssl-dev
+	libcurl4-openssl-dev \
+	jq
 
 RUN pip3 install matplotlib multiprocess
 
