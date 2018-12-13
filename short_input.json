@@ -1,6 +1,6 @@
 {
 	"wgbs.prepare.configuration_file": "/Users/bek/wgbs-testdata/gemBS_example/example.conf",
-	"wgbs.prepare.metadata_file": "/Users/bek/wgbs-testdata/gemBS_example/example.csv",
+	"wgbs.prepare.metadata_file": "/Users/bek/wgbs-testdata/gemBS_example/short_example.csv",
 	"wgbs.reference": "/Users/bek/wgbs-testdata/gemBS_example/reference/sacCer3.fa.gz",
 	"wgbs.extra_reference": "/Users/bek/wgbs-testdata/gemBS_example/reference/conversion_control.fa.gz",
 	"wgbs.indexed_reference": "/Users/bek/wgbs-testdata/gemBS_example/indexes/sacCer3.BS.gem",

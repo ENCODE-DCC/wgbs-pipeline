@@ -190,12 +190,12 @@ task extract {
 	String sample_name
 
 	command {
-		mkdir reference && ln -s ${reference} reference
-		mkdir indexes && ln -s ${contig_sizes} indexes
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p calls/${sample_barcode}
 		mkdir -p extract/${sample_barcode}
-		ln -s ${bcf} calls/${sample_barcode} 
-		ln -s ${bcf_csi} calls/${sample_barcode}
+		ln ${bcf} calls/${sample_barcode} 
+		ln ${bcf_csi} calls/${sample_barcode}
 		gemBS -j ${gemBS_json} extract -w -B --ignore-db --ignore-dep
 	}
 
@@ -224,18 +224,19 @@ task qc_report {
 
 
 	command {
-		mkdir reference && mkdir mapping_reports && mkdir calls_reports
-		ln -s ${reference} reference
-		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p mapping/%
-		cat ${write_lines(sample_barcodes)} | xargs -I % mkdir -p calls/%
-		cat ${write_lines(map_qc_json)} | xargs -I % ln -s % mapping/$(cat % | jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]')
-		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln -s % calls/$(cat % | jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]')
+		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir calls
+		ln ${reference} reference
+		cat ${write_lines(map_qc_json)} | while read line
+		do
+			barcode=$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' $line)
+			mkdir -p mapping/$barcode
+			ln $line mapping/$barcode
+			touch mapping/$barcode/"$barcode.bam"
+		done
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
-		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}
-
 	output {
-		File map_html = glob("mapping_reports/*.html")[0]
-		File bscaller_html = glob("calls_reports/variant_calling/*.html")[0]
+		Array[File] map_html_assets = glob("mapping_reports/mapping/*")[0]
+		File bscaller_html_assets = glob("calls_reports/variant_calling/*.html")[0]
 	}
 }
