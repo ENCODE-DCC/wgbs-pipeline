@@ -1,4 +1,6 @@
 workflow wgbs {
+	File configuration_file
+	File metadata_file
 	File reference
 	File? indexed_reference
 	File? indexed_contig_sizes
@@ -7,21 +9,31 @@ workflow wgbs {
 	Array[String] sample_names
 	Array[String] sample_barcodes
 
-	call prepare { input:
-		reference = reference,
-		extra_reference = extra_reference
-	}
 
 	if (!defined(indexed_reference)) {
 		call index as index_reference { input:
+			configuration_file = configuration_file,
+			metadata_file = metadata_file,
 			reference = reference,
-			extra_reference = extra_reference,
-			gemBS_json = prepare.gemBS_json
+			extra_reference = extra_reference
 		}
 	}
 
 	File index = select_first([indexed_reference, index_reference.BS_gem])
 	File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
+
+	if (defined(indexed_reference) && defined(indexed_contig_sizes)) { 
+		call prepare { input:
+			configuration_file = configuration_file,
+			metadata_file = metadata_file,
+			contig_sizes = indexed_contig_sizes,
+			reference = reference,
+			index = index,
+			extra_reference = extra_reference
+		}
+	}
+
+	File gemBS_json = select_first([prepare.gemBS_json, index_reference.gemBS_json])
 
 	scatter(i in range(length(sample_names))) {
 		call map { input:
@@ -30,12 +42,12 @@ workflow wgbs {
 			sample_name = sample_names[i],
 			index = index,
 			reference = reference,
-			gemBS_json = prepare.gemBS_json
+			gemBS_json = gemBS_json
 		}
 
 		call bscaller { input:
 			reference = reference,
-			gemBS_json = prepare.gemBS_json,
+			gemBS_json = gemBS_json,
 			sample_barcode = sample_barcodes[i],
 			sample_name = sample_names[i],
 			bam = map.bam,
@@ -44,7 +56,7 @@ workflow wgbs {
 		}
 
 		call extract { input:
-			gemBS_json = prepare.gemBS_json,
+			gemBS_json = gemBS_json,
 			reference = reference,
 			sample_barcode = sample_barcodes[i],
 			sample_name = sample_names[i],
@@ -60,10 +72,10 @@ workflow wgbs {
 	call qc_report { input:
 		map_qc_json = map_qc_json_,
 		bscaller_qc_json = bscaller_qc_json_,
-		gemBS_json = prepare.gemBS_json,
+		gemBS_json = gemBS_json,
 		sample_names = sample_names,
 		sample_barcodes = sample_barcodes,
-		reference = reference
+		reference = reference,
 	}
 
 
@@ -92,13 +104,17 @@ workflow wgbs {
 task prepare {
 	File configuration_file
 	File metadata_file
+	File contig_sizes
 	String reference
+	String index
 	String? extra_reference
-
+	
 	command {
-		mkdir reference
+		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
+		touch indexes/$(basename ${index})
+		ln ${contig_sizes} indexes/
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
 					  -o gemBS.json \
@@ -111,20 +127,26 @@ task prepare {
 }
 
 task index {
+	File configuration_file
+	File metadata_file
 	File reference
 	File? extra_reference
-	File gemBS_json
 
 	command {
 		mkdir reference
 		ln -s ${reference} reference && ln -s ${extra_reference} reference
-		gemBS -j ${gemBS_json} index
+		gemBS prepare -c ${configuration_file} \
+					  -t ${metadata_file} \
+					  -o gemBS.json \
+					  --no-db
+		gemBS -j gemBS.json index
 	}
 
 	output {
 		File BS_gem = glob("indexes/*.BS.gem")[0]
 		File BS_info = glob("indexes/*.BS.info")[0]
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
+		File gemBS_json = glob("gemBS.json")[0]
 	}
 }
 
@@ -219,12 +241,14 @@ task qc_report {
 	Array[File] bscaller_qc_json
 	Array[String] sample_names
 	Array[String] sample_barcodes
-	File reference
 	File gemBS_json
+	String reference
+	File contig_sizes
+	String index
 
 
 	command {
-		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir calls
+		mkdir reference && mkdir mapping_reports && mkdir calls_reports
 		ln ${reference} reference
 		cat ${write_lines(map_qc_json)} | while read line
 		do
@@ -233,10 +257,20 @@ task qc_report {
 			ln $line mapping/$barcode
 			touch mapping/$barcode/"$barcode.bam"
 		done
+		cat ${write_lines(bscaller_qc_json)} | while read line
+		do
+			barcode=$(cut -d '_' f1 <<< ($basename $line))
+			mkdir -p calls/$barcode
+			ln $line calls/$barcode
+			touch calls/$barcode/"$barcode.bcf"
+			touch calls/$barcode/
+		done
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
+		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}
+
 	output {
-		Array[File] map_html_assets = glob("mapping_reports/mapping/*")[0]
-		File bscaller_html_assets = glob("calls_reports/variant_calling/*.html")[0]
+		Array[File] map_html_assets = glob("mapping_reports/mapping/*")
+		Array[File] bscaller_html_assets = glob("calls_reports/variant_calling/*")
 	}
 }
