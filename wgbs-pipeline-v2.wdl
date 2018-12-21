@@ -73,9 +73,8 @@ workflow wgbs {
 		map_qc_json = map_qc_json_,
 		bscaller_qc_json = bscaller_qc_json_,
 		gemBS_json = gemBS_json,
-		sample_names = sample_names,
-		sample_barcodes = sample_barcodes,
 		reference = reference,
+		contig_sizes = contig_sizes
 	}
 
 
@@ -239,17 +238,15 @@ task extract {
 task qc_report {
 	Array[File] map_qc_json 
 	Array[File] bscaller_qc_json
-	Array[String] sample_names
-	Array[String] sample_barcodes
+	File reference
 	File gemBS_json
-	String reference
 	File contig_sizes
-	String index
 
 
 	command {
-		mkdir reference && mkdir mapping_reports && mkdir calls_reports
-		ln ${reference} reference
+		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir indexes
+		ln -s ${contig_sizes} indexes
+		ln -s ${reference} reference
 		cat ${write_lines(map_qc_json)} | while read line
 		do
 			barcode=$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' $line)
@@ -259,11 +256,10 @@ task qc_report {
 		done
 		cat ${write_lines(bscaller_qc_json)} | while read line
 		do
-			barcode=$(cut -d '_' f1 <<< ($basename $line))
+			barcode=$(cut -d '_' -f1 <<< $(basename $line))
 			mkdir -p calls/$barcode
 			ln $line calls/$barcode
 			touch calls/$barcode/"$barcode.bcf"
-			touch calls/$barcode/
 		done
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
 		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
