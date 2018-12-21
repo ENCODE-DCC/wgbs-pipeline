@@ -1,276 +1,282 @@
-# ENCODE WGBS Pipeline running https://github.com/heathsc/gemBS
-# Maintainer: Ulugbek Baymuradov
-import 'bs-call.wdl' as bscaller
-import 'mapping.wdl' as mapper
-
 workflow wgbs {
-	String organism
-	File reference_fasta
-	File? indexed_reference_gem
-	File? indexed_reference_info
-	File metadata 
-	Int pyglob_nearness
-	Array[Pair[String, Array[Pair[String,Array[File]]]]] fastq_files
-	Array[File]? mapping_outputs
-	Array[String] chromosomes
+	File configuration_file
+	File metadata_file
+	File reference
+	File? indexed_reference
+	File? indexed_contig_sizes
+	File? extra_reference
+	Array[Array[File]] fastqs
+	Array[String] sample_names
+	Array[String] sample_barcodes
 
 
-	if (!defined(indexed_reference_gem)) {
-		call index { input:
-			reference_fasta = reference_fasta,
-			nearness = pyglob_nearness
+	if (!defined(indexed_reference)) {
+		call index as index_reference { input:
+			configuration_file = configuration_file,
+			metadata_file = metadata_file,
+			reference = reference,
+			extra_reference = extra_reference
 		}
 	}
 
-	File indexed_gem = select_first([indexed_reference_gem, index.reference_gem])
-	File indexed_info = select_first([indexed_reference_info, index.reference_info])
+	File index = select_first([indexed_reference, index_reference.BS_gem])
+	File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
-	call prepare_config { input:
-		metadata_csv = metadata
+	if (defined(indexed_reference) && defined(indexed_contig_sizes)) { 
+		call prepare { input:
+			configuration_file = configuration_file,
+			metadata_file = metadata_file,
+			contig_sizes = indexed_contig_sizes,
+			reference = reference,
+			index = index,
+			extra_reference = extra_reference
+		}
 	}
 
+	File gemBS_json = select_first([prepare.gemBS_json, index_reference.gemBS_json])
 
-	call generate_mapping_commands { input:
-		reference_gem = indexed_gem,
-		metadata_json = prepare_config.metadata_json
+	scatter(i in range(length(sample_names))) {
+		call map { input:
+			fastqs = fastqs[i],
+			sample_barcode = sample_barcodes[i],
+			sample_name = sample_names[i],
+			index = index,
+			reference = reference,
+			gemBS_json = gemBS_json
+		}
+
+		call bscaller { input:
+			reference = reference,
+			gemBS_json = gemBS_json,
+			sample_barcode = sample_barcodes[i],
+			sample_name = sample_names[i],
+			bam = map.bam,
+			bai = map.bai,
+			contig_sizes = contig_sizes
+		}
+
+		call extract { input:
+			gemBS_json = gemBS_json,
+			reference = reference,
+			sample_barcode = sample_barcodes[i],
+			sample_name = sample_names[i],
+			bcf = bscaller.bcf,
+			bcf_csi = bscaller.bcf_csi,
+			contig_sizes = contig_sizes
+		}
 	}
 
-	call flowcell_to_commands { input:
-		metadata_json = prepare_config.metadata_json,
-		commands = generate_mapping_commands.mapping_commands
-	}
+	Array[File] map_qc_json_ = flatten(map.qc_json)
+	Array[File] bscaller_qc_json_ = flatten(bscaller.qc_json)
 
-	scatter(sample_files in fastq_files) {
-		
-		call mapper.mapping as map { input:
-			reference_gem = indexed_gem,
-			metadata_json = prepare_config.metadata_json,
-			sample_files = sample_files,
-			commands = flowcell_to_commands.paired_commands
-		}
-
-		call merging_sample { input:
-			mapping_outputs = map.mapping_outputs,
-			metadata_json = prepare_config.metadata_json,
-			sample = sample_files.left
-		}
-
-		call bscaller.bscall { input:
-			organism = organism,
-			reference_fasta = reference_fasta,
-			bam = merging_sample.bam,
-			bai = merging_sample.bai,
-			sample = sample_files.left,
-			chromosomes = chromosomes
-		}
-
-		call bscall_concatenate { input:
-			sample = sample_files.left,
-			bcf_files = bscall.bcf_files
-		}
-
-		call methylation_filtering {input:
-			merged_file_bcf = bscall_concatenate.merged_file_bcf,
-			merged_file_bcf_csi = bscall_concatenate.merged_file_bcf_csi,
-			merged_file_md5 = bscall_concatenate.merged_file_md5,
-		}
+	call qc_report { input:
+		map_qc_json = map_qc_json_,
+		bscaller_qc_json = bscaller_qc_json_,
+		gemBS_json = gemBS_json,
+		reference = reference,
+		contig_sizes = contig_sizes
 	}
 
 
 	output {
-		File reference_info = indexed_info
-		File reference_gem = indexed_gem
-		File metadata_json = prepare_config.metadata_json
-		Array[Array[Array[File]]] mapping_step_outputs = map.mapping_outputs
-		Array[File] merged_bam = merging_sample.bam
-		Array[File] merged_bai = merging_sample.bai
-		Array[File] bscall_concatenated_file = bscall_concatenate.merged_file_bcf
-		Array[File] methylation_filtered_file = methylation_filtering.filtered_meth_file
+		File index_used = index
+		Array[File] bams = map.bam
+		Array[File] bais = map.bai
+		Array[File] bam_md5s = map.bam_md5
+		Array[File] bscaller_bcf = bscaller.bcf
+		Array[File] bscaller_bcf_csi = bscaller.bcf_csi
+		Array[File] bscaller_bcf_md5 = bscaller.bcf_md5
+		Array[File] extracted_bw = extract.bw
+		Array[File] extracted_chg_bb = extract.chg_bb
+		Array[File] extracted_chh_bb = extract.chh_bb
+		Array[File] extracted_cpg_bb = extract.cpg_bb
+		Array[File] extracted_chg_bed = extract.chg_bed
+		Array[File] extracted_chh_bed = extract.chh_bed
+		Array[File] extracted_cpg_bed = extract.cpg_bed
+		Array[File] extracted_cpg_txt = extract.cpg_txt
+		Array[File] extracted_cpg_txt_tbi = extract.cpg_txt_tbi
+		Array[File] extracted_non_cpg_txt = extract.non_cpg_txt
+		Array[File] extracted_non_cpg_txt_tbi = extract.non_cpg_txt_tbi
+		Array[File] map_html_assets = qc_report.map_html_assets
+		Array[File] map_image_assets = qc_report.map_image_assets
+		Array[File] map_spinx_assets = qc_report.map_spinx_assets
+		Array[File] bscaller_html_assets = qc_report.bscaller_html_assets
+		Array[File] bscaller_image_assets = qc_report.bscaller_image_assets
+		Array[File] bscaller_spinx_assets = qc_report.bscaller_spinx_assets
 	}
 }
 
+task prepare {
+	File configuration_file
+	File metadata_file
+	File contig_sizes
+	String reference
+	String index
+	String? extra_reference
+	
+	command {
+		mkdir reference && mkdir indexes
+		touch reference/$(basename ${reference})
+		touch reference/$(basename ${extra_reference})
+		touch indexes/$(basename ${index})
+		ln ${contig_sizes} indexes/
+		gemBS prepare -c ${configuration_file} \
+					  -t ${metadata_file} \
+					  -o gemBS.json \
+					  --no-db
+	}
+
+	output {
+		File gemBS_json = glob("gemBS.json")[0]
+	}
+}
 
 task index {
-
-	File reference_fasta
-	Int nearness
-
-	Int? memory_gb
-	Int? cpu
-	String? disks
-
+	File configuration_file
+	File metadata_file
+	File reference
+	File? extra_reference
 
 	command {
-		gemBS index -i ${reference_fasta}
-		pyglob.py \
-			${"--pattern '*.BS.info'"} \
-			${"--nearness " + nearness} \
-			${"--matched-files-name info"}
-		pyglob.py \
-			${"--pattern '*.BS.gem'"} \
-			${"--nearness " + nearness} \
-			${"--matched-files-name gem"}
-		mkdir index_out
-		cat info.txt | xargs -I % ln % index_out
-		cat gem.txt | xargs -I % ln % index_out
-	}
-
-	output {
-		File reference_info = glob("index_out/*.BS.info")[0]
-		File reference_gem = glob("index_out/*.BS.gem")[0]
-	}
-
-	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 100 HDD"])
-		preemptible: 0
-	}
-}
-
-task prepare_config {
-	File metadata_csv
-
-	command {
-		gemBS prepare-config -t ${metadata_csv} -j metadata.json
-	}
-
-	output {
-		File metadata_json = glob("metadata.json")[0]
-	}
-}
-
-task flowcell_to_commands {
-	File metadata_json
-	Array[String] commands
-
-	command <<<
-		python3 <<CODE
-		import json
-		with open('${metadata_json}') as file:
-			metadata_json = json.load(file)
-		lane_names = []
-		for key, value in metadata_json.items():
-			lane_names.append("{}_{}_{}".format(value['flowcell_name'],
-											 	value['lane_number'],
-												value['index_name']))
-		for name in set(lane_names):
-			for command_string in '${sep="<>" commands}'.split('<>'):
-				if name in command_string:
-					print("{}\t{}".format(name, command_string))
-		CODE
-	>>>
-
-	output {
-		Map[String,String] paired_commands = read_map(stdout())
-	}
-}
-
-task generate_mapping_commands {
-
-	String reference_gem
-	File metadata_json
-
-	command {
-		mkdir fastqs
-		mkdir -p data/mappings 
-		mkdir tmp
 		mkdir reference
-		ln -s ${reference_gem} reference/
-		ln -s ${metadata_json} .
-		gemBS mapping-commands -I reference/$(basename ${reference_gem}) -j $(basename ${metadata_json}) -i fastqs/ -o data/mappings/ -d tmp/ -t 14 -p
+		ln -s ${reference} reference && ln -s ${extra_reference} reference
+		gemBS prepare -c ${configuration_file} \
+					  -t ${metadata_file} \
+					  -o gemBS.json \
+					  --no-db
+		gemBS -j gemBS.json index
 	}
 
 	output {
-		Array[String] mapping_commands = read_lines(stdout())
+		File BS_gem = glob("indexes/*.BS.gem")[0]
+		File BS_info = glob("indexes/*.BS.info")[0]
+		File contig_sizes = glob("indexes/*.contig.sizes")[0]
+		File gemBS_json = glob("gemBS.json")[0]
 	}
 }
 
-
-task merging_sample {
-	Array[Array[File]] mapping_outputs
-	File metadata_json
-	String sample 
-
-	Int? memory_gb
-	Int? cpu
-	String? disks
-
+task map {
+	File reference
+	File index
+	File gemBS_json
+	Array[File] fastqs
+	String sample_barcode
+	String sample_name
 
 	command {
-		mkdir temp
-		mkdir -p data/mappings
-		cat ${write_lines(mapping_outputs[0])} | xargs -I % ln % data/mappings
-		gemBS merging-sample -i data/mappings -j ${metadata_json} -s ${sample} -t 14 -o data/sample_mappings -d temp/
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${index} indexes
+		mkdir -p fastq/${sample_name}
+		cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
+		mkdir -p mapping/${sample_barcode}
+		gemBS -j ${gemBS_json} map -b ${sample_barcode} --ignore-db
 	}
 
 	output {
-		File bam = glob("data/sample_mappings/*.bam")[0]
-		File bai = glob("data/sample_mappings/*.bai")[0]
+		File bam = glob("mapping/**/*.bam")[0]
+		File bai = glob("mapping/**/*.bai")[0]
+		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
+		Array[File] qc_json = glob("mapping/**/*.json")
 	}
 
-	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 500 HDD"])
-		preemptible: 0
+}
+
+task bscaller {
+	File reference
+	File gemBS_json
+	File bam
+	File bai
+	File contig_sizes
+	String sample_barcode 
+	String sample_name
+
+	command {
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${contig_sizes} indexes
+		mkdir -p mapping/${sample_barcode}
+		ln -s ${bam} mapping/${sample_barcode}
+		ln -s ${bai} mapping/${sample_barcode}
+		gemBS -j ${gemBS_json} call --ignore-db --ignore-dep
+	}
+
+	output {
+		File bcf = glob("calls/**/*.bcf")[0]
+		File bcf_csi = glob("calls/**/*.bcf.csi")[0]
+		File bcf_md5 = glob("calls/**/*.bcf.md5")[0]
+		Array[File] qc_json = glob("calls/**/*.json")
 	}
 }
 
-task bscall_concatenate {
-	String sample
-	Array[File] bcf_files
-
-	Int? memory_gb
-	Int? cpu
-	String? disks
-
+task extract {
+	File gemBS_json
+	File reference
+	File contig_sizes
+	File bcf
+	File bcf_csi
+	String sample_barcode 
+	String sample_name
 
 	command {
-		mkdir -p data/merged_calls
-		gemBS bscall-concatenate -s ${sample} -l ${sep=" " bcf_files} -o data/merged_calls
+		mkdir reference && ln ${reference} reference
+		mkdir indexes && ln ${contig_sizes} indexes
+		mkdir -p calls/${sample_barcode}
+		mkdir -p extract/${sample_barcode}
+		ln ${bcf} calls/${sample_barcode} 
+		ln ${bcf_csi} calls/${sample_barcode}
+		gemBS -j ${gemBS_json} extract -w -B --ignore-db --ignore-dep
 	}
 
 	output {
-		File merged_file_bcf = glob("data/merged_calls/*.raw.bcf")[0]
-		File merged_file_bcf_csi = glob("data/merged_calls/*.raw.bcf.csi")[0]
-		File merged_file_md5 = glob("data/merged_calls/*.raw.md5")[0]
-	}
-
-	runtime {
-		cpu: select_first([cpu,2])
-		memory : "${select_first([memory_gb,'7'])} GB"
-		disks : select_first([disks,"local-disk 100 HDD"])
-		preemptible: 0
+		File bw = glob("extract/**/*.bw")[0]
+		File chg_bb = glob("extract/**/*_chg.bb")[0]
+		File chh_bb = glob("extract/**/*_chh.bb")[0]
+		File cpg_bb = glob("extract/**/*_cpg.bb")[0]
+		File chg_bed = glob("extract/**/*_chg.bed.gz")[0]
+		File chh_bed = glob("extract/**/*_chh.bed.gz")[0]
+		File cpg_bed = glob("extract/**/*_cpg.bed.gz")[0]
+		File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]
+		File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
+		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
+		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
 	}
 }
 
-task methylation_filtering {
-	File merged_file_bcf
-	File merged_file_bcf_csi
-	File merged_file_md5
+task qc_report {
+	Array[File] map_qc_json 
+	Array[File] bscaller_qc_json
+	File reference
+	File gemBS_json
+	File contig_sizes
 
-	Int? memory_gb
-	Int? cpu
-	String? disks
 
 	command {
-		mkdir -p data/filtered_meth_calls
-		mkdir -p data/merged_calls
-		ln ${merged_file_bcf} data/merged_calls
-		ln ${merged_file_bcf_csi} data/merged_calls
-		ln ${merged_file_md5} data/merged_calls
-		gemBS methylation-filtering -b data/merged_calls/$(basename ${merged_file_bcf}) -o data/filtered_meth_calls
+		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir indexes
+		ln -s ${contig_sizes} indexes
+		ln -s ${reference} reference
+		cat ${write_lines(map_qc_json)} | while read line
+		do
+			barcode=$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' $line)
+			mkdir -p mapping/$barcode
+			ln $line mapping/$barcode
+			touch mapping/$barcode/"$barcode.bam"
+		done
+		cat ${write_lines(bscaller_qc_json)} | while read line
+		do
+			barcode=$(cut -d '_' -f1 <<< $(basename $line))
+			mkdir -p calls/$barcode
+			ln $line calls/$barcode
+			touch calls/$barcode/"$barcode.bcf"
+		done
+		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
+		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 	}
 
 	output {
-		File filtered_meth_file = glob("data/filtered_meth_calls/*.txt.gz")[0]
-	}
-
-	runtime {
-		cpu: select_first([cpu,16])
-		memory : "${select_first([memory_gb,'60'])} GB"
-		disks : select_first([disks,"local-disk 500 HDD"])
-		preemptible: 0
+		Array[File] map_html_assets = glob("mapping_reports/mapping/*.html")
+		Array[File] map_image_assets = glob("mapping_reports/mapping/*.png")
+		Array[File] map_spinx_assets = glob("mapping_reports/mapping/SPHINX/*")
+		Array[File] bscaller_html_assets = glob("calls_reports/variant_calling/*.html")
+		Array[File] bscaller_image_assets = glob("calls_reports/variant_calling/IMG/*.png")
+		Array[File] bscaller_spinx_assets = glob("calls_reports/variant_calling/SPHINX/*.png")
 	}
 }
