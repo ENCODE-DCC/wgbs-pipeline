@@ -17,9 +17,12 @@ RUN apt-get update && apt-get install -y \
 	liblzma-dev \
 	libssl-dev \
 	libcurl4-openssl-dev \
+	libpng-dev \
+	uuid-dev \
+	libmysqlclient-dev \
 	jq
 
-RUN pip3 install matplotlib multiprocess
+RUN pip3 install matplotlib==3.0.2 multiprocess
 
 # Make directory for all  softwares
 RUN mkdir /software
