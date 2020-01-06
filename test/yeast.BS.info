@@ -19,7 +19,7 @@
     => Block.Max 0 MB (0.590%)
     => Block.Prefered 0 MB for 128 writers (0.781%)
     => Block.Size 0 MB
-  => Num.Groups 131 
+  => Num.Groups 131
     => Group[0000]	Range=[       0,    9233)	9233 kmers
     => Group[0001]	Range=[    9233,   18214)	8981 kmers
     => Group[0002]	Range=[   18214,   27853)	9639 kmers
@@ -166,7 +166,7 @@
   => Text.Size 1 MB
 [GEM]>Sampled-SA
   => Architecture sSA.pck
-    => ArrayImpl  Packed-Array 
+    => ArrayImpl  Packed-Array
     => Sampling.Hybrid (SA-Space & Text-Space)
       => SA.Sampling.Rate 2^18446744073709551614 (4611686018427387904)
       => Text.Sampling.Rate 2^2 (4)

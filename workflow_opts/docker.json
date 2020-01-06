@@ -1,7 +1,7 @@
 {
-    "default_runtime_attributes" : {
-        "docker" : "quay.io/encode-dcc/wgbs-pipeline:gemBS_v2",
-        "cpu": "8",
-        "memory": "12 GB"
-    }
+  "default_runtime_attributes": {
+    "cpu": "8",
+    "docker": "quay.io/encode-dcc/wgbs-pipeline:gemBS_v2",
+    "memory": "12 GB"
+  }
 }

@@ -13,3 +13,8 @@ cromwell-executions/
 cromwell-workflow-logs/
 cromwell*.jar
 wdltool*.jar
+
+.mypy_cache/
+.tox/
+.vscode/
+venv/
