@@ -31,6 +31,10 @@ ENV PATH="/software:${PATH}"
 
 
 # Install gemBS
+# We do this dummy add step to invalidate the cache if the master HEAD ref changes
+# Otherwise the we won't pull the latest code changes
+# See https://stackoverflow.com/a/39278224
+ADD https://api.github.com/repos/heathsc/gemBS/git/refs/heads/master versions.json
 RUN git clone --recursive https://github.com/heathsc/gemBS.git
 RUN cd gemBS && python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
