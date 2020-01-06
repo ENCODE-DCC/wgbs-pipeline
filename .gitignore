@@ -1,5 +1,5 @@
 # Test files can be large
-helpers/__pycache__
+__pycache__/
 
 .python-version
 
@@ -18,3 +18,5 @@ wdltool*.jar
 .tox/
 .vscode/
 venv/
+
+*.egg-info/
