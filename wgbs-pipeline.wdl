@@ -1,27 +1,25 @@
 workflow wgbs {
 	File configuration_file
-	# TODO: autogenerate from sample names and fastqs
-	# File metadata_file
 	File reference
 	File? indexed_reference
 	File? indexed_contig_sizes
 	File? extra_reference
 	Array[Array[File]] fastqs
 	Array[String] sample_names
-	# TODO: autogenerate from sample names
-	# Array[String] sample_barcodes
+	String barcode_prefix = "sample_"
 
-	scatter(i in range(length(sample_names))) {
-		call make_metadata_csv { input:
-			sample_name = sample_names
-			fastqs = fastqs
-		}
+	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
+
+	call make_metadata_csv { input:
+		sample_names = sample_names
+		fastqs = fastqs
+		barcode_prefix = barcode_prefix
 	}
 
 	if (!defined(indexed_reference)) {
 		call index as index_reference { input:
 			configuration_file = configuration_file,
-			metadata_file = metadata_file,
+			metadata_file = make_metadata_csv.metadata_csv,
 			reference = reference,
 			extra_reference = extra_reference
 		}
@@ -33,7 +31,7 @@ workflow wgbs {
 	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
 		call prepare { input:
 			configuration_file = configuration_file,
-			metadata_file = metadata_file,
+			metadata_file = make_metadata_csv.metadata_csv,
 			contig_sizes = indexed_contig_sizes,
 			reference = reference,
 			index = index,
@@ -109,14 +107,15 @@ workflow wgbs {
 }
 
 task make_metadata_csv {
-	# Length of fastq array must be equal to or exactly twice the length of the sample_names array
 	Array[String] sample_names
 	Array[Array[File]] fastqs
+	String barcode_prefix
 
 	command {
 		python3 $(which make_metadata.py) \
 			-n "${sep=' ' sample_names}" \
-			--files "${sep=' ' flatten(fastqs)}"
+			--files "${write_tsv(fastqs)}"
+			-b "${barcode_prefix}"
 	}
 
 	output {

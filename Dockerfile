@@ -39,4 +39,6 @@ RUN git clone --recursive https://github.com/heathsc/gemBS.git
 RUN cd gemBS && python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
+COPY wgbs_pipeline wgbs_pipeline
+
 ENTRYPOINT ["/bin/bash","-c"]

@@ -60,6 +60,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="A tsv where each row is a fastq file or a pair of fastqs",
         required=True,
     )
+    parser.add_argument(
+        "-b",
+        "--barcode-prefix",
+        help="Prefix to prepend to sample names when making barcodes",
+        default="sample_",
+    )
     return parser
 
 
