@@ -101,13 +101,11 @@ workflow wgbs {
 }
 
 task make_metadata {
-	String sample_barcode
 	String sample_name
 	Array[File] fastqs
 
 	command {
 		python3 $(which make_metadata.py) \
-			-b "${sample_barcode}" \
 			-n "${sample_name}" \
 			--files "${sep=' ' fastqs}"
 	}

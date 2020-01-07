@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 NAME = "wgbs_pipeline"
 PACKAGES = find_packages()
-META_PATH = Path("src", "__init__.py")
+META_PATH = Path(NAME, "__init__.py")
 PROJECT_URLS = {
     "Documentation": "https://github.com/ENCODE-DCC/wgbs-pipeline",
     "Source Code": "https://github.com/ENCODE-DCC/wgbs-pipeline",
@@ -24,13 +24,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.8",
 ]
 INSTALL_REQUIRES = []  # type: ignore
-EXTRAS_REQUIRE = {
-    "docs": [],
-    "tests": ["pytest", "pytest-cov"],
-}
-EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["tests"] + ["pre-commit"]
-)
+EXTRAS_REQUIRE = {"tests": ["pytest", "pytest-cov", "pytest-mock", "attrs"]}
+EXTRAS_REQUIRE["dev"] = EXTRAS_REQUIRE["tests"] + ["pre-commit"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
