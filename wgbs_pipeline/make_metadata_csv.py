@@ -10,7 +10,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     rows = process(args)
-    with open("{}_metadata.csv".format(args.sample_name), "w", newline="") as f:
+    with open("{}_metadata.csv".format(args.sample_names[0]), "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(rows)
 
@@ -19,26 +19,45 @@ def process(args) -> List[List[str]]:
     """
     If only one file is specified (single-ended) then the File2 column is omitted.
     """
-    num_files = len(args.files)
-    if num_files > 2:
-        raise ValueError("Expected at most two fastq files as input.")
-    output = ["sample_{}".format(args.sample_name), args.sample_name, args.sample_name]
-    file_basenames = [Path(i).name for i in args.files]
+    files = read_file_tsv(args.files)
+    if len(args.sample_names) != len(files):
+        raise ValueError("Number of samples must match number of file groups")
+    num_files = len(files[0])
     if num_files == 1:
         header = CSV_FIELDS[:-1]
     else:
         header = CSV_FIELDS
-    output.extend(file_basenames)
-    return [header, output]
+    to_write = [header]
+    for sample_name, sample_files in zip(args.sample_names, files):
+        output = ["sample_{}".format(sample_name), sample_name, sample_name]
+        output.extend(sample_files)
+        to_write.append(output)
+    return to_write
+
+
+def read_file_tsv(path: str) -> List[List[str]]:
+    """
+    Read a tsv where each row should contain one or two fastq files, and preprocess them
+    by truncating paths to the basename.
+    """
+    output = []
+    with open(path, newline="") as f:
+        reader = csv.reader(f, delimiter="\t")
+        for row in reader:
+            if len(row) not in (1, 2):
+                raise ValueError("Expected at most two fastq files as input.")
+            output.append([Path(i).name for i in row])
+    return output
 
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--sample-name", help="sample name", required=True)
+    parser.add_argument(
+        "-n", "--sample-names", nargs="+", help="A list of sample names", required=True
+    )
     parser.add_argument(
         "--files",
-        nargs="+",
-        help="paths to fastq files, must be at least one and at most two",
+        help="A tsv where each row is a fastq file or a pair of fastqs",
         required=True,
     )
     return parser
