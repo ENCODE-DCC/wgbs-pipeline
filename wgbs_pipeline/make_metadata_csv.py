@@ -29,7 +29,11 @@ def process(args) -> List[List[str]]:
         header = CSV_FIELDS
     to_write = [header]
     for sample_name, sample_files in zip(args.sample_names, files):
-        output = ["sample_{}".format(sample_name), sample_name, sample_name]
+        output = [
+            "{}{}".format(args.barcode_prefix, sample_name),
+            sample_name,
+            sample_name,
+        ]
         output.extend(sample_files)
         to_write.append(output)
     return to_write

@@ -1,5 +1,5 @@
 __title__ = "wgbs-pipeline"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __description__ = "Python scripts required for running ENCODE WGBS pipeline."
 __url__ = "https://github.com/ENCODE-DCC/wgbs-pipeline"
 __uri__ = __url__

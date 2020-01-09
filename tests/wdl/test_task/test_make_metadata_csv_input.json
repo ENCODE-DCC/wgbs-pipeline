@@ -1,4 +1,11 @@
 {
-    "test_make_metadata_csv.sample_names": ["foo"],
-    "test_make_metadata_csv.fastqs": [["/a/f1.fastq.gz", "/b/f1.fastq.gz"]]
+  "test_make_metadata_csv.fastqs": [
+    [
+      "/a/f1.fastq.gz",
+      "/b/f1.fastq.gz"
+    ]
+  ],
+  "test_make_metadata_csv.sample_names": [
+    "foo"
+  ]
 }

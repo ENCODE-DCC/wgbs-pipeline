@@ -17,6 +17,7 @@ def does_not_raise():
 class StubArgs:
     sample_names: List[str]
     files: str
+    barcode_prefix: str = "sample_"
 
 
 @pytest.mark.parametrize(

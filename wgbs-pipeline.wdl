@@ -6,8 +6,8 @@ workflow wgbs {
 	File? extra_reference
 	Array[Array[File]] fastqs
 	Array[String] sample_names
-	String barcode_prefix = "sample_"
 
+	String barcode_prefix = "sample_"
 	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
 
 	call make_metadata_csv { input:
