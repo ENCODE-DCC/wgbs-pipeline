@@ -243,7 +243,7 @@ task extract {
 		mkdir -p extract/${sample_barcode}
 		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
-		gemBS -j ${gemBS_json} extract -w -B --ignore-db --ignore-dep
+		gemBS -j ${gemBS_json} extract -q 0 -l 0 -w -B --ignore-db --ignore-dep
 	}
 
 	output {

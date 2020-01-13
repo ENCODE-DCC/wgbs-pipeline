@@ -42,7 +42,6 @@ bsseq.fit <- BSmooth(bsseq,
 
 # Obtain the smoothed methylation profile. This will replace any positions with NaNs
 # (where there was no coverage in input bed). Conceptually similar to sklearn transform
-# methods
 meth <- getMeth(bsseq.fit, type = "smooth", what = "perBase")
 
 # meth is a DelayedMatrix, need to materialize in memory to write to a TSV. See
