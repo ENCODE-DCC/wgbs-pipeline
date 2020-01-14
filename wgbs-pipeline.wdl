@@ -1,19 +1,28 @@
+#CAPER docker quay.io/encode-dcc/wgbs-pipeline:0.1.0
+#CAPER singularity docker://quay.io/encode-dcc/wgbs-pipeline:0.1.0
+
 workflow wgbs {
 	File configuration_file
-	File metadata_file
 	File reference
 	File? indexed_reference
 	File? indexed_contig_sizes
 	File? extra_reference
 	Array[Array[File]] fastqs
 	Array[String] sample_names
-	Array[String] sample_barcodes
 
+	String barcode_prefix = "sample_"
+	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
+
+	call make_metadata_csv { input:
+		sample_names = sample_names,
+		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
+		barcode_prefix = barcode_prefix
+	}
 
 	if (!defined(indexed_reference)) {
 		call index as index_reference { input:
 			configuration_file = configuration_file,
-			metadata_file = metadata_file,
+			metadata_file = make_metadata_csv.metadata_csv,
 			reference = reference,
 			extra_reference = extra_reference
 		}
@@ -22,10 +31,10 @@ workflow wgbs {
 	File index = select_first([indexed_reference, index_reference.BS_gem])
 	File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
-	if (defined(indexed_reference) && defined(indexed_contig_sizes)) { 
+	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
 		call prepare { input:
 			configuration_file = configuration_file,
-			metadata_file = metadata_file,
+			metadata_file = make_metadata_csv.metadata_csv,
 			contig_sizes = indexed_contig_sizes,
 			reference = reference,
 			index = index,
@@ -100,6 +109,23 @@ workflow wgbs {
 	}
 }
 
+task make_metadata_csv {
+	Array[String] sample_names
+	File fastqs
+	String barcode_prefix
+
+	command {
+		python3 $(which make_metadata_csv.py) \
+			-n "${sep=' ' sample_names}" \
+			--files "${fastqs}" \
+			-b "${barcode_prefix}"
+	}
+
+	output {
+		File metadata_csv = glob("*_metadata.csv")[0]
+	}
+}
+
 task prepare {
 	File configuration_file
 	File metadata_file
@@ -107,7 +133,7 @@ task prepare {
 	String reference
 	String index
 	String? extra_reference
-	
+
 	command {
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
@@ -181,7 +207,7 @@ task bscaller {
 	File bam
 	File bai
 	File contig_sizes
-	String sample_barcode 
+	String sample_barcode
 	String sample_name
 
 	command {
@@ -207,7 +233,7 @@ task extract {
 	File contig_sizes
 	File bcf
 	File bcf_csi
-	String sample_barcode 
+	String sample_barcode
 	String sample_name
 
 	command {
@@ -215,7 +241,7 @@ task extract {
 		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p calls/${sample_barcode}
 		mkdir -p extract/${sample_barcode}
-		ln ${bcf} calls/${sample_barcode} 
+		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
 		gemBS -j ${gemBS_json} extract -w -B --ignore-db --ignore-dep
 	}
@@ -236,7 +262,7 @@ task extract {
 }
 
 task qc_report {
-	Array[File] map_qc_json 
+	Array[File] map_qc_json
 	Array[File] bscaller_qc_json
 	File reference
 	File gemBS_json

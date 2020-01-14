@@ -1,5 +1,6 @@
 # Test files can be large
-helpers/__pycache__
+__pycache__/
+.coverage*
 
 .python-version
 
@@ -13,3 +14,14 @@ cromwell-executions/
 cromwell-workflow-logs/
 cromwell*.jar
 wdltool*.jar
+.caper_tmp
+
+.mypy_cache/
+.tox/
+.vscode/
+venv/
+
+*.egg-info/
+.DS_STORE
+pip-wheel-metadata
+test_*
