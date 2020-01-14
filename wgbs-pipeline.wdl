@@ -1,3 +1,6 @@
+#CAPER docker quay.io/encode-dcc/wgbs-pipeline:0.1.0
+#CAPER singularity docker://quay.io/encode-dcc/wgbs-pipeline:0.1.0
+
 workflow wgbs {
 	File configuration_file
 	File reference
@@ -11,8 +14,8 @@ workflow wgbs {
 	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
 
 	call make_metadata_csv { input:
-		sample_names = sample_names
-		fastqs = fastqs
+		sample_names = sample_names,
+		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
 		barcode_prefix = barcode_prefix
 	}
 
@@ -108,13 +111,13 @@ workflow wgbs {
 
 task make_metadata_csv {
 	Array[String] sample_names
-	Array[Array[File]] fastqs
+	File fastqs
 	String barcode_prefix
 
 	command {
-		python3 $(which make_metadata.py) \
+		python3 $(which make_metadata_csv.py) \
 			-n "${sep=' ' sample_names}" \
-			--files "${write_tsv(fastqs)}"
+			--files "${fastqs}" \
 			-b "${barcode_prefix}"
 	}
 

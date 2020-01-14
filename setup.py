@@ -24,7 +24,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.8",
 ]
 INSTALL_REQUIRES = []  # type: ignore
-EXTRAS_REQUIRE = {"tests": ["pytest", "pytest-cov", "pytest-mock", "attrs"]}
+EXTRAS_REQUIRE = {"tests": ["pytest", "pytest-cov", "pytest-mock", "attrs", "caper"]}
 EXTRAS_REQUIRE["dev"] = EXTRAS_REQUIRE["tests"] + ["pre-commit"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 

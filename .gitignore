@@ -14,6 +14,7 @@ cromwell-executions/
 cromwell-workflow-logs/
 cromwell*.jar
 wdltool*.jar
+.caper_tmp
 
 .mypy_cache/
 .tox/
@@ -21,3 +22,6 @@ wdltool*.jar
 venv/
 
 *.egg-info/
+.DS_STORE
+pip-wheel-metadata
+test_*

@@ -10,7 +10,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     rows = process(args)
-    with open("{}_metadata.csv".format(args.sample_names[0]), "w", newline="") as f:
+    with open(args.outfile, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(rows)
 
@@ -69,6 +69,12 @@ def get_parser() -> argparse.ArgumentParser:
         "--barcode-prefix",
         help="Prefix to prepend to sample names when making barcodes",
         default="sample_",
+    ),
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        help="Name of csv file to write generated metadata to",
+        default="metadata.csv",
     )
     return parser
 

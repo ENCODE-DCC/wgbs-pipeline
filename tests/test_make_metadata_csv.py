@@ -102,4 +102,4 @@ def test_main(mocker):
     testargs = ["prog", "-n", "foo", "--files", "path.tsv"]
     mocker.patch("sys.argv", testargs)
     main()
-    assert builtins.open.call_args[0][0] == "foo_metadata.csv"
+    assert builtins.open.call_args[0][0] == "metadata.csv"

@@ -40,5 +40,6 @@ RUN cd gemBS && python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
 COPY wgbs_pipeline wgbs_pipeline
+ENV PATH="/software/wgbs_pipeline:${PATH}"
 
 ENTRYPOINT ["/bin/bash","-c"]
