@@ -1,8 +1,8 @@
+use csv::{ReaderBuilder, StringRecord, WriterBuilder};
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io;
 use structopt::StructOpt;
-use serde::{Deserialize, Serialize};
-use csv::{ReaderBuilder, WriterBuilder, StringRecord};
 
 #[derive(StructOpt)]
 struct Cli {
