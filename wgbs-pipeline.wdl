@@ -73,6 +73,10 @@ workflow wgbs {
 			bcf_csi = bscaller.bcf_csi,
 			contig_sizes = contig_sizes
 		}
+
+		call bsmooth { input:
+			cpg_gembs_bed = extract.cpg_txt
+		}
 	}
 
 	Array[File] map_qc_json_ = flatten(map.qc_json)
@@ -254,10 +258,23 @@ task extract {
 		File chg_bed = glob("extract/**/*_chg.bed.gz")[0]
 		File chh_bed = glob("extract/**/*_chh.bed.gz")[0]
 		File cpg_bed = glob("extract/**/*_cpg.bed.gz")[0]
-		File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]
+		File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]  # gemBS-style output bed file
 		File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
 		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
+	}
+}
+
+task bsmooth  {
+	File cpg_gembs_bed
+
+	command {
+		gembs_to_bismark_bed_converted "${cpg_gembs_bed}" converted_bismark.bed
+		Rscript bsmooth.R converted_bismark.bed smoothed.tsv
+	}
+
+	output {
+		File smoothed = glob("smoothed.tsv")[0]
 	}
 }
 

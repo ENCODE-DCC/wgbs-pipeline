@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "wgbs_pipeline/gembs-to-bismark-bed-converter",
+    "wgbs_pipeline/bismark-bsmooth-to-encode-bed-converter"
+]

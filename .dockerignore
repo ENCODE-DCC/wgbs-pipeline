@@ -1,3 +1,4 @@
 *
 !wgbs_pipeline/*.py
 !wgbs_pipeline/*.R
+!target

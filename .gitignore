@@ -25,3 +25,6 @@ venv/
 .DS_STORE
 pip-wheel-metadata
 test_*
+
+# Rust build directory (not dockerignored though!)
+target
