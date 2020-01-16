@@ -1,4 +1,6 @@
 use csv::{ReaderBuilder, WriterBuilder};
+use palette::rgb::Rgb;
+use palette::Hsv;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
@@ -6,7 +8,7 @@ use std::{cmp, fmt};
 use structopt::StructOpt;
 
 const ENCODE_SCORE_CAP: u16 = 1000;
-const ENCODE_RGB_DISPLAY_THRESH: u16 = 20;
+const ENCODE_HSV_MAX_HUE: f32 = 120.;
 const UNKNOWN_STRANDEDNESS: char = '.';
 
 #[derive(StructOpt)]
@@ -19,11 +21,24 @@ struct Cli {
     encode_bed_outfile: std::path::PathBuf,
 }
 
-struct Rgb(u8, u8, u8);
+struct RgbWithDisplay {
+    red: u8,
+    green: u8,
+    blue: u8,
+}
 
-impl fmt::Display for Rgb {
+impl fmt::Display for RgbWithDisplay {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{},{},{}", self.0, self.1, self.2)
+        write!(f, "{},{},{}", self.red, self.green, self.blue)
+    }
+}
+
+type RgbTriplet = (u8, u8, u8);
+
+impl From<RgbTriplet> for RgbWithDisplay {
+    fn from(rgb: RgbTriplet) -> Self {
+        let (red, green, blue) = rgb;
+        RgbWithDisplay { red, green, blue }
     }
 }
 
@@ -98,29 +113,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         record.strandedness = UNKNOWN_STRANDEDNESS;
         record.start_thick_display = record.start;
         record.stop_thick_display = record.stop;
-        record.color_value = rgb_from_score(record.score).to_string();
         record.smoothed_methylation_percentage =
             smoothed_methylation_record?.smoothed_methylation_percentage;
+        record.color_value =
+            rgb_from_methylation(record.smoothed_methylation_percentage).to_string();
         encode_writer.serialize(record)?;
     }
 
     Ok(())
 }
 
-// The color varies linearly from green to red with increased coverage up until
-// ENCODE_RGB_DISPLAY_THRESH is reached, wherein color is saturated at red
-fn rgb_from_score(score: u16) -> Rgb {
-    let factor =
-        cmp::min(ENCODE_RGB_DISPLAY_THRESH, score) as f64 / ENCODE_RGB_DISPLAY_THRESH as f64;
-    Rgb(
-        cmp::min(
-            { factor * u8::max_value() as f64 }.round() as u8,
-            u8::max_value(),
-        ),
-        cmp::min(
-            { (1. - factor) * u8::max_value() as f64 }.round() as u8,
-            u8::max_value(),
-        ),
-        0,
-    )
+// We interpolate in HSV color space so that at 50% between red and green we obtain
+// the yellow RGB value (255, 255, 0), interpolating in RGB space results in a dark
+// yellow (127, 127, 0) instead. Green = 0% methylation, red = 100% methylation
+fn rgb_from_methylation(methylation: f64) -> RgbWithDisplay {
+    let rgb: Rgb = Hsv::new((1. - methylation as f32) * ENCODE_HSV_MAX_HUE, 1., 1.).into();
+    RgbWithDisplay::from(rgb.into_format::<u8>().into_components())
 }
