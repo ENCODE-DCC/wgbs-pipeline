@@ -1,4 +1,4 @@
-FROM ubuntu:16.04@sha256:181800dada370557133a502977d0e3f7abda0c25b9bbb035f199f5eb6082a114
+FROM ubuntu:16.04@sha256:181800dada370557133a502977d0e3f7abda0c25b9bbb035f199f5eb6082a114 as main
 
 LABEL maintainer "Paul Sud"
 LABEL maintainer.email "encode-help@lists.stanford.edu"
@@ -44,15 +44,30 @@ RUN mkdir /software
 WORKDIR /software
 ENV PATH="/software:${PATH}"
 
+# Compile Rust binaries as a separate stage so we don't bloat pipeline image with Rust
+# build toolchain
+FROM rust:1.40.0-slim-stretch as builder
+WORKDIR /wgbs-pipeline
+COPY . .
+RUN cargo build --release --target x86_64-unknown-linux-gnu
+
+FROM main
+
 # Install gemBS
 RUN git clone --depth 1 --recursive https://github.com/heathsc/gemBS.git && \
-	git checkout 6d7a8ab25c2c44e6c6cca1485bba5b5fbaafc88f && \
-	cd gemBS && python3 setup.py install --user
+	cd gemBS && git checkout 6d7a8ab25c2c44e6c6cca1485bba5b5fbaafc88f && \
+	python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
-COPY wgbs_pipeline wgbs_pipeline
+# Instal Kent bedToBigBed util
+RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedToBigBed && \
+	chmod +x bedToBigBed
+
+# Add source files (Python, R)
+COPY wgbs_pipeline/*.* wgbs_pipeline/
+
+# Add compiled Rust binaries from other stage of build
+COPY --from=builder /wgbs-pipeline/wgbs_pipeline/gembs-to-bismark-bed-converter /wgbs-pipeline/wgbs_pipeline/bismark-bsmooth-to-encode-bed-converter wgbs_pipeline/
+
+# Add to path
 ENV PATH="/software/wgbs_pipeline:${PATH}"
-
-RUN cargo build --target x86_64-unknown-linux-gnu --release
-
-ENTRYPOINT ["/bin/bash","-c"]
