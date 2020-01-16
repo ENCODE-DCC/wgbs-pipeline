@@ -75,7 +75,8 @@ workflow wgbs {
 		}
 
 		call bsmooth { input:
-			cpg_gembs_bed = extract.cpg_txt
+			cpg_gembs_bed = extract.cpg_txt,
+			chrom_size = contig_sizes
 		}
 	}
 
@@ -89,28 +90,6 @@ workflow wgbs {
 		reference = reference,
 		contig_sizes = contig_sizes
 	}
-
-
-	output {
-		File index_used = index
-		Array[File] bams = map.bam
-		Array[File] bais = map.bai
-		Array[File] bam_md5s = map.bam_md5
-		Array[File] bscaller_bcf = bscaller.bcf
-		Array[File] bscaller_bcf_csi = bscaller.bcf_csi
-		Array[File] bscaller_bcf_md5 = bscaller.bcf_md5
-		Array[File] extracted_bw = extract.bw
-		Array[File] extracted_chg_bb = extract.chg_bb
-		Array[File] extracted_chh_bb = extract.chh_bb
-		Array[File] extracted_cpg_bb = extract.cpg_bb
-		Array[File] extracted_chg_bed = extract.chg_bed
-		Array[File] extracted_chh_bed = extract.chh_bed
-		Array[File] extracted_cpg_bed = extract.cpg_bed
-		Array[File] extracted_cpg_txt = extract.cpg_txt
-		Array[File] extracted_cpg_txt_tbi = extract.cpg_txt_tbi
-		Array[File] extracted_non_cpg_txt = extract.non_cpg_txt
-		Array[File] extracted_non_cpg_txt_tbi = extract.non_cpg_txt_tbi
-	}
 }
 
 task make_metadata_csv {
@@ -119,6 +98,7 @@ task make_metadata_csv {
 	String barcode_prefix
 
 	command {
+		set -euo pipefail
 		python3 $(which make_metadata_csv.py) \
 			-n "${sep=' ' sample_names}" \
 			--files "${fastqs}" \
@@ -139,6 +119,7 @@ task prepare {
 	String? extra_reference
 
 	command {
+		set -euo pipefail
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
@@ -162,6 +143,7 @@ task index {
 	File? extra_reference
 
 	command {
+		set -euo pipefail
 		mkdir reference
 		ln -s ${reference} reference && ln -s ${extra_reference} reference
 		gemBS prepare -c ${configuration_file} \
@@ -188,6 +170,7 @@ task map {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${index} indexes
 		mkdir -p fastq/${sample_name}
@@ -215,6 +198,7 @@ task bscaller {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p mapping/${sample_barcode}
@@ -241,6 +225,7 @@ task extract {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p calls/${sample_barcode}
@@ -265,16 +250,22 @@ task extract {
 	}
 }
 
-task bsmooth  {
+task bsmooth {
 	File cpg_gembs_bed
+	File chrom_sizes
 
 	command {
-		gembs_to_bismark_bed_converted "${cpg_gembs_bed}" converted_bismark.bed
+		set -euo pipefail
+		gembs-to-bismark-bed-converter ${cpg_gembs_bed} converted_bismark.bed
 		Rscript bsmooth.R converted_bismark.bed smoothed.tsv
+		bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
+		bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
+		gzip -n smoothed_encode.bed
 	}
 
 	output {
-		File smoothed = glob("smoothed.tsv")[0]
+		File smoothed_cpg_bed = glob("smoothed_encode.bed.gz")[0]
+		File smoothed_cpg_bigbed = glob("smoothed_encode.bb")[0]
 	}
 }
 
@@ -287,6 +278,7 @@ task qc_report {
 
 
 	command {
+		set -euo pipefail
 		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir indexes
 		ln -s ${contig_sizes} indexes
 		ln -s ${reference} reference
