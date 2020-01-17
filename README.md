@@ -33,5 +33,6 @@ Before making a PR, make sure that:
     $ cargo check
     $ cargo clippy
     ```
+
 3. (only if R code changes) Format R files by loading them in [RStudio free desktop version](https://rstudio.com/products/rstudio/download/#download) then clicking `Code` > `Reformat Code` or pressing `Shift` + `Cmd` + `A` (Mac) and saving.
 4. Make sure that you commit and push any formatting changes after any formatters.
