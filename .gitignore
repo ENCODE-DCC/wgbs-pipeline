@@ -24,7 +24,7 @@ venv/
 *.egg-info/
 .DS_STORE
 pip-wheel-metadata
-test_*
+/test_*
 
-# Rust build directory (not dockerignored though!)
+# Rust build directory
 target

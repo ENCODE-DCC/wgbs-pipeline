@@ -13,6 +13,9 @@ workflow wgbs {
 	String barcode_prefix = "sample_"
 	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
 
+	Int bsmooth_num_workers = 8
+	Int bsmooth_num_threads = 2
+
 	call make_metadata_csv { input:
 		sample_names = sample_names,
 		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
@@ -75,8 +78,10 @@ workflow wgbs {
 		}
 
 		call bsmooth { input:
-			cpg_gembs_bed = extract.cpg_txt,
-			chrom_size = contig_sizes
+			gembs_cpg_bed = extract.cpg_txt,
+			chrom_sizes = contig_sizes,
+			num_workers = bsmooth_num_workers,
+			num_threads = bsmooth_num_threads
 		}
 	}
 
@@ -251,13 +256,17 @@ task extract {
 }
 
 task bsmooth {
-	File cpg_gembs_bed
+	File gembs_cpg_bed
 	File chrom_sizes
+	Int num_workers
+	Int num_threads
 
 	command {
 		set -euo pipefail
-		gembs-to-bismark-bed-converter ${cpg_gembs_bed} converted_bismark.bed
-		Rscript bsmooth.R converted_bismark.bed smoothed.tsv
+		# Experienced issues running tests locally due to hard linking, need -f
+		gzip -df ${gembs_cpg_bed}
+		gembs-to-bismark-bed-converter ${basename(gembs_cpg_bed, ".gz")} converted_bismark.bed
+		Rscript bsmooth.R -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
 		bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
 		bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
 		gzip -n smoothed_encode.bed

@@ -60,9 +60,11 @@ RUN git clone --depth 1 --recursive https://github.com/heathsc/gemBS.git && \
     python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Instal Kent bedToBigBed util
-RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedToBigBed && \
-    chmod +x bedToBigBed
+# Instal UCSC v377 bedToBigBed util
+RUN git clone https://github.com/ENCODE-DCC/kentUtils_bin_v377 && \
+    rm $(find kentUtils_bin_v377/bin/ -type f -not -path '*bedToBigBed')
+ENV PATH=${PATH}:/software/kentUtils_bin_v377/bin
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib
 
 # Add source files (Python, R)
 COPY wgbs_pipeline/*.* wgbs_pipeline/

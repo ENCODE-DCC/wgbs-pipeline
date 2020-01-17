@@ -1,6 +1,7 @@
 library(bsseq)
 library(optparse)
 
+
 options = list(
   make_option(c("-i", "--infile"),
               help = "input BED file name in Bismark coverage format",),
