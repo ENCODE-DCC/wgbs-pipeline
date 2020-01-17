@@ -263,10 +263,9 @@ task bsmooth {
 
 	command {
 		set -euo pipefail
-		# Experienced issues running tests locally due to hard linking, need -f
-		gzip -df ${gembs_cpg_bed}
-		gembs-to-bismark-bed-converter ${basename(gembs_cpg_bed, ".gz")} converted_bismark.bed
-		Rscript bsmooth.R -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
+		gzip -cdf ${gembs_cpg_bed} > gembs_cpg.bed
+		gembs-to-bismark-bed-converter gembs_cpg.bed converted_bismark.bed
+		Rscript $(which bsmooth.R) -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
 		bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
 		bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
 		gzip -n smoothed_encode.bed
