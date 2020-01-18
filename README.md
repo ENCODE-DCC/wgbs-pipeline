@@ -23,9 +23,9 @@ This pipeline is currently in prerelease, and as such may be unstable.
 
 ## Usage
 
-    ```bash
-    $ caper run wgbs-pipeline.wdl -i input.json -m testrun_metadata.json
-    ```
+```bash
+$ caper run wgbs-pipeline.wdl -i input.json -m testrun_metadata.json
+```
 
 ## Contributing
 
