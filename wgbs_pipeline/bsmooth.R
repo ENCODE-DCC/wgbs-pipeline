@@ -1,12 +1,13 @@
 library(bsseq)
 library(optparse)
 
-
-options = list(
+options <- list(
   make_option(c("-i", "--infile"),
-              help = "input BED file name in Bismark coverage format",),
+    help = "input BED file name in Bismark coverage format",
+  ),
   make_option(c("-o", "--outfile"),
-              help = "name of file to output smoothed methylation estimate to",),
+    help = "name of file to output smoothed methylation estimate to",
+  ),
   make_option(
     c("-w", "--numworkers"),
     type = "integer",
@@ -36,18 +37,19 @@ bsseq <-
     BACKEND = "HDF5Array"
   )
 
-# Seems to use either the minimum of NUM_CORES cores or the number of available CPUs on
-# the machine. Fits the BSmooth model
-bsseq.fit <- BSmooth(bsseq,
-                     BPPARAM = MulticoreParam(workers = args$numworkers, progressbar = TRUE),)
+# Seems to use either the minimum of NUM_CORES cores or the number of available
+# CPUs on the machine. Fits the BSmooth model
+bsseq_fit <- BSmooth(bsseq,
+  BPPARAM = MulticoreParam(workers = args$numworkers, progressbar = TRUE),
+)
 
-# Obtain the smoothed methylation profile. This will replace any positions with NaNs
-# (where there was no coverage in input bed). Conceptually similar to sklearn transform
-meth <- getMeth(bsseq.fit, type = "smooth", what = "perBase")
+# Obtain the smoothed methylation profile. This will replace any positions with
+# NaNs (where there was no coverage in input bed). Conceptually similar to
+# sklearn transform
+meth <- getMeth(bsseq_fit, type = "smooth", what = "perBase")
 
 # meth is a DelayedMatrix, need to materialize in memory to write to a TSV. See
-# documentation for DelayedArray-class,  "In-memory versus on-disk realization", p. 13
-# https://bioconductor.org/packages/devel/bioc/manuals/DelayedArray/man/DelayedArray.pdf
+# documentation for DelayedArray-class, "In-memory versus on-disk realization"
 write.table(
   as.array(meth),
   file = args$outfile,

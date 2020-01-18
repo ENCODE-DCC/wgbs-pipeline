@@ -4,32 +4,35 @@ LABEL maintainer "Paul Sud"
 LABEL maintainer.email "encode-help@lists.stanford.edu"
 
 # Need to add apt key to read to install R 3.6.2: https://stackoverflow.com/a/56378217
+# hash -r gets python3 symlink to work
 RUN apt-get update && \
     apt-get install -y software-properties-common apt-transport-https && \
     add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/" && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
     apt-get update && \
     apt-get install -y \
-    python3 \
     build-essential \
     git \
-    python3-pip \
-    wget \
-    pigz \
-    zlib1g-dev \
-    libbz2-dev \
     gsl-bin \
-    libgsl0-dev \
-    libncurses5-dev \
-    liblzma-dev \
-    libssl-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
-    libpng-dev \
-    uuid-dev \
-    libmysqlclient-dev \
-    r-base=3.6.2-1xenial \
     jq \
+    libbz2-dev \
+    libcurl4-openssl-dev \
+    libgsl0-dev \
+    liblzma-dev \
+    libmysqlclient-dev \
+    libncurses5-dev \
+    libpng-dev \
+    libssl-dev \
+    libxml2-dev \
+    pigz \
+    python3.7 \
+    r-base=3.6.2-1xenial \
+    uuid-dev \
+    wget \
+    zlib1g-dev \
+    && ln -s /usr/bin/python3.7 /usr/local/bin/python3 && hash -r \
+    && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir matplotlib==3.0.2 multiprocess
