@@ -33,6 +33,7 @@ $ tox
 ```
 
 2. Make sure that you commit and push any formatting changes that may have occurred above.
+3. Run `cargo test` and make sure the Rust tests pass.
 
 ## Useful Tips
 
