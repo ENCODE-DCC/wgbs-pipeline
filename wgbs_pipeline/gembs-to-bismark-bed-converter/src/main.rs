@@ -7,11 +7,15 @@ use structopt::StructOpt;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::from_args();
+
     let gembs_bed_file = File::open(&args.gembs_bed_file)?;
     let bismark_bed_file = File::create(&args.bismark_bed_outfile)?;
+
     let gembs_reader = get_reader(&gembs_bed_file);
     let mut bismark_writer = get_writer(&bismark_bed_file);
+
     process(gembs_reader, &mut bismark_writer)?;
+
     Ok(())
 }
 
