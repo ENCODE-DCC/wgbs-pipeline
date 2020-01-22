@@ -1,3 +1,5 @@
 *
 !wgbs_pipeline/*.py
 !wgbs_pipeline/*.R
+!wgbs_pipeline/*/
+!Cargo.*

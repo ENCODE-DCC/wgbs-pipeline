@@ -13,6 +13,9 @@ workflow wgbs {
 	String barcode_prefix = "sample_"
 	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
 
+	Int bsmooth_num_workers = 8
+	Int bsmooth_num_threads = 2
+
 	call make_metadata_csv { input:
 		sample_names = sample_names,
 		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
@@ -73,6 +76,13 @@ workflow wgbs {
 			bcf_csi = bscaller.bcf_csi,
 			contig_sizes = contig_sizes
 		}
+
+		call bsmooth { input:
+			gembs_cpg_bed = extract.cpg_txt,
+			chrom_sizes = contig_sizes,
+			num_workers = bsmooth_num_workers,
+			num_threads = bsmooth_num_threads
+		}
 	}
 
 	Array[File] map_qc_json_ = flatten(map.qc_json)
@@ -85,28 +95,6 @@ workflow wgbs {
 		reference = reference,
 		contig_sizes = contig_sizes
 	}
-
-
-	output {
-		File index_used = index
-		Array[File] bams = map.bam
-		Array[File] bais = map.bai
-		Array[File] bam_md5s = map.bam_md5
-		Array[File] bscaller_bcf = bscaller.bcf
-		Array[File] bscaller_bcf_csi = bscaller.bcf_csi
-		Array[File] bscaller_bcf_md5 = bscaller.bcf_md5
-		Array[File] extracted_bw = extract.bw
-		Array[File] extracted_chg_bb = extract.chg_bb
-		Array[File] extracted_chh_bb = extract.chh_bb
-		Array[File] extracted_cpg_bb = extract.cpg_bb
-		Array[File] extracted_chg_bed = extract.chg_bed
-		Array[File] extracted_chh_bed = extract.chh_bed
-		Array[File] extracted_cpg_bed = extract.cpg_bed
-		Array[File] extracted_cpg_txt = extract.cpg_txt
-		Array[File] extracted_cpg_txt_tbi = extract.cpg_txt_tbi
-		Array[File] extracted_non_cpg_txt = extract.non_cpg_txt
-		Array[File] extracted_non_cpg_txt_tbi = extract.non_cpg_txt_tbi
-	}
 }
 
 task make_metadata_csv {
@@ -115,6 +103,7 @@ task make_metadata_csv {
 	String barcode_prefix
 
 	command {
+		set -euo pipefail
 		python3 $(which make_metadata_csv.py) \
 			-n "${sep=' ' sample_names}" \
 			--files "${fastqs}" \
@@ -135,6 +124,7 @@ task prepare {
 	String? extra_reference
 
 	command {
+		set -euo pipefail
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
@@ -158,6 +148,7 @@ task index {
 	File? extra_reference
 
 	command {
+		set -euo pipefail
 		mkdir reference
 		ln -s ${reference} reference && ln -s ${extra_reference} reference
 		gemBS prepare -c ${configuration_file} \
@@ -184,6 +175,7 @@ task map {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${index} indexes
 		mkdir -p fastq/${sample_name}
@@ -211,6 +203,7 @@ task bscaller {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p mapping/${sample_barcode}
@@ -237,13 +230,14 @@ task extract {
 	String sample_name
 
 	command {
+		set -euo pipefail
 		mkdir reference && ln ${reference} reference
 		mkdir indexes && ln ${contig_sizes} indexes
 		mkdir -p calls/${sample_barcode}
 		mkdir -p extract/${sample_barcode}
 		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
-		gemBS -j ${gemBS_json} extract -w -B --ignore-db --ignore-dep
+		gemBS -j ${gemBS_json} extract -q 0 -l 0 -w -B --ignore-db --ignore-dep
 	}
 
 	output {
@@ -254,10 +248,32 @@ task extract {
 		File chg_bed = glob("extract/**/*_chg.bed.gz")[0]
 		File chh_bed = glob("extract/**/*_chh.bed.gz")[0]
 		File cpg_bed = glob("extract/**/*_cpg.bed.gz")[0]
-		File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]
+		File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]  # gemBS-style output bed file
 		File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
 		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
+	}
+}
+
+task bsmooth {
+	File gembs_cpg_bed
+	File chrom_sizes
+	Int num_workers
+	Int num_threads
+
+	command {
+		set -euo pipefail
+		gzip -cdf ${gembs_cpg_bed} > gembs_cpg.bed
+		gembs-to-bismark-bed-converter gembs_cpg.bed converted_bismark.bed
+		Rscript $(which bsmooth.R) -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
+		bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
+		bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
+		gzip -n smoothed_encode.bed
+	}
+
+	output {
+		File smoothed_cpg_bed = glob("smoothed_encode.bed.gz")[0]
+		File smoothed_cpg_bigbed = glob("smoothed_encode.bb")[0]
 	}
 }
 
@@ -270,6 +286,7 @@ task qc_report {
 
 
 	command {
+		set -euo pipefail
 		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir indexes
 		ln -s ${contig_sizes} indexes
 		ln -s ${reference} reference
