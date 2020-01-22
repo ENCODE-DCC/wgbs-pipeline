@@ -72,6 +72,9 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib"
 # Add source files (Python, R)
 COPY wgbs_pipeline/*.* wgbs_pipeline/
 
+# Add conf files
+COPY conf/* conf/
+
 # Add compiled Rust binaries from other stage of build
 COPY --from=builder /wgbs-pipeline/target/release/gembs-to-bismark-bed-converter wgbs_pipeline/
 COPY --from=builder /wgbs-pipeline/target/release/bismark-bsmooth-to-encode-bed-converter wgbs_pipeline/
