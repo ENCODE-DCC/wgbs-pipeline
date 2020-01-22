@@ -66,8 +66,8 @@ ENV PATH="/root/.local/bin:${PATH}"
 # Instal UCSC v377 bedToBigBed util
 RUN git clone https://github.com/ENCODE-DCC/kentUtils_bin_v377 && \
     rm $(find kentUtils_bin_v377/bin/ -type f -not -path '*bedToBigBed')
-ENV PATH=${PATH}:/software/kentUtils_bin_v377/bin
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib
+ENV PATH="${PATH}:/software/kentUtils_bin_v377/bin"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib"
 
 # Add source files (Python, R)
 COPY wgbs_pipeline/*.* wgbs_pipeline/
