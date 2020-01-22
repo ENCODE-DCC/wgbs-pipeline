@@ -1,16 +1,11 @@
 import builtins
-from contextlib import contextmanager
+from contextlib import suppress as does_not_raise
 from typing import List
 
 import attr
 import pytest
 
 from wgbs_pipeline.make_metadata_csv import get_parser, main, process, read_file_tsv
-
-
-@contextmanager
-def does_not_raise():
-    yield
 
 
 @attr.s(auto_attribs=True)

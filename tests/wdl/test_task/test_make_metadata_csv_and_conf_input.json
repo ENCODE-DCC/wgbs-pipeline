@@ -1,0 +1,18 @@
+{
+  "test_make_metadata_csv_and_conf.barcode_prefix": "test_",
+  "test_make_metadata_csv_and_conf.extra_reference": "/foo/lambda.fa.gz",
+  "test_make_metadata_csv_and_conf.fastqs": [
+    [
+      "/a/f1.fastq.gz",
+      "/b/f1.fastq.gz"
+    ]
+  ],
+  "test_make_metadata_csv_and_conf.include_file": "conf/IHEC_standard.conf",
+  "test_make_metadata_csv_and_conf.num_jobs": 2,
+  "test_make_metadata_csv_and_conf.num_threads": 2,
+  "test_make_metadata_csv_and_conf.reference": "/foo/reference.fa.gz",
+  "test_make_metadata_csv_and_conf.sample_names": [
+    "foo"
+  ],
+  "test_make_metadata_csv_and_conf.underconversion_sequence_name": "chrL"
+}

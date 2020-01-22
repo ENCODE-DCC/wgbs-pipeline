@@ -6,9 +6,14 @@ workflow wgbs {
 	File reference
 	File? indexed_reference
 	File? indexed_contig_sizes
-	File? extra_reference
+	File extra_reference
 	Array[Array[File]] fastqs
 	Array[String] sample_names
+
+	Int num_gembs_threads = 8
+	Int num_gembs_jobs = 3
+	String? underconversion_sequence_name
+	String? include_conf_file
 
 	String barcode_prefix = "sample_"
 	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
@@ -16,16 +21,22 @@ workflow wgbs {
 	Int bsmooth_num_workers = 8
 	Int bsmooth_num_threads = 2
 
-	call make_metadata_csv { input:
+	call make_metadata_csv_and_conf { input:
 		sample_names = sample_names,
 		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
-		barcode_prefix = barcode_prefix
+		barcode_prefix = barcode_prefix,
+		num_threads = num_gembs_threads,
+		num_jobs = num_gembs_jobs,
+		reference = reference,
+		extra_reference = extra_reference,
+		include_file = include_conf_file,
+		underconversion_sequence_name = underconversion_sequence_name
 	}
 
 	if (!defined(indexed_reference)) {
 		call index as index_reference { input:
 			configuration_file = configuration_file,
-			metadata_file = make_metadata_csv.metadata_csv,
+			metadata_file = make_metadata_csv_and_conf.metadata_csv,
 			reference = reference,
 			extra_reference = extra_reference
 		}
@@ -37,7 +48,7 @@ workflow wgbs {
 	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
 		call prepare { input:
 			configuration_file = configuration_file,
-			metadata_file = make_metadata_csv.metadata_csv,
+			metadata_file = make_metadata_csv_and_conf.metadata_csv,
 			contig_sizes = indexed_contig_sizes,
 			reference = reference,
 			index = index,
@@ -97,21 +108,39 @@ workflow wgbs {
 	}
 }
 
-task make_metadata_csv {
+task make_metadata_csv_and_conf {
 	Array[String] sample_names
 	File fastqs
 	String barcode_prefix
+
+	Int num_threads
+	Int num_jobs
+	String reference
+	String extra_reference
+	String? include_file
+	String? underconversion_sequence_name
 
 	command {
 		set -euo pipefail
 		python3 $(which make_metadata_csv.py) \
 			-n "${sep=' ' sample_names}" \
 			--files "${fastqs}" \
-			-b "${barcode_prefix}"
+			-b "${barcode_prefix}" \
+			-o "gembs_metadata.csv"
+
+		python3 $(which make_conf.py) \
+			-t "${num_threads}" \
+			-j "${num_jobs}" \
+			-r "${reference}" \
+			-e "${extra_reference}" \
+			${if defined(underconversion_sequence_name) then ("-u " + underconversion_sequence_name) else ""} \
+			${if defined(include_file) then ("-i " + include_file) else ""} \
+			-o "gembs.conf"
 	}
 
 	output {
-		File metadata_csv = glob("*_metadata.csv")[0]
+		File metadata_csv = glob("gembs_metadata.csv")[0]
+		File gembs_conf = glob("gembs.conf")[0]
 	}
 }
 
@@ -121,7 +150,7 @@ task prepare {
 	File contig_sizes
 	String reference
 	String index
-	String? extra_reference
+	String extra_reference
 
 	command {
 		set -euo pipefail
@@ -145,7 +174,7 @@ task index {
 	File configuration_file
 	File metadata_file
 	File reference
-	File? extra_reference
+	File extra_reference
 
 	command {
 		set -euo pipefail

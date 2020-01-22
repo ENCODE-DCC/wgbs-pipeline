@@ -3,3 +3,4 @@
 !wgbs_pipeline/*.R
 !wgbs_pipeline/*/
 !Cargo.*
+!conf/*
