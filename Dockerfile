@@ -47,16 +47,6 @@ RUN mkdir /software
 WORKDIR /software
 ENV PATH="/software:${PATH}"
 
-# Compile Rust binaries as a separate stage so we don't bloat pipeline image with Rust
-# build toolchain. rustc default target in the image is x86_64-unknown-linux-gnu, which
-# is what we want
-FROM rust:1.40.0-slim-stretch as builder
-WORKDIR /wgbs-pipeline
-COPY . .
-RUN cargo build --release
-
-FROM main
-
 # Install gemBS
 RUN git clone --depth 1 --recursive https://github.com/heathsc/gemBS.git && \
     cd gemBS && git checkout 6d7a8ab25c2c44e6c6cca1485bba5b5fbaafc88f && \
@@ -69,8 +59,21 @@ RUN git clone https://github.com/ENCODE-DCC/kentUtils_bin_v377 && \
 ENV PATH="${PATH}:/software/kentUtils_bin_v377/bin"
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib"
 
+# Compile Rust binaries as a separate stage so we don't bloat pipeline image with Rust
+# build toolchain. rustc default target in the image is x86_64-unknown-linux-gnu, which
+# is what we want
+FROM rust:1.40.0-slim-stretch as builder
+WORKDIR /wgbs-pipeline
+COPY . .
+RUN cargo build --release
+
+FROM main
+
 # Add source files (Python, R)
 COPY wgbs_pipeline/*.* wgbs_pipeline/
+
+# Add conf files
+COPY conf/* conf/
 
 # Add compiled Rust binaries from other stage of build
 COPY --from=builder /wgbs-pipeline/target/release/gembs-to-bismark-bed-converter wgbs_pipeline/
