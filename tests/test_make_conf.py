@@ -72,7 +72,9 @@ def test_parser(args: List[str], condition):
             [(11, "[mapping]"), (12, "underconversion_sequence = chrL")],
         ),
         (
-            StubArgs("reference.fa.gz", "exref.fa.gz", include_file="my_dir/include.conf"),
+            StubArgs(
+                "reference.fa.gz", "exref.fa.gz", include_file="my_dir/include.conf"
+            ),
             13,
             [(11, "[mapping]"), (12, "include my_dir/include.conf")],
         ),

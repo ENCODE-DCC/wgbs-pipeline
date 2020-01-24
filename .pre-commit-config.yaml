@@ -39,6 +39,11 @@
       - id: cargo-check
       - id: clippy
 
+  - repo: git://github.com/detailyang/pre-commit-shell
+    sha: v1.0.6
+    hooks:
+      - id: shell-lint
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3
     hooks:

@@ -1,5 +1,10 @@
 # wgbs-pipeline
 
+[![CircleCI](https://circleci.com/gh/ENCODE-DCC/wgbs-pipeline.svg?style=svg)](https://circleci.com/gh/ENCODE-DCC/wgbs-pipeline)
+[![Docker Repository on Quay](https://quay.io/repository/encode-dcc/wgbs-pipeline/status "Docker Repository on Quay")](https://quay.io/repository/encode-dcc/wgbs-pipeline)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 ## Overview
 
 An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction and [Bsmooth](https://bioconductor.org/packages/release/bioc/html/bsseq.html) for smoothing of CpG methylation values.

@@ -1,0 +1,198 @@
+version: 2.1
+
+defaults: &defaults
+  docker:
+    - image: circleci/buildpack-deps:xenial-scm
+  working_directory: ~/ENCODE-DCC/wgbs-pipeline
+
+machine_defaults: &machine_defaults
+  machine:
+    image: circleci/classic:latest
+  working_directory: ~/ENCODE-DCC/wgbs-pipeline
+
+py37: &py37
+  docker:
+    - image: circleci/python:3.7.3-stretch
+  working_directory: ~/ENCODE-DCC/wgbs-pipeline
+
+lint: &lint
+  docker:
+    - image: quay.io/encode-dcc/wgbs-pipeline:circleci-lint
+  working_directory: ~/ENCODE-DCC/wgbs-pipeline
+
+rust: &rust
+  docker:
+    - image: circleci/rust:1.40.0-stretch
+  working_directory: ~/ENCODE-DCC/wgbs-pipeline
+
+make_tag: &make_tag
+  name: make docker image tag
+  command: |
+    echo "export TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
+
+set_quay_repo: &set_quay_repo
+  name: set quay repo env var
+  command: |
+    echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
+
+get_caper: &get_caper
+  name: get caper
+  command: |
+    pyenv global 3.5.2
+    pip3 install caper
+
+get_md5_script: &get_md5_script
+  name: get compare_md5.py script
+  command: |
+    curl -O https://raw.githubusercontent.com/ENCODE-DCC/rna-seq-pipeline/master/src/compare_md5.py
+
+commands:
+  run_tox:
+    description: "Install and run tox with a given environment"
+    parameters:
+      toxenv:
+        description: "The name of the environment as per tox.ini, e.g. py37 or lint"
+        type: string
+      extra_args:
+        description: "Extra arguments that are consumed only when running pytest"
+        type: string
+        default: ""
+    steps:
+      - run: sudo pip install tox
+      - run: tox -e << parameters.toxenv >> -- << parameters.extra_args >>
+
+jobs:
+  lint:
+    <<: *lint
+    steps:
+      - checkout
+      - run: cat "${HOME}/.cargo/env" >> ${BASH_ENV}
+      - run_tox:
+          toxenv: "lint"
+  test_py37:
+    <<: *py37
+    steps:
+      - checkout
+      - run_tox:
+          toxenv: "py37"
+  coverage-report:
+    <<: *py37
+    steps:
+      - checkout
+      - run_tox:
+          toxenv: "coverage-report"
+  test_rust:
+    <<: *rust
+    steps:
+      - checkout
+      - run: cargo test
+  test_wdl:
+    <<: *machine_defaults
+    description: Generic testing protocol for wdl tasks
+    parameters:
+      test_name:
+        description: "The name of the test being performed, like align, merge, etc."
+        type: string
+      test_type:
+        default: "task"
+        description: "Describes if the test is for a task or for a workflow"
+        type: enum
+        enum: ["task", "workflow"]
+      keys_to_inspect:
+        description: "The key(s) of the output(s) in metadata.json for which md5sum is to be computed, space delimited"
+        type: string
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *get_caper
+      - run: *get_md5_script
+      - run:
+          command: |
+            source ${BASH_ENV}
+            tests/wdl/test.sh tests/wdl/test_<< parameters.test_type >>/test_<< parameters.test_name >>.wdl tests/wdl/test_<< parameters.test_type >>/test_<< parameters.test_name >>_input.json "${TAG}"
+            python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json test_<< parameters.test_name >>.metadata.json --reference_json tests/wdl/test_<< parameters.test_type >>/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
+            cat result.json
+            python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *make_tag
+      - run: *set_quay_repo
+      - run:
+          name: build image
+          command: |
+            source ${BASH_ENV}
+            echo "pulling template!"
+            docker pull quay.io/encode-dcc/${QUAY_REPO}:template
+            docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
+            docker build --cache-from quay.io/encode-dcc/${QUAY_REPO}:template --build-arg GIT_COMMIT_HASH=${CIRCLE_SHA1} --build-arg BRANCH=${CIRCLE_BRANCH} --build-arg BUILD_TAG=${TAG} -t "${TAG}" -t quay.io/encode-dcc/${QUAY_REPO}:template -f Dockerfile .
+            docker push "${TAG}"
+            docker logout
+          no_output_timeout: 30m
+
+  push_template:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *make_tag
+      - run: *set_quay_repo
+      - run:
+          command: |
+            source ${BASH_ENV}
+            docker pull "${TAG}"
+            docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
+            docker tag "${TAG}" quay.io/encode-dcc/${QUAY_REPO}:template
+            docker push quay.io/encode-dcc/${QUAY_REPO}:template
+            docker logout
+          no_output_timeout: 30m
+
+# Define workflow here
+workflows:
+  version: 2
+  build_workflow:
+    jobs:
+      - build
+      - lint
+      - coverage-report
+      - test_py37:
+          requires:
+            - build
+            - lint
+      - test_rust:
+          requires:
+            - build
+            - lint
+      - test_wdl:
+          name: test_make_metadata_csv_and_conf
+          requires:
+            - build
+            - lint
+          test_name: "make_metadata_csv_and_conf"
+          test_type: "task"
+          keys_to_inspect: "test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.metadata_csv test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.gembs_conf"
+      - test_wdl:
+          name: test_bsmooth
+          requires:
+            - build
+            - lint
+          test_name: "bsmooth"
+          test_type: "task"
+          keys_to_inspect: "test_bsmooth.bsmooth.smoothed_cpg_bed test_bsmooth.bsmooth.smoothed_cpg_bigbed"
+      - push_template:
+          requires:
+            - build
+            - lint
+            - coverage-report
+            - test_py37
+            - test_rust
+            - test_make_metadata_csv_and_conf
+            - test_bsmooth
+          filters:
+            branches:
+              only:
+                - dev
+                - master
