@@ -2,7 +2,6 @@
 #CAPER singularity docker://quay.io/encode-dcc/wgbs-pipeline:0.1.0
 
 workflow wgbs {
-	File configuration_file
 	File reference
 	File? indexed_reference
 	File? indexed_contig_sizes
@@ -35,7 +34,7 @@ workflow wgbs {
 
 	if (!defined(indexed_reference)) {
 		call index as index_reference { input:
-			configuration_file = configuration_file,
+			configuration_file = make_metadata_csv_and_conf.gembs_conf,
 			metadata_file = make_metadata_csv_and_conf.metadata_csv,
 			reference = reference,
 			extra_reference = extra_reference
@@ -47,7 +46,7 @@ workflow wgbs {
 
 	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
 		call prepare { input:
-			configuration_file = configuration_file,
+			configuration_file = make_metadata_csv_and_conf.gembs_conf,
 			metadata_file = make_metadata_csv_and_conf.metadata_csv,
 			contig_sizes = indexed_contig_sizes,
 			reference = reference,
