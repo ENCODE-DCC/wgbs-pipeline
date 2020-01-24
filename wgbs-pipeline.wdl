@@ -123,7 +123,7 @@ task make_metadata_csv_and_conf {
 	command {
 		set -euo pipefail
 		python3 $(which make_metadata_csv.py) \
-			-n "${sep=' ' sample_names}" \
+			-n ${sep=' ' sample_names} \
 			--files "${fastqs}" \
 			-b "${barcode_prefix}" \
 			-o "gembs_metadata.csv"
