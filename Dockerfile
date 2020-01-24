@@ -62,7 +62,7 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib"
 # Compile Rust binaries as a separate stage so we don't bloat pipeline image with Rust
 # build toolchain. rustc default target in the image is x86_64-unknown-linux-gnu, which
 # is what we want
-FROM rust:1.40.0-slim-stretch as builder
+FROM rust:1.40.0-slim-stretch@sha256:5b30cf90cc7cd948207850d470e56c6bbc3014445de97716af479dd6fc69a763 as builder
 WORKDIR /wgbs-pipeline
 COPY . .
 RUN cargo build --release
