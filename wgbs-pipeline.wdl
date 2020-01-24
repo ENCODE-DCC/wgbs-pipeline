@@ -20,6 +20,10 @@ workflow wgbs {
 	Int bsmooth_num_workers = 8
 	Int bsmooth_num_threads = 2
 
+	# Optional params to tweak gemBS extract phred threshold and mininimum informative coverage for genotyped cytosines, otherwise will use gembs defaults
+	Int? gembs_extract_phred_threshold
+	Int? gembs_extract_min_inform
+
 	call make_metadata_csv_and_conf { input:
 		sample_names = sample_names,
 		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
@@ -84,7 +88,9 @@ workflow wgbs {
 			sample_name = sample_names[i],
 			bcf = bscaller.bcf,
 			bcf_csi = bscaller.bcf_csi,
-			contig_sizes = contig_sizes
+			contig_sizes = contig_sizes,
+			phred_threshold = gembs_extract_phred_threshold,
+			min_inform = gembs_extract_min_inform,
 		}
 
 		call bsmooth { input:
@@ -256,6 +262,8 @@ task extract {
 	File bcf_csi
 	String sample_barcode
 	String sample_name
+	Int? phred_threshold
+	Int? min_inform
 
 	command {
 		set -euo pipefail
@@ -265,7 +273,10 @@ task extract {
 		mkdir -p extract/${sample_barcode}
 		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
-		gemBS -j ${gemBS_json} extract -q 0 -l 0 -w -B --ignore-db --ignore-dep
+		gemBS -j ${gemBS_json} extract \
+			${if defined(phred_threshold) then ("-q " + phred_threshold) else ""} \
+			${if defined(min_inform) then ("-l " + min_inform) else ""} \
+			-w -B --ignore-db --ignore-dep
 	}
 
 	output {
