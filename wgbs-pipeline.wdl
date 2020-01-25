@@ -45,7 +45,7 @@ workflow wgbs {
 		}
 	}
 
-	File index = select_first([indexed_reference, index_reference.BS_gem])
+	File index = select_first([indexed_reference, index_reference.gembs_indexes])
 	File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
 	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
@@ -77,8 +77,8 @@ workflow wgbs {
 			sample_barcode = sample_barcodes[i],
 			sample_name = sample_names[i],
 			bam = map.bam,
-			bai = map.bai,
-			contig_sizes = contig_sizes
+			csi = map.csi,
+			index = index,
 		}
 
 		call extract { input:
@@ -153,8 +153,8 @@ task prepare {
 	File configuration_file
 	File metadata_file
 	File contig_sizes
+	File index
 	String reference
-	String index
 	String extra_reference
 
 	command {
@@ -162,7 +162,7 @@ task prepare {
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
-		touch indexes/$(basename ${index})
+		tar xf ${index} -C indexes
 		ln ${contig_sizes} indexes/
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
@@ -190,11 +190,13 @@ task index {
 					  -o gemBS.json \
 					  --no-db
 		gemBS -j gemBS.json index
+		# See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
+		tar -cf indexes.tar $(find indexes -type f -not -path '*.err') --sort=name --owner=root:0 --group=root:0 --mtime='UTC 2019-01-01'
+		gzip -n indexes.tar
 	}
 
 	output {
-		File BS_gem = glob("indexes/*.BS.gem")[0]
-		File BS_info = glob("indexes/*.BS.info")[0]
+		File gembs_indexes = glob("indexes.tar.gz")[0]
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
 		File gemBS_json = glob("gemBS.json")[0]
 	}
@@ -211,7 +213,7 @@ task map {
 	command {
 		set -euo pipefail
 		mkdir reference && ln ${reference} reference
-		mkdir indexes && ln ${index} indexes
+		mkdir indexes && tar xf ${index} -C indexes --strip-components 1
 		mkdir -p fastq/${sample_name}
 		cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
 		mkdir -p mapping/${sample_barcode}
@@ -220,7 +222,7 @@ task map {
 
 	output {
 		File bam = glob("mapping/**/*.bam")[0]
-		File bai = glob("mapping/**/*.bai")[0]
+		File csi = glob("mapping/**/*.csi")[0]
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
@@ -231,18 +233,18 @@ task bscaller {
 	File reference
 	File gemBS_json
 	File bam
-	File bai
-	File contig_sizes
+	File csi
+	File index
 	String sample_barcode
 	String sample_name
 
 	command {
 		set -euo pipefail
 		mkdir reference && ln ${reference} reference
-		mkdir indexes && ln ${contig_sizes} indexes
+		mkdir indexes && tar xf ${index} -C indexes --strip-components 1
 		mkdir -p mapping/${sample_barcode}
 		ln -s ${bam} mapping/${sample_barcode}
-		ln -s ${bai} mapping/${sample_barcode}
+		ln -s ${csi} mapping/${sample_barcode}
 		gemBS -j ${gemBS_json} call --ignore-db --ignore-dep
 	}
 

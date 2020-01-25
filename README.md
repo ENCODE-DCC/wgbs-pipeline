@@ -32,6 +32,17 @@ This pipeline is currently in prerelease, and as such may be unstable.
 $ caper run wgbs-pipeline.wdl -i input.json -m testrun_metadata.json
 ```
 
+## Description of files
+
+The gemBS index file is a .tar.gz archive containing the following files produced by running gemBS index:
+* ${prefix}.gemBS.contig_md5
+* ${prefix}.gemBS.ref.gzi
+* ${prefix}.BS.gem
+* ${prefix}.gemBS.ref
+* ${prefix}.BS.info
+* ${prefix}.contig.sizes
+* ${prefix}.gemBS.ref.fai
+
 ## Contributing
 
 We welcome comments, questions, suggestions, bug reports, feature requests, and pull requests (PRs). Please use one of the existing Github issue templates if applicable. When contributing code, please follow the [Developer Guidelines](docs/CONTRIBUTING.md#developer-guidelines).
