@@ -192,6 +192,13 @@ workflows:
           test_name: "make_metadata_csv_and_conf"
           keys_to_inspect: "test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.metadata_csv test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.gembs_conf"
       - test_wdl:
+          name: test_index
+          requires:
+            - build
+            - lint
+          test_name: "index"
+          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json"
+      - test_wdl:
           name: test_bsmooth
           requires:
             - build
