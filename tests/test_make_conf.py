@@ -17,6 +17,7 @@ class StubArgs:
     outfile: str = "gembs.conf"
     num_threads: int = 8
     num_jobs: int = 3
+    benchmark_mode: bool = False
 
 
 @pytest.mark.parametrize(
@@ -36,6 +37,7 @@ class StubArgs:
                 "chrL",
                 "-i",
                 "include.conf",
+                "--benchmark-mode",
                 "-o",
                 "my.conf",
             ],
@@ -77,6 +79,11 @@ def test_parser(args: List[str], condition):
             ),
             13,
             [(11, "[mapping]"), (12, "include my_dir/include.conf")],
+        ),
+        (
+            StubArgs("reference.fa.gz", "exref.fa.gz", benchmark_mode=True),
+            12,
+            [(11, "benchmark_mode = true")],
         ),
         (
             StubArgs(

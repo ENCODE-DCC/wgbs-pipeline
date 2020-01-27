@@ -19,6 +19,8 @@ workflow wgbs {
 
 	Int bsmooth_num_workers = 8
 	Int bsmooth_num_threads = 2
+	Boolean run_bsmooth = true
+	Boolean benchmark_mode = false
 
 	# Optional params to tweak gemBS extract phred threshold and mininimum informative coverage for genotyped cytosines, otherwise will use gembs defaults
 	Int? gembs_extract_phred_threshold
@@ -33,7 +35,8 @@ workflow wgbs {
 		reference = reference,
 		extra_reference = extra_reference,
 		include_file = include_conf_file,
-		underconversion_sequence_name = underconversion_sequence_name
+		underconversion_sequence_name = underconversion_sequence_name,
+		benchmark_mode = benchmark_mode
 	}
 
 	if (!defined(indexed_reference)) {
@@ -93,11 +96,13 @@ workflow wgbs {
 			min_inform = gembs_extract_min_inform,
 		}
 
-		call bsmooth { input:
-			gembs_cpg_bed = extract.cpg_txt,
-			chrom_sizes = contig_sizes,
-			num_workers = bsmooth_num_workers,
-			num_threads = bsmooth_num_threads
+		if (run_bsmooth) {
+			call bsmooth { input:
+				gembs_cpg_bed = extract.cpg_txt,
+				chrom_sizes = contig_sizes,
+				num_workers = bsmooth_num_workers,
+				num_threads = bsmooth_num_threads
+			}
 		}
 	}
 
@@ -118,6 +123,7 @@ task make_metadata_csv_and_conf {
 	File fastqs
 	String barcode_prefix
 
+	Boolean benchmark_mode
 	Int num_threads
 	Int num_jobs
 	String reference
@@ -140,6 +146,7 @@ task make_metadata_csv_and_conf {
 			-e "${extra_reference}" \
 			${if defined(underconversion_sequence_name) then ("-u " + underconversion_sequence_name) else ""} \
 			${if defined(include_file) then ("-i " + include_file) else ""} \
+			${if benchmark_mode then ("--benchmark-mode") else ""} \
 			-o "gembs.conf"
 	}
 
@@ -191,7 +198,7 @@ task index {
 					  --no-db
 		gemBS -j gemBS.json index
 		# See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
-		tar -cf indexes.tar $(find indexes -type f -not -path '*.err') --sort=name --owner=root:0 --group=root:0 --mtime='UTC 2019-01-01'
+		tar -cf indexes.tar $(find indexes -type f -not -path '*.err' -not -path '*.info') --sort=name --owner=root:0 --group=root:0 --mtime='UTC 2019-01-01'
 		gzip -n indexes.tar
 	}
 

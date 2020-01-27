@@ -30,6 +30,8 @@ def make_conf(args: argparse.Namespace) -> List[str]:
         f"jobs = {args.num_jobs}",
     ]
 
+    if args.benchmark_mode:
+        conf.append("benchmark_mode = true")
     if args.underconversion_sequence or args.include_file:
         conf.append("[mapping]")
     if args.underconversion_sequence:
@@ -70,6 +72,11 @@ def get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-i", "--include-file", help="Name of additional conf file to include in "
+    )
+    parser.add_argument(
+        "--benchmark-mode",
+        help="Switch gemBS to use benchmark mode",
+        action="store_true",
     )
     parser.add_argument(
         "-o",

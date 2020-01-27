@@ -9,6 +9,7 @@ workflow test_make_metadata_csv_and_conf {
 	Int num_jobs
 	String reference
 	String extra_reference
+	Boolean? benchmark_mode = false
 	String? include_file
 	String? underconversion_sequence_name
 
@@ -21,6 +22,7 @@ workflow test_make_metadata_csv_and_conf {
 		reference = reference,
 		extra_reference = extra_reference,
 		include_file = include_file,
-		underconversion_sequence_name = underconversion_sequence_name
+		underconversion_sequence_name = underconversion_sequence_name,
+		benchmark_mode = benchmark_mode
     }
 }
