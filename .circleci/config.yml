@@ -94,7 +94,7 @@ jobs:
         description: "The name of the test being performed, like align, merge, etc."
         type: string
       is_workflow:
-        default: true
+        default: false
         description: "Describes if the test is for a task or for a workflow"
         type: boolean
       keys_to_inspect:
@@ -115,6 +115,7 @@ jobs:
                   python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json wgbs-pipeline.metadata.json --reference_json tests/wdl/test_workflow/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
                   cat result.json
                   python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+                no_output_timeout: 30m
       - unless:
           condition: << parameters.is_workflow >>
           steps:
@@ -129,6 +130,7 @@ jobs:
                   python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json test_<< parameters.test_name >>.metadata.json --reference_json tests/wdl/test_task/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
                   cat result.json
                   python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+                no_output_timeout: 30m
 
   build:
     <<: *defaults
