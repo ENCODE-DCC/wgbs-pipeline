@@ -1,5 +1,5 @@
 {
-  "wgbs.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "wgbs.benchmark_mode": true,
   "wgbs.extra_reference": "tests/wdl/test_data/conversion_control.fa.gz",
   "wgbs.fastqs": [
     [
@@ -7,11 +7,11 @@
       "tests/wdl/test_data/sample5_data_2_200000.fastq.gz"
     ]
   ],
+  "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
+  "wgbs.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "wgbs.run_bsmooth": false,
   "wgbs.sample_names": [
     "sample5"
   ],
-  "wgbs.underconversion_sequence_name": "NC_001416.1",
-  "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
-  "wgbs.run_bsmooth": false,
-  "wgbs.benchmark_mode": true
+  "wgbs.underconversion_sequence_name": "NC_001416.1"
 }
