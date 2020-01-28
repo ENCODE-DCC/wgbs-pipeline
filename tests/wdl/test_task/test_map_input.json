@@ -1,0 +1,10 @@
+{
+  "test_map.fastqs": [
+    "tests/wdl/test_data/sample5_data_1_200000.fastq.gz",
+    "tests/wdl/test_data/sample5_data_2_200000.fastq.gz"
+  ],
+  "test_map.gemBS_json": "tests/wdl/test_data/gemBS.json",
+  "test_map.index": "tests/wdl/test_data/indexes.tar.gz",
+  "test_map.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "test_map.sample_name": "sample5"
+}
