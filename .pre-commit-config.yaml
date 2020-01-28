@@ -53,6 +53,7 @@
       - id: debug-statements
       - id: check-json
       - id: pretty-format-json
+        exclude: 'tests\/wdl\/test_data\/sample.+\.json$'
         args:
           - --autofix
       - id: check-yaml

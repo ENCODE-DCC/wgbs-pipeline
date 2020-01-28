@@ -228,6 +228,13 @@ workflows:
           test_name: "bsmooth"
           keys_to_inspect: "test_bsmooth.bsmooth.smoothed_cpg_bed test_bsmooth.bsmooth.smoothed_cpg_bigbed"
       - test_wdl:
+          name: test_qc_report
+          requires:
+            - build
+            - lint
+          test_name: "qc_report"
+          keys_to_inspect: "test_qc_report.qc_report.map_html_assets"
+      - test_wdl:
           name: test_wgbs
           requires:
             - build
