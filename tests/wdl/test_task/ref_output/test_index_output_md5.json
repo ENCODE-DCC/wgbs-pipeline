@@ -1,11 +1,5 @@
 {
   "gemBS.json": "754212d83e8b05ce6d7078a5a64fc740",
-  "indexes.tar": "fd5043733c9f1bde893f2846e7473273",
   "indexes.tar.gz": "d3dc9b22517251d692e5a53b3ea16bb3",
-  "sacCer3.BS.gem": "05827b03950bc2af7c9204687af0e5a0",
-  "sacCer3.contig.sizes": "7bf2d796820bdd41baae07d2cd657755",
-  "sacCer3.gemBS.contig_md5": "56fa5b2828f767c6f5eb85800e8936b5",
-  "sacCer3.gemBS.ref": "114d55d0bf9b4b78e9ba18865c2d1d56",
-  "sacCer3.gemBS.ref.fai": "556a588ace8849658581ad4695987ad1",
-  "sacCer3.gemBS.ref.gzi": "e3eebf52f035a790b524e4ff01f55ecc"
+  "sacCer3.contig.sizes": "7bf2d796820bdd41baae07d2cd657755"
 }
