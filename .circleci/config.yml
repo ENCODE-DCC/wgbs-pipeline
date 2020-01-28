@@ -206,6 +206,14 @@ workflows:
           test_name: "map"
           keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
       - test_wdl:
+          name: test_bscaller
+          requires:
+            - build
+            - lint
+          test_name: "bscaller"
+          # bscaller qc json not deterministic due to random ordering, so don't check
+          keys_to_inspect: "test_bscaller.bscaller.bcf test_bscaller.bscaller.bcf_csi test_bscaller.bscaller.bcf_md5"
+      - test_wdl:
           name: test_bsmooth
           requires:
             - build
