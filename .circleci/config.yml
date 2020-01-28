@@ -214,6 +214,13 @@ workflows:
           # bscaller qc json not deterministic due to random ordering, so don't check
           keys_to_inspect: "test_bscaller.bscaller.bcf test_bscaller.bscaller.bcf_csi test_bscaller.bscaller.bcf_md5"
       - test_wdl:
+          name: test_extract
+          requires:
+            - build
+            - lint
+          test_name: "extract"
+          keys_to_inspect: "test_extract.extract.cpg_txt test_extract.extract.chh_bed test_extract.extract.chg_bb test_extract.extract.cpg_bed test_extract.extract.non_cpg_txt_tbi test_extract.extract.chg_bed test_extract.extract.non_cpg_txt test_extract.extract.chh_bb test_extract.extract.bw test_extract.extract.cpg_txt_tbi test_extract.extract.cpg_bb"
+      - test_wdl:
           name: test_bsmooth
           requires:
             - build
