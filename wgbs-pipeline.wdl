@@ -199,11 +199,12 @@ task index {
 		gemBS -j gemBS.json index
 		# See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
 		tar -cf indexes.tar $(find indexes -type f -not -path '*.err' -not -path '*.info') --sort=name --owner=root:0 --group=root:0 --mtime='UTC 2019-01-01'
-		gzip -n indexes.tar
+		gzip -nc indexes.tar > indexes.tar.gz
 	}
 
 	output {
 		File gembs_indexes = glob("indexes.tar.gz")[0]
+		File gembs_indexes_tar = glob("indexes.tar")[0]
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
 		File contig_md5 = glob("indexes/*.gemBS.contig_md5")[0]
 		File bs_gem = glob("indexes/*.BS.gem")[0]
