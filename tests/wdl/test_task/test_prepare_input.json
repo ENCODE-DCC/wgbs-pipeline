@@ -1,0 +1,7 @@
+{
+  "test_prepare.configuration_file": "tests/wdl/test_data/gembs.conf",
+  "test_prepare.extra_reference": "tests/wdl/test_data/conversion_control.fa.gz",
+  "test_prepare.index": "tests/wdl/test_data/indexes.tar.gz",
+  "test_prepare.metadata_file": "tests/wdl/test_data/gembs_metadata.csv",
+  "test_prepare.reference": "tests/wdl/test_data/sacCer3.fa.gz"
+}

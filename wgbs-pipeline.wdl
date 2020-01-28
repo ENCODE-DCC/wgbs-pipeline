@@ -55,7 +55,6 @@ workflow wgbs {
 		call prepare { input:
 			configuration_file = make_metadata_csv_and_conf.gembs_conf,
 			metadata_file = make_metadata_csv_and_conf.metadata_csv,
-			contig_sizes = indexed_contig_sizes,
 			reference = reference,
 			index = index,
 			extra_reference = extra_reference
@@ -159,7 +158,6 @@ task make_metadata_csv_and_conf {
 task prepare {
 	File configuration_file
 	File metadata_file
-	File contig_sizes
 	File index
 	String reference
 	String extra_reference
@@ -169,8 +167,7 @@ task prepare {
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
-		tar xf ${index} -C indexes
-		ln ${contig_sizes} indexes/
+		tar xf ${index} -C indexes --strip-components 1
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
 					  -o gemBS.json \
