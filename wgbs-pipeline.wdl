@@ -205,6 +205,11 @@ task index {
 	output {
 		File gembs_indexes = glob("indexes.tar.gz")[0]
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
+		File contig_md5 = glob("indexes/*.gemBS.contig_md5")[0]
+		File bs_gem = glob("indexes/*.BS.gem")[0]
+		File gembs_ref = glob("indexes/*.gemBS.ref")[0]
+		File gembs_ref_fai = glob("indexes/*.gemBS.ref.fai")[0]
+		File gembs_ref_gzi = glob("indexes/*.gemBS.ref.gzi")[0]
 		File gemBS_json = glob("gemBS.json")[0]
 	}
 }

@@ -197,7 +197,7 @@ workflows:
             - build
             - lint
           test_name: "index"
-          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json"
+          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json test_index.index.gembs_ref test_index.index.bs_gem test_index.index.contig_md5 test_index.index.gembs_ref_gzi test_index.index.gembs_ref_fai"
       - test_wdl:
           name: test_bsmooth
           requires:
