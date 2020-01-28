@@ -199,12 +199,12 @@ workflows:
           test_name: "index"
           keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json"
       - test_wdl:
-        name: test_map
-        requires:
-          - build
-          - lint
-        test_name: "map"
-        keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
+          name: test_map
+          requires:
+            - build
+            - lint
+          test_name: "map"
+          keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
       - test_wdl:
           name: test_bsmooth
           requires:
