@@ -1,0 +1,9 @@
+{
+  "test_extract.bcf": "tests/wdl/test_data/sample_sample5.bcf",
+  "test_extract.bcf_csi": "tests/wdl/test_data/sample_sample5.bcf.csi",
+  "test_extract.contig_sizes": "tests/wdl/test_data/sacCer3.contig.sizes",
+  "test_extract.gemBS_json": "tests/wdl/test_data/gemBS.json",
+  "test_extract.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "test_extract.sample_barcode": "sample_sample5",
+  "test_extract.sample_name": "sample5"
+}

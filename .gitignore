@@ -5,7 +5,7 @@ __pycache__/
 .python-version
 
 # Cromwell run metadata output
-metadata.json
+*metadata.json
 
 help/ENC*
 

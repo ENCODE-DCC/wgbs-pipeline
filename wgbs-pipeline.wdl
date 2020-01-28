@@ -19,6 +19,8 @@ workflow wgbs {
 
 	Int bsmooth_num_workers = 8
 	Int bsmooth_num_threads = 2
+	Boolean run_bsmooth = true
+	Boolean benchmark_mode = false
 
 	# Optional params to tweak gemBS extract phred threshold and mininimum informative coverage for genotyped cytosines, otherwise will use gembs defaults
 	Int? gembs_extract_phred_threshold
@@ -33,7 +35,8 @@ workflow wgbs {
 		reference = reference,
 		extra_reference = extra_reference,
 		include_file = include_conf_file,
-		underconversion_sequence_name = underconversion_sequence_name
+		underconversion_sequence_name = underconversion_sequence_name,
+		benchmark_mode = benchmark_mode
 	}
 
 	if (!defined(indexed_reference)) {
@@ -45,14 +48,13 @@ workflow wgbs {
 		}
 	}
 
-	File index = select_first([indexed_reference, index_reference.BS_gem])
+	File index = select_first([indexed_reference, index_reference.gembs_indexes])
 	File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
 	if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
 		call prepare { input:
 			configuration_file = make_metadata_csv_and_conf.gembs_conf,
 			metadata_file = make_metadata_csv_and_conf.metadata_csv,
-			contig_sizes = indexed_contig_sizes,
 			reference = reference,
 			index = index,
 			extra_reference = extra_reference
@@ -77,8 +79,8 @@ workflow wgbs {
 			sample_barcode = sample_barcodes[i],
 			sample_name = sample_names[i],
 			bam = map.bam,
-			bai = map.bai,
-			contig_sizes = contig_sizes
+			csi = map.csi,
+			index = index,
 		}
 
 		call extract { input:
@@ -93,11 +95,13 @@ workflow wgbs {
 			min_inform = gembs_extract_min_inform,
 		}
 
-		call bsmooth { input:
-			gembs_cpg_bed = extract.cpg_txt,
-			chrom_sizes = contig_sizes,
-			num_workers = bsmooth_num_workers,
-			num_threads = bsmooth_num_threads
+		if (run_bsmooth) {
+			call bsmooth { input:
+				gembs_cpg_bed = extract.cpg_txt,
+				chrom_sizes = contig_sizes,
+				num_workers = bsmooth_num_workers,
+				num_threads = bsmooth_num_threads
+			}
 		}
 	}
 
@@ -118,6 +122,7 @@ task make_metadata_csv_and_conf {
 	File fastqs
 	String barcode_prefix
 
+	Boolean benchmark_mode
 	Int num_threads
 	Int num_jobs
 	String reference
@@ -140,6 +145,7 @@ task make_metadata_csv_and_conf {
 			-e "${extra_reference}" \
 			${if defined(underconversion_sequence_name) then ("-u " + underconversion_sequence_name) else ""} \
 			${if defined(include_file) then ("-i " + include_file) else ""} \
+			${if benchmark_mode then ("--benchmark-mode") else ""} \
 			-o "gembs.conf"
 	}
 
@@ -152,9 +158,8 @@ task make_metadata_csv_and_conf {
 task prepare {
 	File configuration_file
 	File metadata_file
-	File contig_sizes
+	File index
 	String reference
-	String index
 	String extra_reference
 
 	command {
@@ -162,8 +167,7 @@ task prepare {
 		mkdir reference && mkdir indexes
 		touch reference/$(basename ${reference})
 		touch reference/$(basename ${extra_reference})
-		touch indexes/$(basename ${index})
-		ln ${contig_sizes} indexes/
+		tar xf ${index} -C indexes --strip-components 1
 		gemBS prepare -c ${configuration_file} \
 					  -t ${metadata_file} \
 					  -o gemBS.json \
@@ -190,11 +194,13 @@ task index {
 					  -o gemBS.json \
 					  --no-db
 		gemBS -j gemBS.json index
+		# See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
+		find indexes -type f -not -path '*.err' -not -path '*.info' -print0 | LC_ALL=C sort -z | tar --owner=0 --group=0 --numeric-owner --mtime='2019-01-01 00:00Z' --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --null -T - -cf indexes.tar
+		gzip -nc indexes.tar > indexes.tar.gz
 	}
 
 	output {
-		File BS_gem = glob("indexes/*.BS.gem")[0]
-		File BS_info = glob("indexes/*.BS.info")[0]
+		File gembs_indexes = glob("indexes.tar.gz")[0]
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
 		File gemBS_json = glob("gemBS.json")[0]
 	}
@@ -211,7 +217,7 @@ task map {
 	command {
 		set -euo pipefail
 		mkdir reference && ln ${reference} reference
-		mkdir indexes && ln ${index} indexes
+		mkdir indexes && tar xf ${index} -C indexes --strip-components 1
 		mkdir -p fastq/${sample_name}
 		cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
 		mkdir -p mapping/${sample_barcode}
@@ -220,7 +226,7 @@ task map {
 
 	output {
 		File bam = glob("mapping/**/*.bam")[0]
-		File bai = glob("mapping/**/*.bai")[0]
+		File csi = glob("mapping/**/*.csi")[0]
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
@@ -231,18 +237,18 @@ task bscaller {
 	File reference
 	File gemBS_json
 	File bam
-	File bai
-	File contig_sizes
+	File csi
+	File index
 	String sample_barcode
 	String sample_name
 
 	command {
 		set -euo pipefail
 		mkdir reference && ln ${reference} reference
-		mkdir indexes && ln ${contig_sizes} indexes
+		mkdir indexes && tar xf ${index} -C indexes --strip-components 1
 		mkdir -p mapping/${sample_barcode}
 		ln -s ${bam} mapping/${sample_barcode}
-		ln -s ${bai} mapping/${sample_barcode}
+		ln -s ${csi} mapping/${sample_barcode}
 		gemBS -j ${gemBS_json} call --ignore-db --ignore-dep
 	}
 

@@ -93,26 +93,44 @@ jobs:
       test_name:
         description: "The name of the test being performed, like align, merge, etc."
         type: string
-      test_type:
-        default: "task"
+      is_workflow:
+        default: false
         description: "Describes if the test is for a task or for a workflow"
-        type: enum
-        enum: ["task", "workflow"]
+        type: boolean
       keys_to_inspect:
         description: "The key(s) of the output(s) in metadata.json for which md5sum is to be computed, space delimited"
         type: string
     steps:
-      - checkout
-      - run: *make_tag
-      - run: *get_caper
-      - run: *get_md5_script
-      - run:
-          command: |
-            source ${BASH_ENV}
-            tests/wdl/test.sh tests/wdl/test_<< parameters.test_type >>/test_<< parameters.test_name >>.wdl tests/wdl/test_<< parameters.test_type >>/test_<< parameters.test_name >>_input.json "${TAG}"
-            python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json test_<< parameters.test_name >>.metadata.json --reference_json tests/wdl/test_<< parameters.test_type >>/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
-            cat result.json
-            python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+      - when:
+          condition: << parameters.is_workflow >>
+          steps:
+            - checkout
+            - run: *make_tag
+            - run: *get_caper
+            - run: *get_md5_script
+            - run:
+                command: |
+                  source ${BASH_ENV}
+                  tests/wdl/test.sh wgbs-pipeline.wdl tests/wdl/test_workflow/test_<< parameters.test_name >>_input.json "${TAG}"
+                  python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json wgbs-pipeline.metadata.json --reference_json tests/wdl/test_workflow/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
+                  cat result.json
+                  python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+                no_output_timeout: 30m
+      - unless:
+          condition: << parameters.is_workflow >>
+          steps:
+            - checkout
+            - run: *make_tag
+            - run: *get_caper
+            - run: *get_md5_script
+            - run:
+                command: |
+                  source ${BASH_ENV}
+                  tests/wdl/test.sh tests/wdl/test_task/test_<< parameters.test_name >>.wdl tests/wdl/test_task/test_<< parameters.test_name >>_input.json "${TAG}"
+                  python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json test_<< parameters.test_name >>.metadata.json --reference_json tests/wdl/test_task/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
+                  cat result.json
+                  python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
+                no_output_timeout: 30m
 
   build:
     <<: *defaults
@@ -172,16 +190,66 @@ workflows:
             - build
             - lint
           test_name: "make_metadata_csv_and_conf"
-          test_type: "task"
           keys_to_inspect: "test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.metadata_csv test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.gembs_conf"
+      - test_wdl:
+          name: test_index
+          requires:
+            - build
+            - lint
+          test_name: "index"
+          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json"
+      - test_wdl:
+          name: test_prepare
+          requires:
+            - build
+            - lint
+          test_name: "prepare"
+          keys_to_inspect: "test_prepare.prepare.gemBS_json"
+      - test_wdl:
+          name: test_map
+          requires:
+            - build
+            - lint
+          test_name: "map"
+          keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
+      - test_wdl:
+          name: test_bscaller
+          requires:
+            - build
+            - lint
+          test_name: "bscaller"
+          # bscaller qc json not deterministic due to random ordering, so don't check
+          keys_to_inspect: "test_bscaller.bscaller.bcf test_bscaller.bscaller.bcf_csi test_bscaller.bscaller.bcf_md5"
+      - test_wdl:
+          name: test_extract
+          requires:
+            - build
+            - lint
+          test_name: "extract"
+          keys_to_inspect: "test_extract.extract.cpg_txt test_extract.extract.chh_bed test_extract.extract.chg_bb test_extract.extract.cpg_bed test_extract.extract.non_cpg_txt_tbi test_extract.extract.chg_bed test_extract.extract.non_cpg_txt test_extract.extract.chh_bb test_extract.extract.bw test_extract.extract.cpg_txt_tbi test_extract.extract.cpg_bb"
       - test_wdl:
           name: test_bsmooth
           requires:
             - build
             - lint
           test_name: "bsmooth"
-          test_type: "task"
           keys_to_inspect: "test_bsmooth.bsmooth.smoothed_cpg_bed test_bsmooth.bsmooth.smoothed_cpg_bigbed"
+      - test_wdl:
+          name: test_qc_report
+          requires:
+            - build
+            - lint
+          test_name: "qc_report"
+          keys_to_inspect: "test_qc_report.qc_report.map_html_assets"
+      - test_wdl:
+          name: test_wgbs
+          requires:
+            - build
+            - lint
+          test_name: wgbs
+          is_workflow: true
+          # wgbs.bscaller.qc_json is not consistent (contigs in random order)
+          keys_to_inspect: "wgbs.make_metadata_csv_and_conf.gembs_conf wgbs.make_metadata_csv_and_conf.metadata_csv wgbs.index_reference.gembs_indexes wgbs.index_reference.gemBS_json wgbs.index_reference.contig_sizes wgbs.map.csi wgbs.map.bam wgbs.map.bam_md5 wgbs.map.qc_json wgbs.bscaller.bcf_csi wgbs.bscaller.bcf wgbs.bscaller.bcf_md5 wgbs.extract.cpg_txt wgbs.extract.chh_bed wgbs.extract.chg_bb wgbs.extract.cpg_bed wgbs.extract.non_cpg_txt_tbi wgbs.extract.chg_bed wgbs.extract.non_cpg_txt wgbs.extract.chh_bb wgbs.extract.bw wgbs.extract.cpg_txt_tbi wgbs.extract.cpg_bb wgbs.qc_report.map_html_assets"
       - push_template:
           requires:
             - build

@@ -1,0 +1,89 @@
+{
+  "config": {
+    "DEFAULT": {
+      "bam_dir": "./mapping/@BARCODE",
+      "base": ".",
+      "bcf_dir": "./calls/@BARCODE",
+      "benchmark_mode": "true",
+      "extra_references": "reference/conversion_control.fa.gz",
+      "extract_dir": "./extract/@BARCODE",
+      "gembs_dbfile": "file:gemBS?mode=memory&cache=shared",
+      "index_dir": "indexes",
+      "jobs": "3",
+      "nonbs_flag": false,
+      "reference": "reference/sacCer3.fa.gz",
+      "report_dir": "./report",
+      "sequence_dir": "./fastq/@SAMPLE",
+      "threads": "8"
+    },
+    "calling": {
+      "contig_pool_limit": "25000000",
+      "conversion": [
+        "0.01",
+        "0.05"
+      ],
+      "haploid": "False",
+      "keep_duplicates": "False",
+      "keep_improper_pairs": "False",
+      "left_trim": "5",
+      "mapq_threshold": "10",
+      "omit_contigs": [
+        "NC_001416.1",
+        "NC_001604.1"
+      ],
+      "qual_threshold": "13",
+      "reference_bias": "2",
+      "remove_individual_bcfs": "True",
+      "right_trim": "0"
+    },
+    "extract": {
+      "make_bedmethyl": "True",
+      "make_bigwig": "True",
+      "make_cpg": "True",
+      "make_non_cpg": "True",
+      "phred_threshold": "10",
+      "strand_specific": "True"
+    },
+    "index": {
+      "sampling_rate": "4"
+    },
+    "mapping": {
+      "non_stranded": "False",
+      "remove_individual_bams": "True",
+      "underconversion_sequence": "NC_001416.1"
+    },
+    "report": {}
+  },
+  "contigs": {
+    "@pool_1": [
+      "chrIV",
+      "chrXV",
+      "chrVII",
+      "chrXII",
+      "chrXVI",
+      "chrXIII",
+      "chrII",
+      "chrXIV",
+      "chrX",
+      "chrXI",
+      "chrV",
+      "chrVIII",
+      "chrIX",
+      "chrIII",
+      "chrVI",
+      "chrI",
+      "chrM"
+    ]
+  },
+  "sampleData": {
+    "sample5": {
+      "file": {
+        "1": "sample5_data_1_200000.fastq.gz",
+        "2": "sample5_data_2_200000.fastq.gz"
+      },
+      "sample_barcode": "sample_sample5",
+      "sample_name": "sample5",
+      "type": "PAIRED"
+    }
+  }
+}

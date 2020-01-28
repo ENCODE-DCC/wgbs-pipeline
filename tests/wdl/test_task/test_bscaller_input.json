@@ -1,0 +1,9 @@
+{
+  "test_bscaller.bam": "tests/wdl/test_data/sample_sample5.bam",
+  "test_bscaller.csi": "tests/wdl/test_data/sample_sample5.bam.csi",
+  "test_bscaller.gemBS_json": "tests/wdl/test_data/gemBS.json",
+  "test_bscaller.index": "tests/wdl/test_data/indexes.tar.gz",
+  "test_bscaller.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "test_bscaller.sample_barcode": "sample_sample5",
+  "test_bscaller.sample_name": "sample5"
+}
