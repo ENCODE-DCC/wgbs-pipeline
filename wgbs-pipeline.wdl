@@ -198,7 +198,7 @@ task index {
 					  --no-db
 		gemBS -j gemBS.json index
 		# See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
-		tar --sort=name --format=gnu --owner=0 --group=0 --numeric-owner --mtime='2019-01-01' -cf indexes.tar $(find indexes -type f -not -path '*.err' -not -path '*.info')
+		tar --sort=name --format=gnu --mode=666 --owner=0 --group=0 --numeric-owner --mtime='2019-01-01 00:00Z' -cf indexes.tar $(find indexes -type f -not -path '*.err' -not -path '*.info')
 		gzip -nc indexes.tar > indexes.tar.gz
 	}
 
