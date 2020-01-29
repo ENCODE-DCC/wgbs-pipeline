@@ -12,7 +12,7 @@ machine_defaults: &machine_defaults
 
 py37: &py37
   docker:
-    - image: circleci/python:3.7.3-stretch
+    - image: circleci/python:3.7.4-stretch
   working_directory: ~/ENCODE-DCC/wgbs-pipeline
 
 lint: &lint
