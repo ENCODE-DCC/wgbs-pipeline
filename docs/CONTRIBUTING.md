@@ -3,7 +3,7 @@
 To work on this pipeline, you will want to have the following installed:
 * Docker Desktop
 * Java > 1.8
-* Python 3.7
+* Python 3.7.4 or higher, tests might fail with lower versions.
   * Install the following:
 
     ```bash
