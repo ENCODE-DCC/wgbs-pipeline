@@ -1,0 +1,121 @@
+{
+  "wgbs.bscaller": {
+    "bcf": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Call BCF\"]",
+      "path": "bscaller/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Calls/Replicate ${i+1}/Methylation and Variant Calls"
+    },
+    "qc_json": {
+      "node": "[shape=oval style=\"filled\" fillcolor=gainsboro fontsize=6 margin=0 label=\"gemBS bscaller QC\"]",
+      "path": "qc/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and logs/Replicate ${i+1}/BSCall QC json"
+    }
+  },
+  "wgbs.bsmooth": {
+    "smoothed_cpg_bed": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Smoothed CpG bed\"]",
+      "path": "bsmooth/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Smoothing/Replicate ${i+1}/Smoothed CpG bed"
+    },
+    "smoothed_cpg_bigbed": {
+      "node": "[shape=oval style=\"filled\" fillcolor=lightyellow fontsize=6 margin=0 label=\"Smoothed CpG bigBed\"]",
+      "path": "bsmooth/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Smoothing/Replicate ${i+1}/Smoothed CpG bigBed",
+      "ucsc_track": "track type=bigBed name=\"Smoothed CpG bigBed\" priority=100 itemRgb=On visibility=full"
+    }
+  },
+  "wgbs.extract": {
+    "bw": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Signal bigWig\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/Signal bigWig",
+      "ucsc_track": "track type=bigWig name=\"Signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=full"
+    },
+    "chg_bb": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bigBed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CHG bigBed",
+      "ucsc_track": "track type=bigBed name=\"CHG bigBed\" priority=100 color=0,0,255 visibility=full"
+    },
+    "chg_bed": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CHG bed"
+    },
+    "chh_bb": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHH bigBed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CHH bigBed",
+      "ucsc_track": "track type=bigBed name=\"CHH bigBed\" priority=100 color=0,0,255 visibility=full"
+    },
+    "chh_bed": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHH bed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CHH bed"
+    },
+    "cpg_bb": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG bigBed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CpG bigBed",
+      "ucsc_track": "track type=bigBed name=\"CpG bigBed\" priority=100 color=0,0,255 visibility=full"
+    },
+    "cpg_bed": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG bed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CpG bed"
+    },
+    "cpg_txt": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG gemBS-style bed\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CpG gemBS-style bed"
+    },
+    "non_cpg_txt": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"non-CpG gemBS-style bed)\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/non-CpG gemBS-style bed"
+    }
+  },
+  "wgbs.make_metadata_csv_and_conf": {
+    "gembs_conf": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"gemBS config\"]",
+      "path": "configuration/${basename}",
+      "table": "Configuration/gemBS configuration"
+    },
+    "metadata_csv": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"gemBS metadata\"]",
+      "path": "configuration/${basename}",
+      "table": "Configuration/gemBS metadata"
+    }
+  },
+  "wgbs.map": {
+    "bam": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"BAM\"]",
+      "path": "map/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Alignment/Replicate ${i+1}/BAM alignments"
+    },
+    "csi": {
+      "path": "map/rep${i+1}/${basename}",
+      "table": "QC and logs/Replicate ${i+1}/BAM CSI Index"
+    },
+    "qc_json": {
+      "node": "[shape=oval style=\"filled\" fillcolor=gainsboro fontsize=6 margin=0 label=\"gemBS map QC\"]",
+      "path": "qc/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and logs/Replicate ${i+1}/gemBS Map QC JSON"
+    }
+  }
+}

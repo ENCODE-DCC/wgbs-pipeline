@@ -6,6 +6,7 @@ __pycache__/
 
 # Cromwell run metadata output
 *metadata.json
+croo.*
 
 help/ENC*
 
