@@ -1,4 +1,5 @@
 import argparse
+import gzip
 from pathlib import Path
 from typing import List
 
@@ -15,6 +16,9 @@ def make_conf(args: argparse.Namespace) -> List[str]:
     The reference and extra reference files are localized in the reference directory at
     the WDL level. Therefore, we only need the basename. However, for the include file,
     the actual path must be provided in order for gemBS to recognize it.
+
+    If a name for an underconversion sequence is not provided, it is assumed that the
+    name of the first contig in the extra reference is the name to use.
     """
     conf = [
         f"reference = reference/{Path(args.reference).name}",
@@ -32,14 +36,26 @@ def make_conf(args: argparse.Namespace) -> List[str]:
 
     if args.benchmark_mode:
         conf.append("benchmark_mode = true")
-    if args.underconversion_sequence or args.include_file:
-        conf.append("[mapping]")
+
+    conf.append("[mapping]")
+
     if args.underconversion_sequence:
-        conf.append(f"underconversion_sequence = {args.underconversion_sequence}")
+        underconversion_sequence = args.underconversion_sequence
+    else:
+        underconversion_sequence = extract_underconversion_sequence(
+            args.extra_reference
+        )
+    conf.append(f"underconversion_sequence = {underconversion_sequence}")
+
     if args.include_file:
         conf.append(f"include {args.include_file}")
 
     return conf
+
+
+def extract_underconversion_sequence(extra_reference: str) -> str:
+    with gzip.open(extra_reference, "rt") as f:
+        return f.readline().strip().lstrip(">")
 
 
 def write_conf(outfile: str, conf: List[str]):
@@ -68,7 +84,11 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-u",
         "--underconversion-sequence",
-        help="Name of contig in extra reference to use as underconversion control",
+        help=(
+            "Name of contig in extra reference to use as underconversion control. If "
+            "not specified, then the name of the first contig in the extra reference "
+            "will be used as the underconversion control."
+        ),
     )
     parser.add_argument(
         "-i", "--include-file", help="Name of additional conf file to include in "

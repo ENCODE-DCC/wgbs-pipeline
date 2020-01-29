@@ -127,7 +127,7 @@ task make_metadata_csv_and_conf {
 	Int num_threads
 	Int num_jobs
 	String reference
-	String extra_reference
+	File extra_reference
 	String? include_file
 	String? underconversion_sequence_name
 

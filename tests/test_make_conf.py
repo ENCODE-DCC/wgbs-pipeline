@@ -1,18 +1,25 @@
 import builtins
+import gzip
 from contextlib import suppress as does_not_raise
 from typing import List, Optional, Tuple
 
 import attr
 import pytest
 
-from wgbs_pipeline.make_conf import get_parser, main, make_conf, write_conf
+from wgbs_pipeline.make_conf import (
+    extract_underconversion_sequence,
+    get_parser,
+    main,
+    make_conf,
+    write_conf,
+)
 
 
 @attr.s(auto_attribs=True)
 class StubArgs:
     reference: str
     extra_reference: str
-    underconversion_sequence: Optional[str] = None
+    underconversion_sequence: Optional[str] = "chrL"
     include_file: Optional[str] = None
     outfile: str = "gembs.conf"
     num_threads: int = 8
@@ -59,7 +66,7 @@ def test_parser(args: List[str], condition):
     [
         (
             StubArgs("/foo/reference.fa.gz", "/bar/exref.fa.gz"),
-            11,
+            13,
             [
                 (0, "reference = reference/reference.fa.gz"),
                 (1, "extra_references = reference/exref.fa.gz"),
@@ -74,22 +81,27 @@ def test_parser(args: List[str], condition):
             [(11, "[mapping]"), (12, "underconversion_sequence = chrL")],
         ),
         (
+            StubArgs("reference.fa.gz", "exref.fa.gz", underconversion_sequence=None),
+            13,
+            [(11, "[mapping]"), (12, "underconversion_sequence = chrL")],
+        ),
+        (
             StubArgs(
                 "reference.fa.gz", "exref.fa.gz", include_file="my_dir/include.conf"
             ),
-            13,
-            [(11, "[mapping]"), (12, "include my_dir/include.conf")],
+            14,
+            [(11, "[mapping]"), (13, "include my_dir/include.conf")],
         ),
         (
             StubArgs("reference.fa.gz", "exref.fa.gz", benchmark_mode=True),
-            12,
+            14,
             [(11, "benchmark_mode = true")],
         ),
         (
             StubArgs(
                 "/foo/reference.fa.gz", "/bar/exref.fa.gz", num_threads=1, num_jobs=1
             ),
-            11,
+            13,
             [(9, "threads = 1"), (10, "jobs = 1")],
         ),
         (
@@ -108,11 +120,24 @@ def test_parser(args: List[str], condition):
         ),
     ],
 )
-def test_make_conf(args, expected_num_rows: int, assertions: List[Tuple[int, str]]):
+def test_make_conf(
+    mocker, args, expected_num_rows: int, assertions: List[Tuple[int, str]]
+):
+    extra_reference = b">chrL\nGATACA\n"
+    extra_reference_gzipped = gzip.compress(extra_reference)
+    mocker.patch("builtins.open", mocker.mock_open(read_data=extra_reference_gzipped))
     output = make_conf(args)
     assert len(output) == expected_num_rows
     for row_index, expected_value in assertions:
         assert output[row_index] == expected_value
+
+
+def test_extract_underconversion_sequence(mocker):
+    extra_reference = b">chrL\nGATACA\n"
+    extra_reference_gzipped = gzip.compress(extra_reference)
+    mocker.patch("builtins.open", mocker.mock_open(read_data=extra_reference_gzipped))
+    result = extract_underconversion_sequence("/path/to/ref.fasta.gz")
+    assert result == "chrL"
 
 
 def test_write_conf(mocker):
@@ -134,7 +159,17 @@ def test_main(mocker):
     and the second extracts the first positional arg.
     """
     mocker.patch("builtins.open", mocker.mock_open())
-    testargs = ["prog", "-r", "ref.fa.gz", "-e", "exref.fa.gz", "-o", "conf.conf"]
+    testargs = [
+        "prog",
+        "-r",
+        "ref.fa.gz",
+        "-e",
+        "exref.fa.gz",
+        "-u",
+        "chrL",
+        "-o",
+        "conf.conf",
+    ]
     mocker.patch("sys.argv", testargs)
     main()
     assert builtins.open.call_args[0][0] == "conf.conf"
