@@ -151,6 +151,12 @@ task make_metadata_csv_and_conf {
 		File metadata_csv = glob("gembs_metadata.csv")[0]
 		File gembs_conf = glob("gembs.conf")[0]
 	}
+
+	runtime {
+		cpu: 1
+		memory: "2 GB"
+		disks: "local-disk 10 SSD"
+	}
 }
 
 task prepare {
@@ -202,6 +208,10 @@ task index {
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
 		File gemBS_json = glob("gemBS.json")[0]
 	}
+
+	runtime {
+		memory: "64 GB"
+	}
 }
 
 task map {
@@ -228,7 +238,6 @@ task map {
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
-
 }
 
 task bscaller {
