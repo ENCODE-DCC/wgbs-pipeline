@@ -238,6 +238,10 @@ task map {
 		File bam_md5 = glob("mapping/**/*.bam.md5")[0]
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
+
+	runtime {
+		memory: "64 GB"
+	}
 }
 
 task bscaller {
