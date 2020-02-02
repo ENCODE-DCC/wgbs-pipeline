@@ -289,6 +289,8 @@ task extract {
 		mkdir -p extract/${sample_barcode}
 		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
+		# htslib can complain the index is older than the bcf, so touch it to update timestamp
+		touch ${bcf_csi}
 		gemBS -j ${gemBS_json} extract \
 			${if defined(phred_threshold) then ("-q " + phred_threshold) else ""} \
 			${if defined(min_inform) then ("-l " + min_inform) else ""} \
