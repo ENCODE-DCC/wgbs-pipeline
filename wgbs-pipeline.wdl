@@ -7,7 +7,8 @@ workflow wgbs {
 	File? indexed_reference
 	File? indexed_contig_sizes
 	File extra_reference
-	Array[Array[File]] fastqs
+	# biological replicate[technical replicate[one (single ended) or two paired fastqs]]]
+	Array[Array[Array[File]]] fastqs
 	Array[String] sample_names
 
 	Int num_gembs_threads = 8
@@ -29,7 +30,7 @@ workflow wgbs {
 
 	call make_metadata_csv_and_conf { input:
 		sample_names = sample_names,
-		fastqs = write_tsv(fastqs),  # don't need the file contents, so avoid localizing
+		fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
 		barcode_prefix = barcode_prefix,
 		num_threads = num_gembs_threads,
 		num_jobs = num_gembs_jobs,
@@ -66,7 +67,7 @@ workflow wgbs {
 
 	scatter(i in range(length(sample_names))) {
 		call map { input:
-			fastqs = fastqs[i],
+			fastqs = flatten(fastqs[i]),
 			sample_barcode = sample_barcodes[i],
 			sample_name = sample_names[i],
 			index = index,

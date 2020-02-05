@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 from pathlib import Path
 from typing import List
 
@@ -17,40 +18,60 @@ def main():
 
 def process(args) -> List[List[str]]:
     """
-    If only one file is specified (single-ended) then the File2 column is omitted.
+    If only one file is specified (single-ended) then the File1 and File2 columns are
+    supplanted by a single File column.
     """
-    files = read_file_tsv(args.files)
+    files = read_file_json(args.files)
     if len(args.sample_names) != len(files):
         raise ValueError("Number of samples must match number of file groups")
-    num_files = len(files[0])
+    num_files = len(files[0][0])
     if num_files == 1:
-        header = CSV_FIELDS[:-1]
+        header = CSV_FIELDS[:-2] + ["File"]
     else:
         header = CSV_FIELDS
     to_write = [header]
-    for sample_name, sample_files in zip(args.sample_names, files):
-        output = [
+    for sample_name, biological_replicate in zip(args.sample_names, files):
+        constant_output = [
             "{}{}".format(args.barcode_prefix, sample_name),
             sample_name,
             sample_name,
         ]
-        output.extend(sample_files)
-        to_write.append(output)
+        for technical_replicate in biological_replicate:
+            output = constant_output + technical_replicate
+            to_write.append(output)
     return to_write
 
 
-def read_file_tsv(path: str) -> List[List[str]]:
+def read_file_json(path: str) -> List[List[List[str]]]:
     """
-    Read a tsv where each row should contain one or two fastq files, and preprocess them
-    by truncating paths to the basename.
+    Read a JSON file of thrice nested arrays where all of the innermost arrays should
+    contain the same number of fastq files (1 or 2), and preprocess them by truncating
+    paths to the basename. We preserve the original JSON structure to avoid collapsing
+    the biological replicate information.
     """
     output = []
-    with open(path, newline="") as f:
-        reader = csv.reader(f, delimiter="\t")
-        for row in reader:
-            if len(row) not in (1, 2):
-                raise ValueError("Expected at most two fastq files as input.")
-            output.append([Path(i).name for i in row])
+    with open(path) as f:
+        data = json.load(f)
+        num_files = len(data[0][0])
+        if num_files > 2:
+            raise ValueError(
+                "At most two files may be specified per techincal replicate, found "
+                f"{num_files}"
+            )
+        for biological_replicate in data:
+            paths_by_tech_rep = []
+            for technical_replicate in biological_replicate:
+                current_length = len(technical_replicate)
+                if current_length != num_files:
+                    raise ValueError(
+                        (
+                            "Found mixed paired and single ended libraries, the first "
+                            f"library has {num_files} files but the current library "
+                            f"contains {current_length}"
+                        )
+                    )
+                paths_by_tech_rep.append([Path(i).name for i in technical_replicate])
+            output.append(paths_by_tech_rep)
     return output
 
 
@@ -60,8 +81,9 @@ def get_parser() -> argparse.ArgumentParser:
         "-n", "--sample-names", nargs="+", help="A list of sample names", required=True
     )
     parser.add_argument(
+        "-f",
         "--files",
-        help="A tsv where each row is a fastq file or a pair of fastqs",
+        help="A JSON file containing an array of arrays of arrays",
         required=True,
     )
     parser.add_argument(

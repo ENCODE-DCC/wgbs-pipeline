@@ -5,7 +5,7 @@ from typing import List
 import attr
 import pytest
 
-from wgbs_pipeline.make_metadata_csv import get_parser, main, process, read_file_tsv
+from wgbs_pipeline.make_metadata_csv import get_parser, main, process, read_file_json
 
 
 @attr.s(auto_attribs=True)
@@ -32,68 +32,106 @@ def test_parser(args, condition, num_names):
 
 
 @pytest.mark.parametrize(
-    "args,parsed_tsv,condition,expected_row_len",
+    "args,parsed_json,condition,expected",
     [
-        (StubArgs(["foo"], "path.tsv"), [["f1.fastq.gz"]], does_not_raise(), 4),
         (
-            StubArgs(["bar"], "path.tsv"),
-            [["f1.fastq.gz", "f2.fastq.gz"]],
+            StubArgs(["foo"], "path.json"),
+            [[["f1.fastq.gz"]]],
             does_not_raise(),
-            5,
+            [
+                ["Barcode", "Name", "Dataset", "File"],
+                ["sample_foo", "foo", "foo", "f1.fastq.gz"],
+            ],
         ),
         (
-            StubArgs(["baz", "qux"], "path.tsv"),
-            [["f1.fastq.gz"]],
+            StubArgs(["bar"], "path.json"),
+            [[["f1.fastq.gz", "f2.fastq.gz"]]],
+            does_not_raise(),
+            [
+                ["Barcode", "Name", "Dataset", "File1", "File2"],
+                ["sample_bar", "bar", "bar", "f1.fastq.gz", "f2.fastq.gz"],
+            ],
+        ),
+        (
+            StubArgs(["baz"], "path.json"),
+            [[["f1.fastq.gz", "f2.fastq.gz"], ["f3.fastq.gz", "f4.fastq.gz"]]],
+            does_not_raise(),
+            [
+                ["Barcode", "Name", "Dataset", "File1", "File2"],
+                ["sample_baz", "baz", "baz", "f1.fastq.gz", "f2.fastq.gz"],
+                ["sample_baz", "baz", "baz", "f3.fastq.gz", "f4.fastq.gz"],
+            ],
+        ),
+        (
+            StubArgs(["baz", "qux"], "path.json"),
+            [[["f1.fastq.gz", "f2.fastq.gz"]], [["f3.fastq.gz", "f4.fastq.gz"]]],
+            does_not_raise(),
+            [
+                ["Barcode", "Name", "Dataset", "File1", "File2"],
+                ["sample_baz", "baz", "baz", "f1.fastq.gz", "f2.fastq.gz"],
+                ["sample_qux", "qux", "qux", "f3.fastq.gz", "f4.fastq.gz"],
+            ],
+        ),
+        (
+            StubArgs(["baz", "qux"], "path.json"),
+            [[["f1.fastq.gz"]]],
             pytest.raises(ValueError),
-            0,
+            [[]],
         ),
     ],
 )
-def test_process(mocker, args, parsed_tsv, condition, expected_row_len):
+def test_process(mocker, args, parsed_json, condition, expected):
     mocker.patch(
-        "wgbs_pipeline.make_metadata_csv.read_file_tsv", return_value=parsed_tsv
+        "wgbs_pipeline.make_metadata_csv.read_file_json", return_value=parsed_json
     )
     with condition:
         output = process(args)
-        assert all(len(row) == expected_row_len for row in output)
+        assert output == expected
 
 
 @pytest.mark.parametrize(
-    "tsv_contents,condition,expected",
+    "json_contents,condition,expected",
     [
         (
-            "/a/f1.fastq.gz\t/b/f2.fastq.gz\n",
+            '[[["/a/f1.fastq.gz","/b/f2.fastq.gz"]]]',
             does_not_raise(),
-            [["f1.fastq.gz", "f2.fastq.gz"]],
+            [[["f1.fastq.gz", "f2.fastq.gz"]]],
         ),
-        ("f1.fastq.gz\tf2.fastq.gz\tf3.fastq.gz\n", pytest.raises(ValueError), [[]]),
+        (
+            '[[["/a/f1.fastq.gz","/b/f2.fastq.gz"],["/a/f3.fastq.gz","/b/f4.fastq.gz"]]]',
+            does_not_raise(),
+            [[["f1.fastq.gz", "f2.fastq.gz"], ["f3.fastq.gz", "f4.fastq.gz"]]],
+        ),
+        (
+            '[[["/a/f1.fastq.gz", "/b/f2.fastq.gz"]],[["/a/f3.fastq.gz", "/b/f4.fastq.gz"]]]',
+            does_not_raise(),
+            [[["f1.fastq.gz", "f2.fastq.gz"]], [["f3.fastq.gz", "f4.fastq.gz"]]],
+        ),
+        (
+            '[[["f1.fastq.gz", "f2.fastq.gz", "f3.fastq.gz"]]]',
+            pytest.raises(ValueError),
+            [[[]]],
+        ),
+        (
+            '[[["f1.fastq.gz"], ["f2.fastq.gz", "f3.fastq.gz"]]]',
+            pytest.raises(ValueError),
+            [[[]]],
+        ),
     ],
 )
-def test_read_file_tsv(mocker, tsv_contents, condition, expected):
-    """
-    mock_open does not support iteration (fixed in Python 3.8 but not backported), so we
-    need to patch it. See https://bugs.python.org/issue21258 . We can resolve this by
-    supplying a __iter__ method to the mock: https://stackoverflow.com/a/24779923
-    """
-    mocker.patch("builtins.open", mocker.mock_open(read_data=tsv_contents))
-    mocker.patch(
-        "builtins.open.return_value.__iter__", lambda self: iter(self.readline, "")
-    )
+def test_read_file_json(mocker, json_contents, condition, expected):
+    mocker.patch("builtins.open", mocker.mock_open(read_data=json_contents))
     with condition:
-        result = read_file_tsv("foo")
+        result = read_file_json("foo")
         assert result == expected
 
 
 def test_main(mocker):
     """
     The assert looks a little wonky here. The first index extracts the args of the call,
-    and the second extracts the first positional arg. We use the same trick of patching
-    open()'s __iter__ so that the csv library can loop over it.
+    and the second extracts the first positional arg.
     """
-    mocker.patch("builtins.open", mocker.mock_open(read_data="f1.fastq.gz"))
-    mocker.patch(
-        "builtins.open.return_value.__iter__", lambda self: iter(self.readline, "")
-    )
+    mocker.patch("builtins.open", mocker.mock_open(read_data=b'["f1.fastq.gz"]'))
     testargs = ["prog", "-n", "foo", "--files", "path.tsv"]
     mocker.patch("sys.argv", testargs)
     main()
