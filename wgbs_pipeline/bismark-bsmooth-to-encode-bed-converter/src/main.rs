@@ -28,6 +28,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+// Bsmooth will sometimes output invalid floats (NA in the tsv), for these rows we skip
+// outputting them in the bed
 fn process<R: io::Read, W: io::Write>(
     mut bismark_reader: Reader<R>,
     mut smoothed_methylation_reader: Reader<R>,
@@ -39,14 +41,18 @@ fn process<R: io::Read, W: io::Write>(
 
     for (i, smoothed_methylation_record) in records.zip(smoothed_methylation_records) {
         let mut record = i?;
+        match smoothed_methylation_record?.smoothed_methylation_percentage {
+            SmoothedMethylationPercentage::Valid(valid) => {
+                record.smoothed_methylation_percentage = valid
+            }
+            SmoothedMethylationPercentage::Nan(_) => continue,
+        };
         record.item_name = ".".to_string();
         record.coverage = record.converted_count + record.non_converted_count;
         record.score = cmp::min(record.coverage, ENCODE_SCORE_CAP);
         record.strandedness = UNKNOWN_STRANDEDNESS;
         record.start_thick_display = record.start;
         record.stop_thick_display = record.stop;
-        record.smoothed_methylation_percentage =
-            smoothed_methylation_record?.smoothed_methylation_percentage;
         record.color_value =
             rgb_from_methylation(record.smoothed_methylation_percentage).to_string();
         encode_writer.serialize(record)?;
@@ -112,6 +118,13 @@ impl From<RgbTriplet> for RgbWithDisplay {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum SmoothedMethylationPercentage {
+    Valid(f64),
+    Nan(String),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 struct Row {
     contig: String,
     // Positions could be as large as 2.4e8 (chr1 length)
@@ -147,7 +160,7 @@ struct Row {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct SmoothedMethylationRow {
-    smoothed_methylation_percentage: f64,
+    smoothed_methylation_percentage: SmoothedMethylationPercentage,
 }
 
 #[cfg(test)]
@@ -216,9 +229,11 @@ mod tests {
     fn test_process() -> Result<(), Box<dyn Error>> {
         let bismark_data = "\
                             chr1\t10649\t10650\t1.0\t4\t0\n\
+                            chr1\t10650\t10651\t1.0\t4\t0\n\
                             ";
         let bsmooth_data = "\
         0.356\n
+        NA\n
         ";
         let bismark_rdr = get_reader(bismark_data.as_bytes());
         let bsmooth_rdr = get_reader(bsmooth_data.as_bytes());

@@ -332,6 +332,12 @@ task bsmooth {
 		File smoothed_cpg_bed = glob("smoothed_encode.bed.gz")[0]
 		File smoothed_cpg_bigbed = glob("smoothed_encode.bb")[0]
 	}
+
+	runtime {
+		cpu: 16
+		disks: "local-disk 500 SSD",
+		memory: "128 GB"
+	}
 }
 
 task qc_report {
