@@ -335,7 +335,7 @@ task bsmooth {
 
 	runtime {
 		cpu: 16
-		disks: "local-disk 500 SSD",
+		disks: "local-disk 500 SSD"
 		memory: "128 GB"
 	}
 }
