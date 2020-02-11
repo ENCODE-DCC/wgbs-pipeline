@@ -15,7 +15,6 @@ RUN apt-get update && \
     build-essential \
     git \
     gsl-bin \
-    jq \
     libbz2-dev \
     libcurl4-openssl-dev \
     libgsl0-dev \
@@ -35,7 +34,7 @@ RUN apt-get update && \
     && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir matplotlib==3.0.2 multiprocess
+RUN pip3 install --no-cache-dir beautifulsoup4 matplotlib==3.0.2 multiprocess
 
 # Install bsmooth.R dependencies
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://cloud.r-project.org'; options(repos = r);" > ~/.Rprofile && \

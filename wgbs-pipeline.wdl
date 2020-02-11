@@ -105,17 +105,14 @@ workflow wgbs {
 				num_threads = bsmooth_num_threads
 			}
 		}
-	}
-
-	Array[File] map_qc_json_ = flatten(map.qc_json)
-	Array[File] bscaller_qc_json_ = flatten(bscaller.qc_json)
-
-	call qc_report { input:
-		map_qc_json = map_qc_json_,
-		bscaller_qc_json = bscaller_qc_json_,
-		gemBS_json = gemBS_json,
-		reference = reference,
-		contig_sizes = contig_sizes
+		call qc_report { input:
+			map_qc_json = map.qc_json,
+			bscaller_qc_json = bscaller.qc_json,
+			gemBS_json = gemBS_json,
+			reference = reference,
+			contig_sizes = contig_sizes,
+			sample_barcode = sample_barcodes[i]
+		}
 	}
 }
 
@@ -330,33 +327,29 @@ task qc_report {
 	File reference
 	File gemBS_json
 	File contig_sizes
-
+	String sample_barcode
 
 	command {
 		set -euo pipefail
 		mkdir reference && mkdir mapping_reports && mkdir calls_reports && mkdir indexes
 		ln -s ${contig_sizes} indexes
 		ln -s ${reference} reference
-		cat ${write_lines(map_qc_json)} | while read line
-		do
-			barcode=$(jq --raw-output '.ReadGroup | split("\t")[3] | split("BC:")[1]' $line)
-			mkdir -p mapping/$barcode
-			ln $line mapping/$barcode
-			touch mapping/$barcode/"$barcode.bam"
-		done
-		cat ${write_lines(bscaller_qc_json)} | while read line
-		do
-			barcode=$(cut -d '_' -f1 <<< $(basename $line))
-			mkdir -p calls/$barcode
-			ln $line calls/$barcode
-			touch calls/$barcode/"$barcode.bcf"
-		done
+		mkdir -p "mapping/${sample_barcode}"
+		cat ${write_lines(map_qc_json)} | xargs -I % ln % "mapping/${sample_barcode}"
+		touch mapping/${sample_barcode}/"${sample_barcode}.bam"
+		mkdir -p "calls/${sample_barcode}"
+		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln % "calls/${sample_barcode}"
+		touch calls/${sample_barcode}/"${sample_barcode}.bcf"
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
 		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
+		python3 $(which parse_map_qc_html.py) -i mapping_reports/mapping/${sample_barcode}.html -o gembs_map_qc.json
 	}
 
 	output {
 		Array[File] map_html_assets = glob("mapping_reports/mapping/*")
+		File map_qc_json = glob("gembs_map_qc.json")[0]
+		File map_qc_insert_size_plot_png = glob("mapping_reports/mapping/${sample_barcode}.isize.png")[0]
+		File map_qc_mapq_plot_png = glob("mapping_reports/mapping/${sample_barcode}.mapq.png")[0]
 		Array[File] bscaller_html_assets = glob("calls_reports/variant_calling/*")
 	}
 }
