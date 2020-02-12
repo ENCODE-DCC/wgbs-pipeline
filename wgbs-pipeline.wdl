@@ -310,6 +310,11 @@ task extract {
 		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
 	}
+
+	runtime {
+		disks: "local-disk 500 SSD"
+		memory: "96 GB"
+	}
 }
 
 task bsmooth {
