@@ -25,7 +25,7 @@
       "path": "bsmooth/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Smoothing/Replicate ${i+1}/Smoothed CpG bigBed",
-      "ucsc_track": "track type=bigBed name=\"Smoothed CpG bigBed\" priority=100 itemRgb=On visibility=full"
+      "ucsc_track": "track type=bigBed name=\"Smoothed CpG bigBed\" priority=100 itemRgb=On visibility=dense"
     }
   },
   "wgbs.extract": {
@@ -34,14 +34,14 @@
       "path": "extract/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/Signal bigWig",
-      "ucsc_track": "track type=bigWig name=\"Signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=full"
+      "ucsc_track": "track type=bigWig name=\"Signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
     },
     "chg_bb": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bigBed\"]",
       "path": "extract/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/CHG bigBed",
-      "ucsc_track": "track type=bigBed name=\"CHG bigBed\" priority=100 color=0,0,255 visibility=full"
+      "ucsc_track": "track type=bigBed name=\"CHG bigBed\" priority=100 color=0,0,255 visibility=dense"
     },
     "chg_bed": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bed\"]",
@@ -54,7 +54,7 @@
       "path": "extract/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/CHH bigBed",
-      "ucsc_track": "track type=bigBed name=\"CHH bigBed\" priority=100 color=0,0,255 visibility=full"
+      "ucsc_track": "track type=bigBed name=\"CHH bigBed\" priority=100 color=0,0,255 visibility=dense"
     },
     "chh_bed": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHH bed\"]",
@@ -67,7 +67,7 @@
       "path": "extract/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/CpG bigBed",
-      "ucsc_track": "track type=bigBed name=\"CpG bigBed\" priority=100 color=0,0,255 visibility=full"
+      "ucsc_track": "track type=bigBed name=\"CpG bigBed\" priority=100 color=0,0,255 visibility=dense"
     },
     "cpg_bed": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG bed\"]",
