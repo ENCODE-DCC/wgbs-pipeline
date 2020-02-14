@@ -344,6 +344,5 @@ task qc_report {
 		File portal_map_qc_json = glob("gembs_map_qc.json")[0]
 		File map_qc_insert_size_plot_png = glob("mapping_reports/mapping/${sample_barcode}.isize.png")[0]
 		File map_qc_mapq_plot_png = glob("mapping_reports/mapping/${sample_barcode}.mapq.png")[0]
-		Array[File] bscaller_html_assets = glob("calls_reports/variant_calling/*")
 	}
 }
