@@ -254,7 +254,6 @@ task bscaller {
 		File bcf = glob("calls/**/*.bcf")[0]
 		File bcf_csi = glob("calls/**/*.bcf.csi")[0]
 		File bcf_md5 = glob("calls/**/*.bcf.md5")[0]
-		Array[File] qc_json = glob("calls/**/*.json")
 	}
 }
 
