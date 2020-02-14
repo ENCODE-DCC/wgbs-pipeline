@@ -107,7 +107,6 @@ workflow wgbs {
 		}
 		call qc_report { input:
 			map_qc_json = map.qc_json,
-			bscaller_qc_json = bscaller.qc_json,
 			gemBS_json = gemBS_json,
 			reference = reference,
 			contig_sizes = contig_sizes,
@@ -323,7 +322,6 @@ task bsmooth {
 
 task qc_report {
 	Array[File] map_qc_json
-	Array[File] bscaller_qc_json
 	File reference
 	File gemBS_json
 	File contig_sizes
@@ -337,11 +335,7 @@ task qc_report {
 		mkdir -p "mapping/${sample_barcode}"
 		cat ${write_lines(map_qc_json)} | xargs -I % ln % "mapping/${sample_barcode}"
 		touch mapping/${sample_barcode}/"${sample_barcode}.bam"
-		mkdir -p "calls/${sample_barcode}"
-		cat ${write_lines(bscaller_qc_json)} | xargs -I % ln % "calls/${sample_barcode}"
-		touch calls/${sample_barcode}/"${sample_barcode}.bcf"
 		gemBS -j ${gemBS_json} map-report -p ENCODE -o mapping_reports
-		gemBS -j ${gemBS_json} call-report -p ENCODE -o calls_reports
 		python3 $(which parse_map_qc_html.py) -i mapping_reports/mapping/${sample_barcode}.html -o gembs_map_qc.json
 	}
 
