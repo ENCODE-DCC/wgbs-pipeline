@@ -3,8 +3,10 @@
   "wgbs.extra_reference": "tests/wdl/test_data/conversion_control.fa.gz",
   "wgbs.fastqs": [
     [
-      "tests/wdl/test_data/sample5_data_1_200000.fastq.gz",
-      "tests/wdl/test_data/sample5_data_2_200000.fastq.gz"
+      [
+        "tests/wdl/test_data/sample5_data_1_200000.fastq.gz",
+        "tests/wdl/test_data/sample5_data_2_200000.fastq.gz"
+      ]
     ]
   ],
   "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
