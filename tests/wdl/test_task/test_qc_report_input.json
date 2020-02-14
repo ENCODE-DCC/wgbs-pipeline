@@ -1,11 +1,9 @@
 {
-  "test_qc_report.bscaller_qc_json": [
-    "tests/wdl/test_data/sample_sample5_@pool_1.json"
-  ],
   "test_qc_report.contig_sizes": "tests/wdl/test_data/sacCer3.contig.sizes",
   "test_qc_report.gemBS_json": "tests/wdl/test_data/gemBS.json",
   "test_qc_report.map_qc_json": [
     "tests/wdl/test_data/sample5.json"
   ],
-  "test_qc_report.reference": "tests/wdl/test_data/sacCer3.fa.gz"
+  "test_qc_report.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "test_qc_report.sample_barcode": "sample_sample5"
 }
