@@ -1,10 +1,10 @@
 {
   "default_runtime_attributes": {
     "bootDiskSizeGb": "10",
-    "cpu": "1",
-    "disks": "local-disk 100 HDD",
-    "docker": "quay.io/encode-dcc/wgbs-pipeline:latest",
-    "memory": "2 GB",
+    "cpu": "8",
+    "disks": "local-disk 500 HDD",
+    "docker": "quay.io/encode-dcc/wgbs-pipeline:0.1.0",
+    "memory": "32 GB",
     "noAddress": "false",
     "preemptible": "0",
     "zones": "us-west1-a us-west1-b us-west1-c"

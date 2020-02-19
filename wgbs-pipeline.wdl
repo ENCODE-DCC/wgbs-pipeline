@@ -151,6 +151,12 @@ task make_metadata_csv_and_conf {
 		File metadata_csv = glob("gembs_metadata.csv")[0]
 		File gembs_conf = glob("gembs.conf")[0]
 	}
+
+	runtime {
+		cpu: 1
+		memory: "2 GB"
+		disks: "local-disk 10 SSD"
+	}
 }
 
 task prepare {
@@ -202,6 +208,10 @@ task index {
 		File contig_sizes = glob("indexes/*.contig.sizes")[0]
 		File gemBS_json = glob("gemBS.json")[0]
 	}
+
+	runtime {
+		memory: "64 GB"
+	}
 }
 
 task map {
@@ -229,6 +239,9 @@ task map {
 		Array[File] qc_json = glob("mapping/**/*.json")
 	}
 
+	runtime {
+		memory: "64 GB"
+	}
 }
 
 task bscaller {
@@ -276,6 +289,8 @@ task extract {
 		mkdir -p extract/${sample_barcode}
 		ln ${bcf} calls/${sample_barcode}
 		ln ${bcf_csi} calls/${sample_barcode}
+		# htslib can complain the index is older than the bcf, so touch it to update timestamp
+		touch ${bcf_csi}
 		gemBS -j ${gemBS_json} extract \
 			${if defined(phred_threshold) then ("-q " + phred_threshold) else ""} \
 			${if defined(min_inform) then ("-l " + min_inform) else ""} \
@@ -294,6 +309,11 @@ task extract {
 		File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
 		File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
 		File non_cpg_txt_tbi = glob("extract/**/*_non_cpg.txt.gz.tbi")[0]
+	}
+
+	runtime {
+		disks: "local-disk 500 SSD"
+		memory: "96 GB"
 	}
 }
 
@@ -316,6 +336,12 @@ task bsmooth {
 	output {
 		File smoothed_cpg_bed = glob("smoothed_encode.bed.gz")[0]
 		File smoothed_cpg_bigbed = glob("smoothed_encode.bb")[0]
+	}
+
+	runtime {
+		cpu: 16
+		disks: "local-disk 500 SSD"
+		memory: "128 GB"
 	}
 }
 

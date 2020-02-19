@@ -100,6 +100,11 @@ jobs:
       keys_to_inspect:
         description: "The key(s) of the output(s) in metadata.json for which md5sum is to be computed, space delimited"
         type: string
+      resource_class:
+        description: "The machine resource class to run the test with"
+        type: string
+        default: medium
+    resource_class: << parameters.resource_class >>
     steps:
       - when:
           condition: << parameters.is_workflow >>
@@ -248,6 +253,7 @@ workflows:
             - lint
           test_name: wgbs
           is_workflow: true
+          resource_class: large
           # wgbs.bscaller.qc_json is not consistent (contigs in random order)
           keys_to_inspect: "wgbs.make_metadata_csv_and_conf.gembs_conf wgbs.make_metadata_csv_and_conf.metadata_csv wgbs.index_reference.gembs_indexes wgbs.index_reference.gemBS_json wgbs.index_reference.contig_sizes wgbs.map.csi wgbs.map.bam wgbs.map.bam_md5 wgbs.map.qc_json wgbs.bscaller.bcf_csi wgbs.bscaller.bcf wgbs.bscaller.bcf_md5 wgbs.extract.cpg_txt wgbs.extract.chh_bed wgbs.extract.chg_bb wgbs.extract.cpg_bed wgbs.extract.non_cpg_txt_tbi wgbs.extract.chg_bed wgbs.extract.non_cpg_txt wgbs.extract.chh_bb wgbs.extract.bw wgbs.extract.cpg_txt_tbi wgbs.extract.cpg_bb wgbs.qc_report.map_html_assets wgbs.qc_report.portal_map_qc_json"
       - push_template:
