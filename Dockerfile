@@ -28,6 +28,7 @@ RUN apt-get update && \
     pigz \
     python3.7 \
     r-base=3.6.2-1xenial \
+    r-recommended=3.6.2-1xenial \
     uuid-dev \
     wget \
     zlib1g-dev \
