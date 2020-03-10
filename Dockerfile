@@ -12,6 +12,7 @@ RUN apt-get update && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
     apt-get update && \
     apt-get install -y \
+    autoconf \
     build-essential \
     git \
     gsl-bin \
@@ -48,7 +49,7 @@ ENV PATH="/software:${PATH}"
 
 # Install gemBS
 RUN git clone --depth 10 --recursive https://github.com/heathsc/gemBS.git && \
-    cd gemBS && git checkout 7256070f8ed0b01dfd53601f40fa05d7497df542 && \
+    cd gemBS && git checkout 0724ced33f122376d22c6ab9ef6d5aad548f5595 && \
     python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
