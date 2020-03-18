@@ -50,7 +50,7 @@ ENV PATH="/software:${PATH}"
 
 # Install gemBS
 RUN git clone --depth 10 --recursive https://github.com/heathsc/gemBS.git && \
-    cd gemBS && git checkout 0724ced33f122376d22c6ab9ef6d5aad548f5595 && \
+    cd gemBS && git checkout 8b33580390dd0f975dbb0f7e3f72ed34ce7b17c1 && \
     python3 setup.py install --user
 ENV PATH="/root/.local/bin:${PATH}"
 
