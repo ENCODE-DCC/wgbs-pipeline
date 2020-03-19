@@ -16,20 +16,17 @@ RUN apt-get update && \
     build-essential \
     git \
     gsl-bin \
+    lbzip2 \
     libbz2-dev \
     libcurl4-openssl-dev \
     libgsl0-dev \
     liblzma-dev \
-    libmysqlclient-dev \
     libncurses5-dev \
-    libpng-dev \
     libssl-dev \
     libxml2-dev \
-    pigz \
     python3.7 \
     r-base=3.6.2-1xenial \
     r-recommended=3.6.2-1xenial \
-    uuid-dev \
     wget \
     zlib1g-dev \
     && ln -s /usr/bin/python3.7 /usr/local/bin/python3 && hash -r \
@@ -51,7 +48,9 @@ ENV PATH="/software:${PATH}"
 # Install gemBS
 RUN git clone --depth 10 --recursive https://github.com/heathsc/gemBS.git && \
     cd gemBS && git checkout 8b33580390dd0f975dbb0f7e3f72ed34ce7b17c1 && \
-    python3 setup.py install --user
+    python3 setup.py install --user && \
+    cd .. && \
+    rm -rf gemBS /usr/local/build
 ENV PATH="/root/.local/bin:${PATH}"
 
 # Instal UCSC v377 bedToBigBed util
