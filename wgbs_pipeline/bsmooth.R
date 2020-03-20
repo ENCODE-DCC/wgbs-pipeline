@@ -33,7 +33,7 @@ bsseq <-
     strandCollapse = FALSE,
     verbose = TRUE,
     nThread = args$numthreads,
-    BPPARAM = MulticoreParam(workers = args$numworkers, progressbar = TRUE),
+    BPPARAM = SerialParam(progressbar = TRUE),
     BACKEND = "HDF5Array"
   )
 
