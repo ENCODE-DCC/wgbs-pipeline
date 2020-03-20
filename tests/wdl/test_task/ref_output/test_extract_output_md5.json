@@ -1,14 +1,14 @@
 {
-  "sample_sample5.bw": "485997e9488410f21a424366c54b310b",
-  "sample_sample5.chh.bed.gz": "97f017a351b8c592d4dab0c0a8d38196",
-  "sample_sample5_chg.bb": "1bcd9bbab695425979b73adef436d85a",
-  "sample_sample5_chg.bed.gz": "80d7fa109a0805283bfe67b46013af8e",
-  "sample_sample5_chh.bb": "ae3ed321ace51dc948565aa3d1fea4f7",
-  "sample_sample5_chh.bed.gz": "97f017a351b8c592d4dab0c0a8d38196",
-  "sample_sample5_cpg.bb": "6d12f0f39de2181d65c9acac37118240",
-  "sample_sample5_cpg.bed.gz": "d0f33e828f688ef7349ac47113093084",
-  "sample_sample5_cpg.txt.gz": "2d6fc699cd8db9ecf18a41b2ddf66892",
-  "sample_sample5_cpg.txt.gz.tbi": "d12b02dafb3f3ccddb9867944f6820e7",
-  "sample_sample5_non_cpg.txt.gz": "1f5c71bb52943bd32964ede80eafa751",
-  "sample_sample5_non_cpg.txt.gz.tbi": "868b91b63e745ca04ae2a2bac76b3889"
+  "sample_sample5.bw": "4d1cda311892b3ccbce20800d0d23265",
+  "sample_sample5.chh.bed.gz": "31a69396b7084520c04bd80f2cabfd59",
+  "sample_sample5_chg.bb": "cc123bff807e0637864d387628d410fa",
+  "sample_sample5_chg.bed.gz": "6994fafbf9eab44ff6e7fafa421fffbc",
+  "sample_sample5_chh.bb": "47cf9d56f2eeb51288264790e28efd1f",
+  "sample_sample5_chh.bed.gz": "31a69396b7084520c04bd80f2cabfd59",
+  "sample_sample5_cpg.bb": "f67f273c68577197ecf19a8bb92c925c",
+  "sample_sample5_cpg.bed.gz": "67193e21cc34b76d12efba1a19df6644",
+  "sample_sample5_cpg.txt.gz": "fccd9c9c5b4fea80890abd536fd76a35",
+  "sample_sample5_cpg.txt.gz.tbi": "a1e08686f568af353e9026c1de00c25d",
+  "sample_sample5_non_cpg.txt.gz": "6809ee8479439454aa502ae11f48d91c",
+  "sample_sample5_non_cpg.txt.gz.tbi": "6cdebb4ad2ea184ca4783acb350ae038"
 }
