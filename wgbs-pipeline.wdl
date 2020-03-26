@@ -294,7 +294,7 @@ task extract {
 		gemBS -j ${gemBS_json} extract \
 			${if defined(phred_threshold) then ("-q " + phred_threshold) else ""} \
 			${if defined(min_inform) then ("-l " + min_inform) else ""} \
-			-w -B --ignore-db --ignore-dep
+			-B --ignore-db --ignore-dep
 	}
 
 	output {

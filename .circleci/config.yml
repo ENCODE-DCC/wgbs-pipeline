@@ -216,6 +216,7 @@ workflows:
             - build
             - lint
           test_name: "map"
+          resource_class: large
           keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
       - test_wdl:
           name: test_bscaller
