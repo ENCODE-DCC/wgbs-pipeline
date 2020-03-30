@@ -5,12 +5,6 @@
       "path": "bscaller/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Calls/Replicate ${i+1}/Methylation and Variant Calls"
-    },
-    "qc_json": {
-      "node": "[shape=oval style=\"filled\" fillcolor=gainsboro fontsize=6 margin=0 label=\"gemBS bscaller QC\"]",
-      "path": "qc/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "QC and logs/Replicate ${i+1}/BSCall QC json"
     }
   },
   "wgbs.bsmooth": {
@@ -109,13 +103,33 @@
     },
     "csi": {
       "path": "map/rep${i+1}/${basename}",
-      "table": "QC and logs/Replicate ${i+1}/BAM CSI Index"
-    },
-    "qc_json": {
-      "node": "[shape=oval style=\"filled\" fillcolor=gainsboro fontsize=6 margin=0 label=\"gemBS map QC\"]",
-      "path": "qc/rep${i+1}/${basename}",
+      "table": "Alignment/Replicate ${i+1}/BAM CSI Index"
+    }
+  },
+  "wgbs.qc_report": {
+    "map_html_assets": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Map QC HTML\"]",
+      "path": "map/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
-      "table": "QC and logs/Replicate ${i+1}/gemBS Map QC JSON"
+      "table": "QC and Logs/Replicate ${i+1}/Map QC HTML"
+    },
+    "portal_map_qc_json": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Map QC JSON\"]",
+      "path": "map/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and Logs/Replicate ${i+1}/Map QC JSON"
+    },
+    "map_qc_insert_size_plot_png": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Insert Size Plot\"]",
+      "path": "map/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and Logs/Replicate ${i+1}/Insert Size Plot"
+    },
+    "map_qc_mapq_plot_png": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"MAPQ Plot\"]",
+      "path": "map/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and Logs/Replicate ${i+1}/MAPQ Plot"
     }
   }
 }
