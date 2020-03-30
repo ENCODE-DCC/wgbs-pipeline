@@ -113,12 +113,6 @@
       "subgraph": "cluster_rep${i+1}",
       "table": "QC and Logs/Replicate ${i+1}/Map QC HTML"
     },
-    "portal_map_qc_json": {
-      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Map QC JSON\"]",
-      "path": "qc/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "QC and Logs/Replicate ${i+1}/Map QC JSON"
-    },
     "map_qc_insert_size_plot_png": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Insert Size Plot\"]",
       "path": "qc/rep${i+1}/${basename}",
@@ -130,6 +124,12 @@
       "path": "qc/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "QC and Logs/Replicate ${i+1}/MAPQ Plot"
+    },
+    "portal_map_qc_json": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Map QC JSON\"]",
+      "path": "qc/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "QC and Logs/Replicate ${i+1}/Map QC JSON"
     }
   }
 }
