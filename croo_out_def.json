@@ -108,9 +108,7 @@
   },
   "wgbs.qc_report": {
     "map_html_assets": {
-      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Map QC HTML\"]",
       "path": "qc/rep${i+1}/map_html_assets/${basename}",
-      "subgraph": "cluster_rep${i+1}",
       "table": "QC and Logs/Replicate ${i+1}/Map QC HTML"
     },
     "map_qc_insert_size_plot_png": {
