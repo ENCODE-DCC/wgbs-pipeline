@@ -327,6 +327,7 @@ task bsmooth {
 		set -euo pipefail
 		gzip -cdf ${gembs_cpg_bed} > gembs_cpg.bed
 		gembs-to-bismark-bed-converter gembs_cpg.bed converted_bismark.bed
+		export HDF5_USE_FILE_LOCKING=FALSE
 		Rscript $(which bsmooth.R) -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
 		bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
 		bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
