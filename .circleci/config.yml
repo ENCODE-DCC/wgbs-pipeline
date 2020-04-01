@@ -39,7 +39,7 @@ get_caper: &get_caper
   name: get caper
   command: |
     pyenv global 3.5.2
-    pip3 install caper
+    pip3 install caper==0.7.0
 
 get_md5_script: &get_md5_script
   name: get compare_md5.py script
