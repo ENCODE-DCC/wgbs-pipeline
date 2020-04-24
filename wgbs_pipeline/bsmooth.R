@@ -33,8 +33,8 @@ bsseq <-
     strandCollapse = FALSE,
     verbose = TRUE,
     nThread = args$numthreads,
-    BPPARAM = SerialParam(progressbar = TRUE),
-    BACKEND = "HDF5Array"
+    BPPARAM = MulticoreParam(workers = args$numworkers, progressbar = TRUE),
+    BACKEND = NULL,
   )
 
 # Seems to use either the minimum of NUM_CORES cores or the number of available
