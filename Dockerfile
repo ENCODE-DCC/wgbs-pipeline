@@ -46,8 +46,9 @@ WORKDIR /software
 ENV PATH="/software:${PATH}"
 
 # Install gemBS
-RUN git clone --depth 10 --recursive https://github.com/heathsc/gemBS.git && \
-    cd gemBS && git checkout 522d41a6624b97ea406962fb236523ad4ba77275 && \
+RUN git clone --recursive https://github.com/heathsc/gemBS.git && \
+    cd gemBS && \
+    git checkout 3bed486a707671e452642b4e357d9316e36db22b && \
     python3 setup.py install --user && \
     cd .. && \
     rm -rf gemBS /usr/local/build
