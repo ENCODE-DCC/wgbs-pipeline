@@ -82,12 +82,14 @@
       "table": "Methylation Extraction/Replicate ${i+1}/non-CpG gemBS-style bed"
     }
   },
-  "wgbs.make_metadata_csv_and_conf": {
+  "wgbs.make_conf": {
     "gembs_conf": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"gemBS config\"]",
       "path": "configuration/${basename}",
       "table": "Configuration/gemBS configuration"
-    },
+    }
+  },
+  "wgbs.make_metadata_csv": {
     "metadata_csv": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"gemBS metadata\"]",
       "path": "configuration/${basename}",

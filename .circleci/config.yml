@@ -190,12 +190,19 @@ workflows:
             - build
             - lint
       - test_wdl:
-          name: test_make_metadata_csv_and_conf
+          name: test_make_metadata_csv
           requires:
             - build
             - lint
-          test_name: "make_metadata_csv_and_conf"
-          keys_to_inspect: "test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.metadata_csv test_make_metadata_csv_and_conf.make_metadata_csv_and_conf.gembs_conf"
+          test_name: "make_metadata_csv"
+          keys_to_inspect: "test_make_metadata_csv.make_metadata_csv.metadata_csv"
+      - test_wdl:
+          name: test_make_conf
+          requires:
+            - build
+            - lint
+          test_name: "make_conf"
+          keys_to_inspect: "test_make_conf.make_conf.gembs_conf"
       - test_wdl:
           name: test_index
           requires:
@@ -248,6 +255,14 @@ workflows:
           test_name: "qc_report"
           keys_to_inspect: "test_qc_report.qc_report.map_html_assets test_qc_report.qc_report.portal_map_qc_json"
       - test_wdl:
+          name: test_wgbs_index_only
+          requires:
+            - build
+            - lint
+          test_name: wgbs_index_only
+          is_workflow: true
+          keys_to_inspect: "test_wgbs_index_only.index.contig_sizes test_wgbs_index_only.index.gembs_indexes test_wgbs_index_only.index.gemBS_json"
+      - test_wdl:
           name: test_wgbs
           requires:
             - build
@@ -256,7 +271,7 @@ workflows:
           is_workflow: true
           resource_class: large
           # wgbs.bscaller.qc_json is not consistent (contigs in random order)
-          keys_to_inspect: "wgbs.make_metadata_csv_and_conf.gembs_conf wgbs.make_metadata_csv_and_conf.metadata_csv wgbs.index_reference.gembs_indexes wgbs.index_reference.gemBS_json wgbs.index_reference.contig_sizes wgbs.map.csi wgbs.map.bam wgbs.map.bam_md5 wgbs.map.qc_json wgbs.bscaller.bcf_csi wgbs.bscaller.bcf wgbs.bscaller.bcf_md5 wgbs.extract.cpg_txt wgbs.extract.chh_bed wgbs.extract.chg_bb wgbs.extract.cpg_bed wgbs.extract.non_cpg_txt_tbi wgbs.extract.chg_bed wgbs.extract.non_cpg_txt wgbs.extract.chh_bb wgbs.extract.bw wgbs.extract.cpg_txt_tbi wgbs.extract.cpg_bb wgbs.qc_report.map_html_assets wgbs.qc_report.portal_map_qc_json"
+          keys_to_inspect: "wgbs.make_conf.gembs_conf wgbs.make_metadata_csv.metadata_csv wgbs.index_reference.gembs_indexes wgbs.index_reference.gemBS_json wgbs.index_reference.contig_sizes wgbs.map.csi wgbs.map.bam wgbs.map.bam_md5 wgbs.map.qc_json wgbs.bscaller.bcf_csi wgbs.bscaller.bcf wgbs.bscaller.bcf_md5 wgbs.extract.cpg_txt wgbs.extract.chh_bed wgbs.extract.chg_bb wgbs.extract.cpg_bed wgbs.extract.non_cpg_txt_tbi wgbs.extract.chg_bed wgbs.extract.non_cpg_txt wgbs.extract.chh_bb wgbs.extract.bw wgbs.extract.cpg_txt_tbi wgbs.extract.cpg_bb wgbs.qc_report.map_html_assets wgbs.qc_report.portal_map_qc_json"
       - push_template:
           requires:
             - build
@@ -264,7 +279,8 @@ workflows:
             - coverage-report
             - test_py37
             - test_rust
-            - test_make_metadata_csv_and_conf
+            - test_make_metadata_csv
+            - test_make_conf
             - test_bsmooth
           filters:
             branches:

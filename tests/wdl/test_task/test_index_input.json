@@ -1,6 +1,5 @@
 {
   "test_index.configuration_file": "tests/wdl/test_data/gembs.conf",
   "test_index.extra_reference": "tests/wdl/test_data/conversion_control.fa.gz",
-  "test_index.metadata_file": "tests/wdl/test_data/gembs_metadata.csv",
   "test_index.reference": "tests/wdl/test_data/sacCer3.fa.gz"
 }

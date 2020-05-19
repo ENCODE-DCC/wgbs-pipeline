@@ -1,0 +1,21 @@
+{
+  "test_make_metadata_csv.barcode_prefix": "test_",
+  "test_make_metadata_csv.fastqs": [
+    [
+      [
+        "/a/f1_r1.fastq.gz",
+        "/b/f1_r2.fastq.gz"
+      ]
+    ],
+    [
+      [
+        "/a/f2_r1.fastq.gz",
+        "/a/f2_r2.fastq.gz"
+      ]
+    ]
+  ],
+  "test_make_metadata_csv.sample_names": [
+    "foo",
+    "bar"
+  ]
+}
