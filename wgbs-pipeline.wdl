@@ -9,7 +9,7 @@ workflow wgbs {
 	File extra_reference
 	# biological replicate[technical replicate[one (single ended) or two paired fastqs]]]
 	Array[Array[Array[File]]] fastqs
-	Array[String] sample_names
+	Array[String]? sample_names
 
 	Int num_gembs_threads = 8
 	Int num_gembs_jobs = 3
@@ -17,7 +17,8 @@ workflow wgbs {
 	String? include_conf_file
 
 	String barcode_prefix = "sample_"
-	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names)
+	Array[String] sample_names_ = select_first([sample_names, range(length(fastqs))])
+	Array[String] sample_barcodes = prefix(barcode_prefix, sample_names_)
 
 	Int bsmooth_num_workers = 8
 	Int bsmooth_num_threads = 2
@@ -29,7 +30,7 @@ workflow wgbs {
 	Int? gembs_extract_min_inform
 
 	call make_metadata_csv_and_conf { input:
-		sample_names = sample_names,
+		sample_names = sample_names_,
 		fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
 		barcode_prefix = barcode_prefix,
 		num_threads = num_gembs_threads,
@@ -65,11 +66,11 @@ workflow wgbs {
 
 	File gemBS_json = select_first([prepare.gemBS_json, index_reference.gemBS_json])
 
-	scatter(i in range(length(sample_names))) {
+	scatter(i in range(length(sample_names_))) {
 		call map { input:
 			fastqs = flatten(fastqs[i]),
 			sample_barcode = sample_barcodes[i],
-			sample_name = sample_names[i],
+			sample_name = sample_names_[i],
 			index = index,
 			reference = reference,
 			gemBS_json = gemBS_json
@@ -79,7 +80,7 @@ workflow wgbs {
 			reference = reference,
 			gemBS_json = gemBS_json,
 			sample_barcode = sample_barcodes[i],
-			sample_name = sample_names[i],
+			sample_name = sample_names_[i],
 			bam = map.bam,
 			csi = map.csi,
 			index = index,
@@ -89,7 +90,7 @@ workflow wgbs {
 			gemBS_json = gemBS_json,
 			reference = reference,
 			sample_barcode = sample_barcodes[i],
-			sample_name = sample_names[i],
+			sample_name = sample_names_[i],
 			bcf = bscaller.bcf,
 			bcf_csi = bscaller.bcf_csi,
 			contig_sizes = contig_sizes,
