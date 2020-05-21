@@ -209,7 +209,7 @@ workflows:
             - build
             - lint
           test_name: "index"
-          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes test_index.index.gemBS_json"
+          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes"
       - test_wdl:
           name: test_prepare
           requires:

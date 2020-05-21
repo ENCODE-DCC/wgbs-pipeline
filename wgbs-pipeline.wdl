@@ -60,7 +60,7 @@ workflow wgbs {
     File index = select_first([indexed_reference, index_reference.gembs_indexes])
     File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
-    if (defined(indexed_reference) && defined(indexed_contig_sizes) && !index_only) {
+    if (!index_only) {
         call prepare { input:
             configuration_file = make_conf.gembs_conf,
             metadata_file = select_first([make_metadata_csv.metadata_csv]),
@@ -72,7 +72,7 @@ workflow wgbs {
 
     if (!index_only && defined(fastqs)) {
         Array[Array[Array[File]]] fastqs_ = select_first([fastqs])
-        File gemBS_json = select_first([prepare.gemBS_json, index_reference.gemBS_json])
+        File gemBS_json = select_first([prepare.gemBS_json])
         Array[String] sample_names_ = select_first([sample_names, range(length(fastqs_))])
         Array[String] sample_barcodes = prefix(barcode_prefix, sample_names_)
 
@@ -218,9 +218,18 @@ task index {
         set -euo pipefail
         mkdir reference
         ln -s ${reference} reference && ln -s ${extra_reference} reference
-        gemBS prepare -c ${configuration_file} \
-                      -o gemBS.json \
-                      --no-db
+        # We need a gemBS JSON to create the index, and we need a metadata csv to create
+        # the gemBS JSON. Create a dummy one, we don't use the config later so it
+        # doesn't matter.
+        cat << EOF > metadata.csv
+        Barcode,Name,Dataset,File1,File2
+        1,2,3,1.fastq.gz,2.fastq.gz
+        EOF
+        gemBS prepare \
+            -c ${configuration_file} \
+            -t metadata.csv \
+            -o gemBS.json \
+            --no-db
         gemBS -j gemBS.json index
         # See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
         find indexes -type f -not -path '*.err' -not -path '*.info' -print0 | LC_ALL=C sort -z | tar --owner=0 --group=0 --numeric-owner --mtime='2019-01-01 00:00Z' --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --null -T - -cf indexes.tar
@@ -230,7 +239,6 @@ task index {
     output {
         File gembs_indexes = glob("indexes.tar.gz")[0]
         File contig_sizes = glob("indexes/*.contig.sizes")[0]
-        File gemBS_json = glob("gemBS.json")[0]
     }
 
     runtime {
