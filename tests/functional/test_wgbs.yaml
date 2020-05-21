@@ -17,13 +17,13 @@
         md5sum: 05882cfaa35fb9bf360c477413c6e9ed
       - path: test-output/glob-02196c85872f4f40df146df39c306877/sacCer3.contig.sizes
         md5sum: 0497066e3880c6932cf6bde815c42c40
-      - path: test-output/glob-6dfb20942824d944a56c470bfe5f3bc2/sample_sample5.bam
+      - path: test-output/glob-c8599c0b9048b55a8d5cfaad52995a94/sample_sample5.bam
         md5sum: b60de62fd0508db429bebfb0e1851a0e
-      - path: test-output/glob-f9112549ecb2cc68ce1d7fb9f3055586/sample_sample5.bam.csi
+      - path: test-output/glob-e42c489c9c1355a3e5eca0071600f795/sample_sample5.bam.csi
         md5sum: 97e2ca09a7fb4372debd48e8a3266b06
-      - path: test-output/glob-efa6c6bf0ba5164eda3a67fe17574abe/sample_sample5.bam.md5
+      - path: test-output/glob-13824b1e03fdcf315fe2424593870e56/sample_sample5.bam.md5
         md5sum: 224edc0c104af7f04159cc4d2c29d86b
-      - path: test-output/glob-f38ec0ab5629df1fb1bd9438b9ad3f3d/sample5.json
+      - path: test-output/glob-c0e92e4e9fb050e7e70bb645748b45dd/sample5.json
         md5sum: e5435de250e37f6220a75e7f0f0b0277
       - path: test-output/glob-1e6c456aecc092f75370b54a5806588f/sample_sample5.bcf
         md5sum: 7cafb436b89898e852f971f1f3b20fc6
