@@ -9,5 +9,5 @@
     files:
       - path: test-output/indexes.tar.gz
         md5sum: bde2c7f6984c318423cb7354c4c37d44
-      - path: test-output/glob-02196c85872f4f40df146df39c306877/sacCer3.contig.sizes
+      - path: test-output/glob-e97d885c83d966247d485dc62b6ae799/sacCer3.contig.sizes
         md5sum: 0497066e3880c6932cf6bde815c42c40
