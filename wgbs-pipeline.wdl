@@ -8,7 +8,7 @@ workflow wgbs {
     File? indexed_contig_sizes
     File extra_reference
     # biological replicate[technical replicate[one (single ended) or two paired fastqs]]]
-    Array[Array[Array[File]]] fastqs
+    Array[Array[Array[File]]]? fastqs
     Array[String]? sample_names
 
     Int num_gembs_threads = 8
@@ -17,22 +17,29 @@ workflow wgbs {
     String? include_conf_file
 
     String barcode_prefix = "sample_"
-    Array[String] sample_names_ = select_first([sample_names, range(length(fastqs))])
-    Array[String] sample_barcodes = prefix(barcode_prefix, sample_names_)
 
     Int bsmooth_num_workers = 8
     Int bsmooth_num_threads = 2
     Boolean run_bsmooth = true
+
+    # Flag to only generate index tarball
+    Boolean index_only = false
     Boolean benchmark_mode = false
 
     # Optional params to tweak gemBS extract phred threshold and mininimum informative coverage for genotyped cytosines, otherwise will use gembs defaults
     Int? gembs_extract_phred_threshold
     Int? gembs_extract_min_inform
 
-    call make_metadata_csv_and_conf { input:
-        sample_names = sample_names_,
-        fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
-        barcode_prefix = barcode_prefix,
+    # Don't need metadata csv to create indexes
+    if (!index_only) {
+        call make_metadata_csv { input:
+            sample_names = select_first([sample_names]),
+            fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
+            barcode_prefix = barcode_prefix,
+        }
+    }
+
+    call make_conf { input:
         num_threads = num_gembs_threads,
         num_jobs = num_gembs_jobs,
         reference = reference,
@@ -44,8 +51,7 @@ workflow wgbs {
 
     if (!defined(indexed_reference)) {
         call index as index_reference { input:
-            configuration_file = make_metadata_csv_and_conf.gembs_conf,
-            metadata_file = make_metadata_csv_and_conf.metadata_csv,
+            configuration_file = make_conf.gembs_conf,
             reference = reference,
             extra_reference = extra_reference
         }
@@ -54,73 +60,99 @@ workflow wgbs {
     File index = select_first([indexed_reference, index_reference.gembs_indexes])
     File contig_sizes = select_first([indexed_contig_sizes, index_reference.contig_sizes])
 
-    if (defined(indexed_reference) && defined(indexed_contig_sizes)) {
+    if (!index_only) {
         call prepare { input:
-            configuration_file = make_metadata_csv_and_conf.gembs_conf,
-            metadata_file = make_metadata_csv_and_conf.metadata_csv,
+            configuration_file = make_conf.gembs_conf,
+            metadata_file = select_first([make_metadata_csv.metadata_csv]),
             reference = reference,
             index = index,
             extra_reference = extra_reference
         }
     }
 
-    File gemBS_json = select_first([prepare.gemBS_json, index_reference.gemBS_json])
+    if (!index_only && defined(fastqs)) {
+        Array[Array[Array[File]]] fastqs_ = select_first([fastqs])
+        File gemBS_json = select_first([prepare.gemBS_json])
+        Array[String] sample_names_ = select_first([sample_names, range(length(fastqs_))])
+        Array[String] sample_barcodes = prefix(barcode_prefix, sample_names_)
 
-    scatter(i in range(length(sample_names_))) {
-        call map { input:
-            fastqs = flatten(fastqs[i]),
-            sample_barcode = sample_barcodes[i],
-            sample_name = sample_names_[i],
-            index = index,
-            reference = reference,
-            gemBS_json = gemBS_json
-        }
-
-        call bscaller { input:
-            reference = reference,
-            gemBS_json = gemBS_json,
-            sample_barcode = sample_barcodes[i],
-            sample_name = sample_names_[i],
-            bam = map.bam,
-            csi = map.csi,
-            index = index,
-        }
-
-        call extract { input:
-            gemBS_json = gemBS_json,
-            reference = reference,
-            sample_barcode = sample_barcodes[i],
-            sample_name = sample_names_[i],
-            bcf = bscaller.bcf,
-            bcf_csi = bscaller.bcf_csi,
-            contig_sizes = contig_sizes,
-            phred_threshold = gembs_extract_phred_threshold,
-            min_inform = gembs_extract_min_inform,
-        }
-
-        if (run_bsmooth) {
-            call bsmooth { input:
-                gembs_cpg_bed = extract.cpg_txt,
-                chrom_sizes = contig_sizes,
-                num_workers = bsmooth_num_workers,
-                num_threads = bsmooth_num_threads
+        scatter(i in range(length(sample_names_))) {
+            call map { input:
+                fastqs = flatten(fastqs_[i]),
+                sample_barcode = sample_barcodes[i],
+                sample_name = sample_names_[i],
+                index = index,
+                reference = reference,
+                gemBS_json = gemBS_json
             }
-        }
-        call qc_report { input:
-            map_qc_json = map.qc_json,
-            gemBS_json = gemBS_json,
-            reference = reference,
-            contig_sizes = contig_sizes,
-            sample_barcode = sample_barcodes[i]
+
+            call bscaller { input:
+                reference = reference,
+                gemBS_json = gemBS_json,
+                sample_barcode = sample_barcodes[i],
+                sample_name = sample_names_[i],
+                bam = map.bam,
+                csi = map.csi,
+                index = index,
+            }
+
+            call extract { input:
+                gemBS_json = gemBS_json,
+                reference = reference,
+                sample_barcode = sample_barcodes[i],
+                sample_name = sample_names_[i],
+                bcf = bscaller.bcf,
+                bcf_csi = bscaller.bcf_csi,
+                contig_sizes = contig_sizes,
+                phred_threshold = gembs_extract_phred_threshold,
+                min_inform = gembs_extract_min_inform,
+            }
+
+            if (run_bsmooth) {
+                call bsmooth { input:
+                    gembs_cpg_bed = extract.cpg_txt,
+                    chrom_sizes = contig_sizes,
+                    num_workers = bsmooth_num_workers,
+                    num_threads = bsmooth_num_threads
+                }
+            }
+            call qc_report { input:
+                map_qc_json = map.qc_json,
+                gemBS_json = gemBS_json,
+                reference = reference,
+                contig_sizes = contig_sizes,
+                sample_barcode = sample_barcodes[i]
+            }
         }
     }
 }
 
-task make_metadata_csv_and_conf {
+task make_metadata_csv {
     Array[String] sample_names
     File fastqs
     String barcode_prefix
 
+    command {
+        set -euo pipefail
+        python3 "$(which make_metadata_csv.py)" \
+            -n ${sep=' ' sample_names} \
+            --files "${fastqs}" \
+            -b "${barcode_prefix}" \
+            -o "gembs_metadata.csv"
+    }
+
+    output {
+        File metadata_csv = "gembs_metadata.csv"
+    }
+
+    runtime {
+        cpu: 1
+        memory: "2 GB"
+        disks: "local-disk 10 SSD"
+    }
+}
+
+task make_conf {
     Boolean benchmark_mode
     Int num_threads
     Int num_jobs
@@ -131,13 +163,7 @@ task make_metadata_csv_and_conf {
 
     command {
         set -euo pipefail
-        python3 $(which make_metadata_csv.py) \
-            -n ${sep=' ' sample_names} \
-            --files "${fastqs}" \
-            -b "${barcode_prefix}" \
-            -o "gembs_metadata.csv"
-
-        python3 $(which make_conf.py) \
+        python3 "$(which make_conf.py)" \
             -t "${num_threads}" \
             -j "${num_jobs}" \
             -r "${reference}" \
@@ -149,8 +175,7 @@ task make_metadata_csv_and_conf {
     }
 
     output {
-        File metadata_csv = glob("gembs_metadata.csv")[0]
-        File gembs_conf = glob("gembs.conf")[0]
+        File gembs_conf = "gembs.conf"
     }
 
     runtime {
@@ -186,7 +211,6 @@ task prepare {
 
 task index {
     File configuration_file
-    File metadata_file
     File reference
     File extra_reference
 
@@ -194,10 +218,18 @@ task index {
         set -euo pipefail
         mkdir reference
         ln -s ${reference} reference && ln -s ${extra_reference} reference
-        gemBS prepare -c ${configuration_file} \
-                      -t ${metadata_file} \
-                      -o gemBS.json \
-                      --no-db
+        # We need a gemBS JSON to create the index, and we need a metadata csv to create
+        # the gemBS JSON. Create a dummy one, we don't use the config later so it
+        # doesn't matter.
+        cat << EOF > metadata.csv
+        Barcode,Name,Dataset,File1,File2
+        1,2,3,1.fastq.gz,2.fastq.gz
+        EOF
+        gemBS prepare \
+            -c ${configuration_file} \
+            -t metadata.csv \
+            -o gemBS.json \
+            --no-db
         gemBS -j gemBS.json index
         # See https://stackoverflow.com/a/54908072 . Want to make tar idempotent
         find indexes -type f -not -path '*.err' -not -path '*.info' -print0 | LC_ALL=C sort -z | tar --owner=0 --group=0 --numeric-owner --mtime='2019-01-01 00:00Z' --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --null -T - -cf indexes.tar
@@ -207,7 +239,6 @@ task index {
     output {
         File gembs_indexes = glob("indexes.tar.gz")[0]
         File contig_sizes = glob("indexes/*.contig.sizes")[0]
-        File gemBS_json = glob("gemBS.json")[0]
     }
 
     runtime {
