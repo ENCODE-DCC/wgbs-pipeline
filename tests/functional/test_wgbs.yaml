@@ -10,12 +10,12 @@
       - path: test-output/gembs.conf
         md5sum: 1ad8f25544fa7dcb56383bc233407b54
       - path: test-output/gembs_metadata.csv
-        md5sum: 4f6f280650a513250194b24e5dd0ac91
+        md5sum: 40419347ed006135fbf6e909693f0e9c
       - path: test-output/indexes.tar.gz
         md5sum: bde2c7f6984c318423cb7354c4c37d44
       - path: test-output/gemBS.json
-        md5sum: 05882cfaa35fb9bf360c477413c6e9ed
-      - path: test-output/glob-02196c85872f4f40df146df39c306877/sacCer3.contig.sizes
+        md5sum: 9bccd896e9f874bf3e0b0344f67c1e58
+      - path: test-output/glob-e97d885c83d966247d485dc62b6ae799/sacCer3.contig.sizes
         md5sum: 0497066e3880c6932cf6bde815c42c40
       - path: test-output/glob-c8599c0b9048b55a8d5cfaad52995a94/sample_sample5.bam
         md5sum: b60de62fd0508db429bebfb0e1851a0e
