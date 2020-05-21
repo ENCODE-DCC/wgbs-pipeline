@@ -7,25 +7,25 @@
       tests/integration/wdl/test_extract.wdl
       tests/integration/json/test_extract.json
     files:
-      - path: test-output/glob-783750a5c35bc17b1391c7d4af6cba04/sample_sample5.bw
+      - path: test-output/glob-5d4aa70d432d0ec67764bfbc1260e48c/sample_sample5.bw
         md5sum: 4d1cda311892b3ccbce20800d0d23265
-      - path: test-output/glob-13995ceb5548428d2d1f963e98aa0d3b/sample_sample5_chg.bb
+      - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
         md5sum: cc123bff807e0637864d387628d410fa
-      - path: test-output/glob-88cb13a329d8ced03b1f3497a65e135e/sample_sample5_chh.bb
+      - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
         md5sum: 47cf9d56f2eeb51288264790e28efd1f
-      - path: test-output/glob-85e498a21d4a8c519ea4e2f1684d9db2/sample_sample5_cpg.bb
+      - path: test-output/glob-f70a6609728d4fb1448dba1f41361a30/sample_sample5_cpg.bb
         md5sum: f67f273c68577197ecf19a8bb92c925c
-      - path: test-output/glob-db350f7bcefd64c1ebc8cc72b39d7491/sample_sample5_chg.bed.gz
+      - path: test-output/glob-52f916d7cc14a5bcfb168d6910e04b56/sample_sample5_chg.bed.gz
         md5sum: 6994fafbf9eab44ff6e7fafa421fffbc
-      - path: test-output/glob-2dba090bf17846c77e7e4e71423e66ce/sample_sample5_chh.bed.gz
+      - path: test-output/glob-2b5148d6967b43eee33eb370fd36b70e/sample_sample5_chh.bed.gz
         md5sum: 31a69396b7084520c04bd80f2cabfd59
-      - path: test-output/glob-ce22c2ce01a0b56b485e3d64cd6a18b8/sample_sample5_cpg.bed.gz
+      - path: test-output/glob-f31cca1fcab505e10c2fe5ff003b211a/sample_sample5_cpg.bed.gz
         md5sum: 67193e21cc34b76d12efba1a19df6644
-      - path: test-output/glob-f2f143737c0258ca2551f8b2a5cee161/sample_sample5_cpg.txt.gz
+      - path: test-output/glob-b76cddd256e1197e0b726acc7184afc4/sample_sample5_cpg.txt.gz
         md5sum: fccd9c9c5b4fea80890abd536fd76a35
-      - path: test-output/glob-6d18174e2fff1b6310ae4c18bcc48e6f/sample_sample5_cpg.txt.gz.tbi
+      - path: test-output/glob-24ceb385eea2ca53f1e6c4a1438ccd21/sample_sample5_cpg.txt.gz.tbi
         md5sum: a1e08686f568af353e9026c1de00c25d
-      - path: test-output/glob-ca1121277396499f9c2e268278cae569/sample_sample5_non_cpg.txt.gz
+      - path: test-output/glob-40c90aa4516b00209d682b819b1d021f/sample_sample5_non_cpg.txt.gz
         md5sum: 6809ee8479439454aa502ae11f48d91c
-      - path: test-output/glob-aa69cd1bf57f4e8a6e38987df8130e77/sample_sample5_non_cpg.txt.gz.tbi
+      - path: test-output/glob-664ff83c3881df2363da923f006b098b/sample_sample5_non_cpg.txt.gz.tbi
         md5sum: 6cdebb4ad2ea184ca4783acb350ae038
