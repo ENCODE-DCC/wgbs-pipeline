@@ -1,0 +1,11 @@
+---
+  - name: test_make_conf
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_make_conf.wdl
+      tests/integration/json/test_make_conf.json
+    files:
+      - path: test-output/gembs.conf
+        md5sum: 72c4b173a9ad05fa20183adac4a26348

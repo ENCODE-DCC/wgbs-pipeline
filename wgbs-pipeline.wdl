@@ -205,7 +205,7 @@ task prepare {
     }
 
     output {
-        File gemBS_json = glob("gemBS.json")[0]
+        File gemBS_json = "gemBS.json"
     }
 }
 
@@ -237,7 +237,7 @@ task index {
     }
 
     output {
-        File gembs_indexes = glob("indexes.tar.gz")[0]
+        File gembs_indexes = "indexes.tar.gz"
         File contig_sizes = glob("indexes/*.contig.sizes")[0]
     }
 
@@ -367,8 +367,8 @@ task bsmooth {
     }
 
     output {
-        File smoothed_cpg_bed = glob("smoothed_encode.bed.gz")[0]
-        File smoothed_cpg_bigbed = glob("smoothed_encode.bb")[0]
+        File smoothed_cpg_bed = "smoothed_encode.bed.gz"
+        File smoothed_cpg_bigbed = "smoothed_encode.bb"
     }
 
     runtime {
@@ -399,8 +399,8 @@ task qc_report {
 
     output {
         Array[File] map_html_assets = glob("mapping_reports/mapping/*")
-        File portal_map_qc_json = glob("gembs_map_qc.json")[0]
-        File map_qc_insert_size_plot_png = glob("mapping_reports/mapping/${sample_barcode}.isize.png")[0]
-        File map_qc_mapq_plot_png = glob("mapping_reports/mapping/${sample_barcode}.mapq.png")[0]
+        File portal_map_qc_json = "gembs_map_qc.json"
+        File map_qc_insert_size_plot_png = "mapping_reports/mapping/${sample_barcode}.isize.png"
+        File map_qc_mapq_plot_png = "mapping_reports/mapping/${sample_barcode}.mapq.png"
     }
 }
