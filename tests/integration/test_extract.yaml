@@ -11,8 +11,6 @@
         md5sum: 4d1cda311892b3ccbce20800d0d23265
       - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
         md5sum: cc123bff807e0637864d387628d410fa
-      - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
-        md5sum: 47cf9d56f2eeb51288264790e28efd1f
       - path: test-output/glob-f70a6609728d4fb1448dba1f41361a30/sample_sample5_cpg.bb
         md5sum: f67f273c68577197ecf19a8bb92c925c
       - path: test-output/glob-52f916d7cc14a5bcfb168d6910e04b56/sample_sample5_chg.bed.gz
