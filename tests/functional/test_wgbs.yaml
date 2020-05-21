@@ -1,0 +1,75 @@
+---
+  - name: test_wgbs
+    tags:
+      - functional
+    command: >-
+      tests/caper_run.sh
+      wgbs-pipeline.wdl
+      tests/functional/json/test_wgbs.json
+    files:
+      - path: test-output/gembs.conf
+        md5sum: 1ad8f25544fa7dcb56383bc233407b54
+      - path: test-output/gembs_metadata.csv
+        md5sum: 4f6f280650a513250194b24e5dd0ac91
+      - path: test-output/indexes.tar.gz
+        md5sum: bde2c7f6984c318423cb7354c4c37d44
+      - path: test-output/gemBS.json
+        md5sum: 05882cfaa35fb9bf360c477413c6e9ed
+      - path: test-output/glob-02196c85872f4f40df146df39c306877/sacCer3.contig.sizes
+        md5sum: 0497066e3880c6932cf6bde815c42c40
+      - path: test-output/glob-6dfb20942824d944a56c470bfe5f3bc2/sample_sample5.bam
+        md5sum: b60de62fd0508db429bebfb0e1851a0e
+      - path: test-output/glob-f9112549ecb2cc68ce1d7fb9f3055586/sample_sample5.bam.csi
+        md5sum: 97e2ca09a7fb4372debd48e8a3266b06
+      - path: test-output/glob-efa6c6bf0ba5164eda3a67fe17574abe/sample_sample5.bam.md5
+        md5sum: 224edc0c104af7f04159cc4d2c29d86b
+      - path: test-output/glob-f38ec0ab5629df1fb1bd9438b9ad3f3d/sample5.json
+        md5sum: e5435de250e37f6220a75e7f0f0b0277
+      - path: test-output/glob-1e6c456aecc092f75370b54a5806588f/sample_sample5.bcf
+        md5sum: 7cafb436b89898e852f971f1f3b20fc6
+      - path: test-output/glob-804650e4b0c9cc57f1bbc0b3919d1f73/sample_sample5.bcf.csi
+        md5sum: 156c39bd2bcc0bc83052eb4171f83507
+      - path: test-output/glob-95d24e89d025dc63935acc9ded9f8810/sample_sample5.bcf.md5
+        md5sum: 8ebe942fe48b07e1a3455f572aadf57b
+      - path: test-output/glob-783750a5c35bc17b1391c7d4af6cba04/sample_sample5.bw
+        md5sum: 4d1cda311892b3ccbce20800d0d23265
+      - path: test-output/glob-13995ceb5548428d2d1f963e98aa0d3b/sample_sample5_chg.bb
+        md5sum: cc123bff807e0637864d387628d410fa
+      - path: test-output/glob-88cb13a329d8ced03b1f3497a65e135e/sample_sample5_chh.bb
+        md5sum: 47cf9d56f2eeb51288264790e28efd1f
+      - path: test-output/glob-85e498a21d4a8c519ea4e2f1684d9db2/sample_sample5_cpg.bb
+        md5sum: f67f273c68577197ecf19a8bb92c925c
+      - path: test-output/glob-db350f7bcefd64c1ebc8cc72b39d7491/sample_sample5_chg.bed.gz
+        md5sum: 6994fafbf9eab44ff6e7fafa421fffbc
+      - path: test-output/glob-2dba090bf17846c77e7e4e71423e66ce/sample_sample5_chh.bed.gz
+        md5sum: 31a69396b7084520c04bd80f2cabfd59
+      - path: test-output/glob-ce22c2ce01a0b56b485e3d64cd6a18b8/sample_sample5_cpg.bed.gz
+        md5sum: 67193e21cc34b76d12efba1a19df6644
+      - path: test-output/glob-f2f143737c0258ca2551f8b2a5cee161/sample_sample5_cpg.txt.gz
+        md5sum: fccd9c9c5b4fea80890abd536fd76a35
+      - path: test-output/glob-6d18174e2fff1b6310ae4c18bcc48e6f/sample_sample5_cpg.txt.gz.tbi
+        md5sum: a1e08686f568af353e9026c1de00c25d
+      - path: test-output/glob-ca1121277396499f9c2e268278cae569/sample_sample5_non_cpg.txt.gz
+        md5sum: 6809ee8479439454aa502ae11f48d91c
+      - path: test-output/glob-aa69cd1bf57f4e8a6e38987df8130e77/sample_sample5_non_cpg.txt.gz.tbi
+        md5sum: 6cdebb4ad2ea184ca4783acb350ae038
+      - path: test-output/gembs_map_qc.json
+        md5sum: 26b5238ab7bb5b195d1cf8127767261c
+      - path: test-output/sample_sample5.isize.png
+        md5sum: d707e203b77c8806a75d269426279ca0
+      - path: test-output/sample_sample5.mapq.png
+        md5sum: 49837be15f24f23c59c50241cf504614
+      - path: test-output/gembs_map_qc.json
+        md5sum: 26b5238ab7bb5b195d1cf8127767261c
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/ENCODE.html
+        md5sum: 163401e0bf6a377c2a35dc4bf9064574
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/sample5.html
+        md5sum: 14112d4289420ca4f68e466c9e2c7e24
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/sample_sample5.html
+        md5sum: 5d80cb1b69a71b782140d09285411527
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/sample5.isize.png
+        md5sum: d707e203b77c8806a75d269426279ca0
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/sample5.mapq.png
+        md5sum: d8c3af2eae5af12f1eb5dd9ec4e225bb
+      - path: test-output/glob-bb23b166d84c485c4b679a35a9bb4f39/style.css
+        md5sum: a09ae01f70fa6d2461e37d5814ceb579

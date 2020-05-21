@@ -1,0 +1,15 @@
+---
+  - name: test_wgbs_index_only
+    tags:
+      - functional
+    command: >-
+      tests/caper_run.sh
+      wgbs-pipeline.wdl
+      tests/functional/json/test_wgbs_index_only.json
+    files:
+      - path: test-output/gemBS.json
+        md5sum: 754212d83e8b05ce6d7078a5a64fc740
+      - path: test-output/indexes.tar.gz
+        md5sum: bde2c7f6984c318423cb7354c4c37d44
+      - path: test-output/glob-02196c85872f4f40df146df39c306877/sacCer3.contig.sizes
+        md5sum: 0497066e3880c6932cf6bde815c42c40
