@@ -82,3 +82,6 @@ COPY --from=builder /wgbs-pipeline/target/release/bismark-bsmooth-to-encode-bed-
 
 # Add to path
 ENV PATH="/software/wgbs_pipeline:${PATH}"
+
+# pytest-workflow tests don't run as root, need to chmod dependencies
+RUN chmod -R a+rwx /software /root

@@ -8,7 +8,7 @@ defaults: &defaults
 
 machine_defaults: &machine_defaults
   machine:
-    image: circleci/classic:latest
+    image: ubuntu-1604:201903-01
   working_directory: ~/ENCODE-DCC/wgbs-pipeline
 
 py37: &py37
@@ -31,11 +31,6 @@ make_tag: &make_tag
   command: |
     echo "export TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
 
-set_quay_repo: &set_quay_repo
-  name: set quay repo env var
-  command: |
-    echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
-
 commands:
   run_tox:
     description: Install and run tox with a given environment
@@ -57,7 +52,7 @@ commands:
       - run:
           command: |
             echo "export WGBS_DOCKER_IMAGE_TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
-            echo "export QUAY_REPO=segway-pipeline" >> ${BASH_ENV}
+            echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
 
 jobs:
   lint:
@@ -114,8 +109,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - set_environment_variables
       - run: *make_tag
-      - run: *set_quay_repo
       - run:
           name: build image
           command: |
@@ -133,8 +128,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - set_environment_variables
       - run: *make_tag
-      - run: *set_quay_repo
       - run:
           command: |
             source ${BASH_ENV}
