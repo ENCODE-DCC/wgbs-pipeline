@@ -1,0 +1,6 @@
+{
+  "test_bsmooth.chrom_sizes": "tests/data/GRCh38_EBV.chrom.sizes",
+  "test_bsmooth.gembs_cpg_bed": "tests/data/sample_ENCSR750CPN_cpg_gembs_10e5.bed.gz",
+  "test_bsmooth.num_threads": 2,
+  "test_bsmooth.num_workers": 8
+}

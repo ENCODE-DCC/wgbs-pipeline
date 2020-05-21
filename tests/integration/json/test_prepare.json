@@ -1,0 +1,7 @@
+{
+  "test_prepare.configuration_file": "tests/data/gembs.conf",
+  "test_prepare.extra_reference": "tests/data/conversion_control.fa.gz",
+  "test_prepare.index": "tests/data/indexes.tar.gz",
+  "test_prepare.metadata_file": "tests/data/gembs_metadata.csv",
+  "test_prepare.reference": "tests/data/sacCer3.fa.gz"
+}
