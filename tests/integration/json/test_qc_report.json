@@ -1,0 +1,9 @@
+{
+  "test_qc_report.contig_sizes": "tests/data/sacCer3.contig.sizes",
+  "test_qc_report.gemBS_json": "tests/data/gemBS.json",
+  "test_qc_report.map_qc_json": [
+    "tests/data/sample5.json"
+  ],
+  "test_qc_report.reference": "tests/data/sacCer3.fa.gz",
+  "test_qc_report.sample_barcode": "sample_sample5"
+}

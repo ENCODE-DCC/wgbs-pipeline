@@ -1,0 +1,5 @@
+{
+  "test_index.configuration_file": "tests/data/gembs.conf",
+  "test_index.extra_reference": "tests/data/conversion_control.fa.gz",
+  "test_index.reference": "tests/data/sacCer3.fa.gz"
+}

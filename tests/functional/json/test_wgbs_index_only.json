@@ -1,7 +1,7 @@
 {
-  "wgbs.extra_reference": "tests/wdl/test_data/conversion_control.fa.gz",
+  "wgbs.extra_reference": "tests/data/conversion_control.fa.gz",
   "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
   "wgbs.index_only": true,
-  "wgbs.reference": "tests/wdl/test_data/sacCer3.fa.gz",
+  "wgbs.reference": "tests/data/sacCer3.fa.gz",
   "wgbs.underconversion_sequence_name": "NC_001416.1"
 }

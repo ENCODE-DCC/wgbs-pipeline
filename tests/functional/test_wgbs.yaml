@@ -1,0 +1,71 @@
+---
+  - name: test_wgbs
+    tags:
+      - functional
+    command: >-
+      tests/caper_run.sh
+      wgbs-pipeline.wdl
+      tests/functional/json/test_wgbs.json
+    files:
+      - path: test-output/gembs.conf
+        md5sum: 1ad8f25544fa7dcb56383bc233407b54
+      - path: test-output/gembs_metadata.csv
+        md5sum: 40419347ed006135fbf6e909693f0e9c
+      - path: test-output/indexes.tar.gz
+        md5sum: bde2c7f6984c318423cb7354c4c37d44
+      - path: test-output/gemBS.json
+        md5sum: 9bccd896e9f874bf3e0b0344f67c1e58
+      - path: test-output/glob-e97d885c83d966247d485dc62b6ae799/sacCer3.contig.sizes
+        md5sum: 0497066e3880c6932cf6bde815c42c40
+      - path: test-output/glob-c8599c0b9048b55a8d5cfaad52995a94/sample_sample5.bam
+        md5sum: b60de62fd0508db429bebfb0e1851a0e
+      - path: test-output/glob-e42c489c9c1355a3e5eca0071600f795/sample_sample5.bam.csi
+        md5sum: 97e2ca09a7fb4372debd48e8a3266b06
+      - path: test-output/glob-13824b1e03fdcf315fe2424593870e56/sample_sample5.bam.md5
+        md5sum: 224edc0c104af7f04159cc4d2c29d86b
+      - path: test-output/glob-c0e92e4e9fb050e7e70bb645748b45dd/sample5.json
+        md5sum: e5435de250e37f6220a75e7f0f0b0277
+      - path: test-output/glob-1e6c456aecc092f75370b54a5806588f/sample_sample5.bcf
+        md5sum: 7cafb436b89898e852f971f1f3b20fc6
+      - path: test-output/glob-804650e4b0c9cc57f1bbc0b3919d1f73/sample_sample5.bcf.csi
+        md5sum: 156c39bd2bcc0bc83052eb4171f83507
+      - path: test-output/glob-95d24e89d025dc63935acc9ded9f8810/sample_sample5.bcf.md5
+        md5sum: 8ebe942fe48b07e1a3455f572aadf57b
+      - path: test-output/glob-5d4aa70d432d0ec67764bfbc1260e48c/sample_sample5.bw
+        md5sum: 4d1cda311892b3ccbce20800d0d23265
+      - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
+        md5sum: cc123bff807e0637864d387628d410fa
+      - path: test-output/glob-f70a6609728d4fb1448dba1f41361a30/sample_sample5_cpg.bb
+        md5sum: f67f273c68577197ecf19a8bb92c925c
+      - path: test-output/glob-52f916d7cc14a5bcfb168d6910e04b56/sample_sample5_chg.bed.gz
+        md5sum: 6994fafbf9eab44ff6e7fafa421fffbc
+      - path: test-output/glob-2b5148d6967b43eee33eb370fd36b70e/sample_sample5_chh.bed.gz
+        md5sum: 31a69396b7084520c04bd80f2cabfd59
+      - path: test-output/glob-f31cca1fcab505e10c2fe5ff003b211a/sample_sample5_cpg.bed.gz
+        md5sum: 67193e21cc34b76d12efba1a19df6644
+      - path: test-output/glob-b76cddd256e1197e0b726acc7184afc4/sample_sample5_cpg.txt.gz
+        md5sum: fccd9c9c5b4fea80890abd536fd76a35
+      - path: test-output/glob-24ceb385eea2ca53f1e6c4a1438ccd21/sample_sample5_cpg.txt.gz.tbi
+        md5sum: a1e08686f568af353e9026c1de00c25d
+      - path: test-output/glob-40c90aa4516b00209d682b819b1d021f/sample_sample5_non_cpg.txt.gz
+        md5sum: 6809ee8479439454aa502ae11f48d91c
+      - path: test-output/glob-664ff83c3881df2363da923f006b098b/sample_sample5_non_cpg.txt.gz.tbi
+        md5sum: 6cdebb4ad2ea184ca4783acb350ae038
+      - path: test-output/gembs_map_qc.json
+        md5sum: 26b5238ab7bb5b195d1cf8127767261c
+      - path: test-output/mapping_reports/mapping/sample_sample5.isize.png
+        md5sum: d707e203b77c8806a75d269426279ca0
+      - path: test-output/mapping_reports/mapping/sample_sample5.mapq.png
+        md5sum: 49837be15f24f23c59c50241cf504614
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/ENCODE.html
+        md5sum: 163401e0bf6a377c2a35dc4bf9064574
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.html
+        md5sum: 14112d4289420ca4f68e466c9e2c7e24
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample_sample5.html
+        md5sum: 5d80cb1b69a71b782140d09285411527
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.isize.png
+        md5sum: 82a262d0bf2dadb02239272da490bba1
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.mapq.png
+        md5sum: d8c3af2eae5af12f1eb5dd9ec4e225bb
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/style.css
+        md5sum: a09ae01f70fa6d2461e37d5814ceb579

@@ -1,0 +1,15 @@
+---
+  - name: test_bscaller
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_bscaller.wdl
+      tests/integration/json/test_bscaller.json
+    files:
+      - path: test-output/glob-1e6c456aecc092f75370b54a5806588f/sample_sample5.bcf
+        md5sum: 66cc1d8b85420e4bc767b5d6ce97dacf
+      - path: test-output/glob-804650e4b0c9cc57f1bbc0b3919d1f73/sample_sample5.bcf.csi
+        md5sum: cd57100d1e618233d316fe6ee5751c50
+      - path: test-output/glob-95d24e89d025dc63935acc9ded9f8810/sample_sample5.bcf.md5
+        md5sum: 5bc83433abf96bf5e0b2aabfd8daa965

@@ -1,5 +1,5 @@
 {
-  "test_make_conf.extra_reference": "tests/wdl/test_data/lambda.fa.gz",
+  "test_make_conf.extra_reference": "tests/data/lambda.fa.gz",
   "test_make_conf.include_file": "conf/IHEC_standard.conf",
   "test_make_conf.num_jobs": 2,
   "test_make_conf.num_threads": 2,

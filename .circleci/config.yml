@@ -1,3 +1,4 @@
+---
 version: 2.1
 
 defaults: &defaults
@@ -7,7 +8,7 @@ defaults: &defaults
 
 machine_defaults: &machine_defaults
   machine:
-    image: circleci/classic:latest
+    image: ubuntu-1604:201903-01
   working_directory: ~/ENCODE-DCC/wgbs-pipeline
 
 py37: &py37
@@ -30,36 +31,28 @@ make_tag: &make_tag
   command: |
     echo "export TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
 
-set_quay_repo: &set_quay_repo
-  name: set quay repo env var
-  command: |
-    echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
-
-get_caper: &get_caper
-  name: get caper
-  command: |
-    pyenv global 3.5.2
-    pip3 install caper==0.7.0
-
-get_md5_script: &get_md5_script
-  name: get compare_md5.py script
-  command: |
-    curl -O https://raw.githubusercontent.com/ENCODE-DCC/rna-seq-pipeline/master/src/compare_md5.py
-
 commands:
   run_tox:
-    description: "Install and run tox with a given environment"
+    description: Install and run tox with a given environment
     parameters:
       toxenv:
-        description: "The name of the environment as per tox.ini, e.g. py37 or lint"
+        description: The name of the environment as per tox.ini, e.g. py37 or lint
         type: string
       extra_args:
-        description: "Extra arguments that are consumed only when running pytest"
+        description: Extra arguments that are consumed only when running pytest
         type: string
-        default: ""
+        default: ''
     steps:
       - run: sudo pip install tox
       - run: tox -e << parameters.toxenv >> -- << parameters.extra_args >>
+
+  set_environment_variables:
+    description: Set docker image env vars for builds and WDL test runs
+    steps:
+      - run:
+          command: |
+            echo "export WGBS_DOCKER_IMAGE_TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
+            echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
 
 jobs:
   lint:
@@ -68,19 +61,19 @@ jobs:
       - checkout
       - run: cat "${HOME}/.cargo/env" >> ${BASH_ENV}
       - run_tox:
-          toxenv: "lint"
+          toxenv: lint
   test_py37:
     <<: *py37
     steps:
       - checkout
       - run_tox:
-          toxenv: "py37"
+          toxenv: py37
   coverage-report:
     <<: *py37
     steps:
       - checkout
       - run_tox:
-          toxenv: "coverage-report"
+          toxenv: coverage-report
   test_rust:
     <<: *rust
     steps:
@@ -90,60 +83,34 @@ jobs:
     <<: *machine_defaults
     description: Generic testing protocol for wdl tasks
     parameters:
-      test_name:
-        description: "The name of the test being performed, like align, merge, etc."
+      tag:
+        description: pytest-workflow tag, e.g. functional, integration, test_align
         type: string
-      is_workflow:
-        default: false
-        description: "Describes if the test is for a task or for a workflow"
-        type: boolean
-      keys_to_inspect:
-        description: "The key(s) of the output(s) in metadata.json for which md5sum is to be computed, space delimited"
-        type: string
+      num_parallel_workflows:
+        description: Max number of tests to execute in parallel
+        type: integer
       resource_class:
-        description: "The machine resource class to run the test with"
+        description: The machine resource class to run the test with
         type: string
         default: medium
     resource_class: << parameters.resource_class >>
     steps:
-      - when:
-          condition: << parameters.is_workflow >>
-          steps:
-            - checkout
-            - run: *make_tag
-            - run: *get_caper
-            - run: *get_md5_script
-            - run:
-                command: |
-                  source ${BASH_ENV}
-                  tests/wdl/test.sh wgbs-pipeline.wdl tests/wdl/test_workflow/test_<< parameters.test_name >>_input.json "${TAG}"
-                  python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json wgbs-pipeline.metadata.json --reference_json tests/wdl/test_workflow/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
-                  cat result.json
-                  python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
-                no_output_timeout: 30m
-      - unless:
-          condition: << parameters.is_workflow >>
-          steps:
-            - checkout
-            - run: *make_tag
-            - run: *get_caper
-            - run: *get_md5_script
-            - run:
-                command: |
-                  source ${BASH_ENV}
-                  tests/wdl/test.sh tests/wdl/test_task/test_<< parameters.test_name >>.wdl tests/wdl/test_task/test_<< parameters.test_name >>_input.json "${TAG}"
-                  python3 compare_md5.py --keys_to_inspect << parameters.keys_to_inspect >> --metadata_json test_<< parameters.test_name >>.metadata.json --reference_json tests/wdl/test_task/ref_output/test_<< parameters.test_name >>_output_md5.json --outfile result.json
-                  cat result.json
-                  python3 -c "import sys; import json; data=json.loads(sys.stdin.read()); sys.exit(int(not data['match_overall']))" < result.json
-                no_output_timeout: 30m
-
+      - checkout
+      - set_environment_variables
+      - run:
+          name: Run pytest-workflow WDL tests using tox
+          command: |
+            pyenv global 3.7.0
+            pip install --upgrade pip
+            pip install tox
+            tox -e wdl -- --tag << parameters.tag >> --wt << parameters.num_parallel_workflows >>
   build:
     <<: *defaults
     steps:
       - checkout
       - setup_remote_docker
+      - set_environment_variables
       - run: *make_tag
-      - run: *set_quay_repo
       - run:
           name: build image
           command: |
@@ -151,7 +118,7 @@ jobs:
             echo "pulling template!"
             docker pull quay.io/encode-dcc/${QUAY_REPO}:template
             docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
-            docker build --cache-from quay.io/encode-dcc/${QUAY_REPO}:template --build-arg GIT_COMMIT_HASH=${CIRCLE_SHA1} --build-arg BRANCH=${CIRCLE_BRANCH} --build-arg BUILD_TAG=${TAG} -t "${TAG}" -t quay.io/encode-dcc/${QUAY_REPO}:template -f Dockerfile .
+            docker build --cache-from quay.io/encode-dcc/${QUAY_REPO}:template -t "${TAG}" -t quay.io/encode-dcc/${QUAY_REPO}:template -f Dockerfile .
             docker push "${TAG}"
             docker logout
           no_output_timeout: 30m
@@ -161,8 +128,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - set_environment_variables
       - run: *make_tag
-      - run: *set_quay_repo
       - run:
           command: |
             source ${BASH_ENV}
@@ -189,89 +156,30 @@ workflows:
           requires:
             - build
             - lint
+      # TODO: add back when unit tests are added
+      # - test_wdl:
+      #     name: test_wdl_unit
+      #     tag: unit
+      #     num_parallel_workflows: 8
+      #     requires:
+      #       - build
+      #       - lint
       - test_wdl:
-          name: test_make_metadata_csv
-          requires:
-            - build
-            - lint
-          test_name: "make_metadata_csv"
-          keys_to_inspect: "test_make_metadata_csv.make_metadata_csv.metadata_csv"
-      - test_wdl:
-          name: test_make_conf
-          requires:
-            - build
-            - lint
-          test_name: "make_conf"
-          keys_to_inspect: "test_make_conf.make_conf.gembs_conf"
-      - test_wdl:
-          name: test_index
-          requires:
-            - build
-            - lint
-          test_name: "index"
-          keys_to_inspect: "test_index.index.contig_sizes test_index.index.gembs_indexes"
-      - test_wdl:
-          name: test_prepare
-          requires:
-            - build
-            - lint
-          test_name: "prepare"
-          keys_to_inspect: "test_prepare.prepare.gemBS_json"
-      - test_wdl:
-          name: test_map
-          requires:
-            - build
-            - lint
-          test_name: "map"
+          name: test_wdl_integration
           resource_class: large
-          keys_to_inspect: "test_map.map.bam test_map.map.csi test_map.map.bam_md5 test_map.map.qc_json"
-      - test_wdl:
-          name: test_bscaller
+          tag: integration
+          num_parallel_workflows: 12
           requires:
             - build
             - lint
-          test_name: "bscaller"
-          # bscaller qc json not deterministic due to random ordering, so don't check
-          keys_to_inspect: "test_bscaller.bscaller.bcf test_bscaller.bscaller.bcf_csi test_bscaller.bscaller.bcf_md5"
       - test_wdl:
-          name: test_extract
-          requires:
-            - build
-            - lint
-          test_name: "extract"
-          keys_to_inspect: "test_extract.extract.cpg_txt test_extract.extract.chh_bed test_extract.extract.chg_bb test_extract.extract.cpg_bed test_extract.extract.non_cpg_txt_tbi test_extract.extract.chg_bed test_extract.extract.non_cpg_txt test_extract.extract.chh_bb test_extract.extract.bw test_extract.extract.cpg_txt_tbi test_extract.extract.cpg_bb"
-      - test_wdl:
-          name: test_bsmooth
-          requires:
-            - build
-            - lint
-          test_name: "bsmooth"
-          keys_to_inspect: "test_bsmooth.bsmooth.smoothed_cpg_bed test_bsmooth.bsmooth.smoothed_cpg_bigbed"
-      - test_wdl:
-          name: test_qc_report
-          requires:
-            - build
-            - lint
-          test_name: "qc_report"
-          keys_to_inspect: "test_qc_report.qc_report.map_html_assets test_qc_report.qc_report.portal_map_qc_json"
-      - test_wdl:
-          name: test_wgbs_index_only
-          requires:
-            - build
-            - lint
-          test_name: wgbs_index_only
-          is_workflow: true
-          keys_to_inspect: "wgbs.index_reference.contig_sizes wgbs.index_reference.gembs_indexes"
-      - test_wdl:
-          name: test_wgbs
-          requires:
-            - build
-            - lint
-          test_name: wgbs
-          is_workflow: true
+          name: test_wdl_functional
           resource_class: large
-          # wgbs.bscaller.qc_json is not consistent (contigs in random order)
-          keys_to_inspect: "wgbs.make_conf.gembs_conf wgbs.make_metadata_csv.metadata_csv wgbs.index_reference.gembs_indexes wgbs.index_reference.contig_sizes wgbs.map.csi wgbs.map.bam wgbs.map.bam_md5 wgbs.map.qc_json wgbs.bscaller.bcf_csi wgbs.bscaller.bcf wgbs.bscaller.bcf_md5 wgbs.extract.cpg_txt wgbs.extract.chh_bed wgbs.extract.chg_bb wgbs.extract.cpg_bed wgbs.extract.non_cpg_txt_tbi wgbs.extract.chg_bed wgbs.extract.non_cpg_txt wgbs.extract.chh_bb wgbs.extract.bw wgbs.extract.cpg_txt_tbi wgbs.extract.cpg_bb wgbs.qc_report.map_html_assets wgbs.qc_report.portal_map_qc_json"
+          tag: functional
+          num_parallel_workflows: 8
+          requires:
+            - build
+            - lint
       - push_template:
           requires:
             - build
@@ -279,9 +187,10 @@ workflows:
             - coverage-report
             - test_py37
             - test_rust
-            - test_make_metadata_csv
-            - test_make_conf
-            - test_bsmooth
+            # TODO: add back when unit tests are added
+            # - test_wdl_unit
+            - test_wdl_integration
+            - test_wdl_functional
           filters:
             branches:
               only:

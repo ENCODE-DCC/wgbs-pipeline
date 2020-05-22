@@ -1,0 +1,13 @@
+---
+  - name: test_index
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_index.wdl
+      tests/integration/json/test_index.json
+    files:
+      - path: test-output/indexes.tar.gz
+        md5sum: bde2c7f6984c318423cb7354c4c37d44
+      - path: test-output/glob-e97d885c83d966247d485dc62b6ae799/sacCer3.contig.sizes
+        md5sum: 0497066e3880c6932cf6bde815c42c40
