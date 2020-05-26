@@ -8,6 +8,6 @@
       tests/integration/json/test_bsmooth.json
     files:
       - path: test-output/smoothed_encode.bb
-        md5sum: 00547408a407e45f41f5b5fe2acdd10c
+        md5sum: 468e2d23f2c374aa5b23e032208e9068
       - path: test-output/smoothed_encode.bed.gz
-        md5sum: 55dd45b0de47a293542dbc81d681e3cd
+        md5sum: 794e3fcf7002777b9269c19acf9b3462
