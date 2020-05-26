@@ -43,7 +43,7 @@ fn process<R: io::Read, W: io::Write>(
         let mut record = i?;
         match smoothed_methylation_record?.smoothed_methylation_percentage {
             SmoothedMethylationPercentage::Valid(valid) => {
-                record.smoothed_methylation_percentage = valid
+                record.smoothed_methylation_percentage = valid * 100.
             }
             SmoothedMethylationPercentage::Nan(_) => continue,
         };
@@ -64,7 +64,7 @@ fn process<R: io::Read, W: io::Write>(
 // the yellow RGB value (255, 255, 0), interpolating in RGB space results in a dark
 // yellow (127, 127, 0) instead. Green = 0% methylation, red = 100% methylation
 fn rgb_from_methylation(methylation: f64) -> RgbWithDisplay {
-    let rgb: Rgb = Hsv::new((1. - methylation as f32) * ENCODE_HSV_MAX_HUE, 1., 1.).into();
+    let rgb: Rgb = Hsv::new((1. - (methylation / 100.) as f32) * ENCODE_HSV_MAX_HUE, 1., 1.).into();
     RgbWithDisplay::from(rgb.into_format::<u8>().into_components())
 }
 
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_rgb_from_methylation() {
-        let RgbWithDisplay { red, green, blue } = rgb_from_methylation(0.5 as f64);
+        let RgbWithDisplay { red, green, blue } = rgb_from_methylation(50.);
         assert_eq!(red, 255);
         assert_eq!(green, 255);
         assert_eq!(blue, 0);
@@ -242,7 +242,7 @@ mod tests {
         let result = String::from_utf8(wtr.into_inner()?)?;
         assert_eq!(
             result,
-            "chr1\t10649\t10650\t.\t4\t.\t10649\t10650\t219,255,0\t4\t0.356\n"
+            "chr1\t10649\t10650\t.\t4\t.\t10649\t10650\t219,255,0\t4\t35.6\n"
         );
         Ok(())
     }
