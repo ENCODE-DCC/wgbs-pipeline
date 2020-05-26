@@ -64,7 +64,12 @@ fn process<R: io::Read, W: io::Write>(
 // the yellow RGB value (255, 255, 0), interpolating in RGB space results in a dark
 // yellow (127, 127, 0) instead. Green = 0% methylation, red = 100% methylation
 fn rgb_from_methylation(methylation: f64) -> RgbWithDisplay {
-    let rgb: Rgb = Hsv::new((1. - (methylation / 100.) as f32) * ENCODE_HSV_MAX_HUE, 1., 1.).into();
+    let rgb: Rgb = Hsv::new(
+        (1. - (methylation / 100.) as f32) * ENCODE_HSV_MAX_HUE,
+        1.,
+        1.,
+    )
+    .into();
     RgbWithDisplay::from(rgb.into_format::<u8>().into_components())
 }
 
