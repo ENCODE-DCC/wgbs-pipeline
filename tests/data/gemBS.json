@@ -42,7 +42,8 @@
       "make_cpg": "True",
       "make_non_cpg": "True",
       "phred_threshold": "10",
-      "strand_specific": "True"
+      "strand_specific": "True",
+      "bigwig_strand_specific": "True"
     },
     "index": {
       "sampling_rate": "4"
