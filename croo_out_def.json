@@ -23,13 +23,6 @@
     }
   },
   "wgbs.extract": {
-    "bw": {
-      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Signal bigWig\"]",
-      "path": "extract/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "Methylation Extraction/Replicate ${i+1}/Signal bigWig",
-      "ucsc_track": "track type=bigWig name=\"Signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
-    },
     "chg_bb": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bigBed\"]",
       "path": "extract/rep${i+1}/${basename}",
@@ -75,11 +68,25 @@
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/CpG gemBS-style bed"
     },
+    "minus_strand_bw": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Minus strand signal bigWig\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/Minus strand signal bigWig",
+      "ucsc_track": "track type=bigWig name=\"Minus strand signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
+    },
     "non_cpg_txt": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"non-CpG gemBS-style bed)\"]",
       "path": "extract/rep${i+1}/${basename}",
       "subgraph": "cluster_rep${i+1}",
       "table": "Methylation Extraction/Replicate ${i+1}/non-CpG gemBS-style bed"
+    },
+    "plus_strand_bw": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Plus strand signal bigWig\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "subgraph": "cluster_rep${i+1}",
+      "table": "Methylation Extraction/Replicate ${i+1}/Plus strand signal bigWig",
+      "ucsc_track": "track type=bigWig name=\"Plus strand signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
     }
   },
   "wgbs.make_conf": {

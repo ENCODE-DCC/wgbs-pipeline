@@ -8,4 +8,4 @@
       tests/integration/json/test_prepare.json
     files:
       - path: test-output/gemBS.json
-        md5sum: 9f7a78d67e463969064621e15e343996
+        md5sum: 9d739e091bd814a1209254ca8582a8e9

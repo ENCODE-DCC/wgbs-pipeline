@@ -14,7 +14,7 @@
       - path: test-output/indexes.tar.gz
         md5sum: bde2c7f6984c318423cb7354c4c37d44
       - path: test-output/gemBS.json
-        md5sum: 9bccd896e9f874bf3e0b0344f67c1e58
+        md5sum: b631e67a1fccd3c6187c0378cbeae948
       - path: test-output/glob-e97d885c83d966247d485dc62b6ae799/sacCer3.contig.sizes
         md5sum: 0497066e3880c6932cf6bde815c42c40
       - path: test-output/glob-c8599c0b9048b55a8d5cfaad52995a94/sample_sample5.bam
@@ -31,8 +31,10 @@
         md5sum: 156c39bd2bcc0bc83052eb4171f83507
       - path: test-output/glob-95d24e89d025dc63935acc9ded9f8810/sample_sample5.bcf.md5
         md5sum: 8ebe942fe48b07e1a3455f572aadf57b
-      - path: test-output/glob-5d4aa70d432d0ec67764bfbc1260e48c/sample_sample5.bw
-        md5sum: 4d1cda311892b3ccbce20800d0d23265
+      - path: test-output/glob-0b0236659b9524643e6454061959b28c/sample_sample5_pos.bw
+        md5sum: c30bc10a258ca4f1fe67f115c4c2db10
+      - path: test-output/glob-041e1709c7dd1f320426281eb4649f9b/sample_sample5_neg.bw
+        md5sum: f49ab06a51d9c4a8e663f0472e70eb06
       - path: test-output/glob-708835e6a0042d33b00b6937266734f5/sample_sample5_chg.bb
         md5sum: cc123bff807e0637864d387628d410fa
       - path: test-output/glob-f70a6609728d4fb1448dba1f41361a30/sample_sample5_cpg.bb

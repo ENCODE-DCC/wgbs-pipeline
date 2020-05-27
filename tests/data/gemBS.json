@@ -37,6 +37,7 @@
       "right_trim": "0"
     },
     "extract": {
+      "bigwig_strand_specific": "True",
       "make_bedmethyl": "True",
       "make_bigwig": "True",
       "make_cpg": "True",
