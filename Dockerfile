@@ -54,11 +54,17 @@ RUN git clone --recursive https://github.com/heathsc/gemBS.git && \
     rm -rf gemBS /usr/local/build
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Instal UCSC v377 bedToBigBed util
+# Install UCSC v377 bedToBigBed util
 RUN git clone https://github.com/ENCODE-DCC/kentUtils_bin_v377 && \
-    rm $(find kentUtils_bin_v377/bin/ -type f -not -path '*bedToBigBed')
+    rm $(find kentUtils_bin_v377/bin/ -type f -not -path '*bedToBigBed' -not -path '*bedGraphToBigWig')
 ENV PATH="${PATH}:/software/kentUtils_bin_v377/bin"
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/software/kentUtils_bin_v377/lib"
+
+# Install xsv for selecting out bed columns for generating coverage bigiwg
+RUN wget https://github.com/BurntSushi/xsv/releases/download/0.13.0/xsv-0.13.0-x86_64-unknown-linux-musl.tar.gz && \
+    tar xf xsv-0.13.0-x86_64-unknown-linux-musl.tar.gz && \
+    mv xsv /usr/local/bin && \
+    rm xsv-0.13.0-x86_64-unknown-linux-musl.tar.gz
 
 # Compile Rust binaries as a separate stage so we don't bloat pipeline image with Rust
 # build toolchain. rustc default target in the image is x86_64-unknown-linux-gnu, which

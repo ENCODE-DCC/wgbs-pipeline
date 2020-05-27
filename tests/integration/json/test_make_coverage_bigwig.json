@@ -1,0 +1,4 @@
+{
+  "test_make_coverage_bigwig.chrom_sizes": "tests/data/GRCh38_EBV.chrom.sizes",
+  "test_make_coverage_bigwig.encode_bed": "tests/data/encode_cpg_10e5.bed.gz"
+}

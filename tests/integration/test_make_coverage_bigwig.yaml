@@ -1,0 +1,11 @@
+---
+  - name: test_make_coverage_bigwig
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_make_coverage_bigwig.wdl
+      tests/integration/json/test_make_coverage_bigwig.json
+    files:
+      - path: test-output/coverage.bw
+        md5sum: 8533f920b469e98d297349a2c4f1b5aa

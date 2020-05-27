@@ -89,6 +89,14 @@
       "table": "Configuration/gemBS configuration"
     }
   },
+  "wgbs.make_coverage_bigwig": {
+    "coverage_bigwig": {
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG Coverage bigWig\"]",
+      "path": "coverage/rep${i+1}/${basename}",
+      "table": "Coverage/Replicate ${i+1}/CpG Coverage bigWig",
+      "ucsc_track": "track type=bigWig name=\"CpG Coverage bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
+    }
+  },
   "wgbs.make_metadata_csv": {
     "metadata_csv": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"gemBS metadata\"]",

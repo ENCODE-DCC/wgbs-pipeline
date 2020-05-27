@@ -156,14 +156,13 @@ workflows:
           requires:
             - build
             - lint
-      # TODO: add back when unit tests are added
-      # - test_wdl:
-      #     name: test_wdl_unit
-      #     tag: unit
-      #     num_parallel_workflows: 8
-      #     requires:
-      #       - build
-      #       - lint
+      - test_wdl:
+          name: test_wdl_unit
+          tag: unit
+          num_parallel_workflows: 8
+          requires:
+            - build
+            - lint
       - test_wdl:
           name: test_wdl_integration
           resource_class: large
@@ -187,8 +186,7 @@ workflows:
             - coverage-report
             - test_py37
             - test_rust
-            # TODO: add back when unit tests are added
-            # - test_wdl_unit
+            - test_wdl_unit
             - test_wdl_integration
             - test_wdl_functional
           filters:

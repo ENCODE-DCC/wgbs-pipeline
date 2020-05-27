@@ -1,0 +1,4 @@
+{
+  "test_make_coverage_bigwig.chrom_sizes": "tests/data/dummy.txt",
+  "test_make_coverage_bigwig.encode_bed": "tests/data/dummy.txt"
+}
