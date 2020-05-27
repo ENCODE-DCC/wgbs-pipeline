@@ -116,6 +116,12 @@ workflow wgbs {
                     num_threads = bsmooth_num_threads
                 }
             }
+
+            call make_coverage_bigwig { input:
+                encode_cpg_bed = extract.cpg_bed,
+                chrom_sizes = contig_sizes,
+            }
+
             call qc_report { input:
                 map_qc_json = map.qc_json,
                 gemBS_json = gemBS_json,
@@ -346,6 +352,26 @@ task extract {
     runtime {
         disks: "local-disk 500 SSD"
         memory: "96 GB"
+    }
+}
+
+task make_coverage_bigwig {
+    File encode_cpg_bed
+    File chrom_sizes
+
+    command {
+        BEDGRAPH_FILE="encode_cpg.bedGraph"
+        echo "track type=bedGraph" > "$BEDGRAPH_FILE"
+        gzip -dc ${encode_cpg_bed} |
+            tail -n +2 |
+            xsv select -d '\t' -n 1,2,3,10 |
+            xsv fmt -t '\t' >> "$BEDGRAPH_FILE"
+        gzip -n "$BEDGRAPH_FILE"
+        bedGraphToBigWig "$BEDGRAPH_FILE" ${chrom_sizes} cpg_coverage.bw
+    }
+
+    output {
+        File cpg_coverage_bigwig = "cpg_coverage.bw"
     }
 }
 
