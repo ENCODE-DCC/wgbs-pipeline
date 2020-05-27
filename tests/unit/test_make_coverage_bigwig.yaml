@@ -1,0 +1,12 @@
+---
+  - name: test_make_coverage_bigwig_unit
+    tags:
+      - unit
+    command: >-
+      tests/caper_run.sh
+      tests/unit/wdl/test_make_coverage_bigwig.wdl
+      tests/unit/json/test_make_coverage_bigwig.json
+    stdout:
+      contains:
+        - dummy.txt |
+        - dummy.txt coverage.bw

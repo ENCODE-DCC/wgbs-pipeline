@@ -118,7 +118,7 @@ workflow wgbs {
             }
 
             call make_coverage_bigwig { input:
-                encode_cpg_bed = extract.cpg_bed,
+                encode_bed = extract.cpg_bed,
                 chrom_sizes = contig_sizes,
             }
 
@@ -356,22 +356,22 @@ task extract {
 }
 
 task make_coverage_bigwig {
-    File encode_cpg_bed
+    File encode_bed
     File chrom_sizes
 
     command {
-        BEDGRAPH_FILE="encode_cpg.bedGraph"
+        set -euo pipefail
+        BEDGRAPH_FILE="coverage.bedGraph"
         echo "track type=bedGraph" > "$BEDGRAPH_FILE"
-        gzip -dc ${encode_cpg_bed} |
+        gzip -dc ${encode_bed} |
             tail -n +2 |
             xsv select -d '\t' -n 1,2,3,10 |
             xsv fmt -t '\t' >> "$BEDGRAPH_FILE"
-        gzip -n "$BEDGRAPH_FILE"
-        bedGraphToBigWig "$BEDGRAPH_FILE" ${chrom_sizes} cpg_coverage.bw
+        bedGraphToBigWig "$BEDGRAPH_FILE" ${chrom_sizes} coverage.bw
     }
 
     output {
-        File cpg_coverage_bigwig = "cpg_coverage.bw"
+        File coverage_bigwig = "coverage.bw"
     }
 }
 

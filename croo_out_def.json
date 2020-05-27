@@ -89,13 +89,12 @@
       "table": "Configuration/gemBS configuration"
     }
   },
-  "wgbs.make_coverage_bigwig": {
+  "wgbs.make_cpg_coverage_bigwig": {
     "cpg_coverage_bigwig": {
-      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Coverage bigWig\"]",
-      "path": "make_coverage_bigwig/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "Methylation Extraction/Replicate ${i+1}/Signal bigWig",
-      "ucsc_track": "track type=bigWig name=\"Signal bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
+      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CpG Coverage bigWig\"]",
+      "path": "extract/rep${i+1}/${basename}",
+      "table": "Methylation Extraction/Replicate ${i+1}/CpG Coverage bigWig",
+      "ucsc_track": "track type=bigWig name=\"CpG Coverage bigWig (rep${i+1})\" priority=${i+1} smoothingWindow=off maxHeightPixels=80:60:40 color=255,0,0 autoScale=off viewLimits=0:40 visibility=dense"
     }
   },
   "wgbs.make_metadata_csv": {
