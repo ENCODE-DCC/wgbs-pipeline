@@ -4,6 +4,5 @@
   "test_extract.contig_sizes": "tests/data/sacCer3.contig.sizes",
   "test_extract.gemBS_json": "tests/data/gemBS.json",
   "test_extract.reference": "tests/data/sacCer3.fa.gz",
-  "test_extract.sample_barcode": "sample_sample5",
-  "test_extract.sample_name": "sample5"
+  "test_extract.sample_barcode": "sample_sample5"
 }

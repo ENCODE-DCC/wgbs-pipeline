@@ -100,7 +100,6 @@ workflow wgbs {
                 gemBS_json = gemBS_json,
                 reference = reference,
                 sample_barcode = sample_barcodes[i],
-                sample_name = sample_names_[i],
                 bcf = bscaller.bcf,
                 bcf_csi = bscaller.bcf_csi,
                 contig_sizes = contig_sizes,
@@ -315,7 +314,6 @@ task extract {
     File bcf
     File bcf_csi
     String sample_barcode
-    String sample_name
     Int? phred_threshold
     Int? min_inform
 
@@ -336,7 +334,8 @@ task extract {
     }
 
     output {
-        File bw = glob("extract/**/*.bw")[0]
+        File plus_strand_bw = glob("extract/**/*_pos.bw")[0]
+        File minus_strand_bw = glob("extract/**/*_neg.bw")[0]
         File chg_bb = glob("extract/**/*_chg.bb")[0]
         File chh_bb = glob("extract/**/*_chh.bb")[0]
         File cpg_bb = glob("extract/**/*_cpg.bb")[0]
