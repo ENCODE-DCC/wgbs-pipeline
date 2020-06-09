@@ -23,31 +23,27 @@ def test_load_bedmethyl():
     )
     df = load_bedmethyl(data)
     assert df.shape[0] == 1
-    expected = ("chr1", 10468, 10489, 1, 100)
+    expected = ("chr1", 10468, 10469, 1, 100)
     for key, expected in zip(DF_COLUMN_NAMES, expected):
         assert df.at[0, key] == expected
 
 
 def test_calculate_pearson():
     df1 = pd.DataFrame.from_records(
-        [
-            ("chr1", "1", "2", "14", "57"),
-            ("chr1", "3", "4", "12", "100"),
-            ("chr1", "5", "6", "3", "100"),
-        ],
+        [("chr1", 1, 2, 14, 50), ("chr1", 3, 4, 12, 100), ("chr1", 5, 6, 3, 100)],
         columns=DF_COLUMN_NAMES,
     )
     df2 = pd.DataFrame.from_records(
         [
-            ("chr1", "1", "2", "16", "87"),
-            ("chr1", "3", "4", "12", "33"),
-            ("chr1", "5", "6", "3", "100"),
-            ("chr1", "7", "8", "3", "100"),
+            ("chr1", 1, 2, 16, 25),
+            ("chr1", 3, 4, 12, 50),
+            ("chr1", 5, 6, 3, 100),
+            ("chr1", 7, 8, 3, 100),
         ],
         columns=DF_COLUMN_NAMES,
     )
     pearson = calculate_pearson(df1, df2)
-    assert pearson == 0.12
+    assert pearson == 1.0
 
 
 def test_make_pearson_qc():

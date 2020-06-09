@@ -129,6 +129,21 @@ workflow wgbs {
                 sample_barcode = sample_barcodes[i]
             }
         }
+
+        Array[File] bedmethyls = extract.cpg_bed
+        # cross(a, a) is like combinations with replacement
+        Array[Pair[File, File]] crossed = cross(bedmethyls, bedmethyls)
+        scatter(i in range(length(crossed))) {
+            Pair[File, File] pair = crossed[i]
+            # Don't want to calculate correlations when files are the same, for instance
+            # if there is only one replicate
+            if (pair.left != pair.right) {
+                 call calculate_bed_pearson_correlation { input:
+                     bed1 = pair.left,
+                     bed2 = pair.right,
+                 }
+            }
+        }
     }
 }
 
@@ -371,6 +386,25 @@ task make_coverage_bigwig {
 
     output {
         File coverage_bigwig = "coverage.bw"
+    }
+}
+
+task calculate_bed_pearson_correlation {
+    File bed1
+    File bed2
+
+    command {
+        python3 "$(which calculate_bed_pearson_correlation.py)" --bedmethyls ${bed1} ${bed2} --outfile bed_pearson_correlation_qc.json
+    }
+
+    output {
+        File bed_pearson_correlation_qc = "bed_pearson_correlation_qc.json"
+    }
+
+    runtime {
+        cpu: 1
+        disks: "local-disk 10 SSD"
+        memory: "4 GB"
     }
 }
 

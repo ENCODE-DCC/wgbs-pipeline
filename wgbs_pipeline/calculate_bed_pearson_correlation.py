@@ -4,7 +4,6 @@ Inspired by https://github.com/ENCODE-DCC/mirna-seq-pipeline/blob/dev/src/calcul
 """
 
 import argparse
-import json
 
 import pandas as pd
 from qc_utils import QCMetric, QCMetricRecord
@@ -19,10 +18,7 @@ def main() -> None:
     bedmethyl2 = load_bedmethyl(args.bedmethyls[1])
     pearson_correlation = calculate_pearson(bedmethyl1, bedmethyl2)
     qc_record = make_pearson_qc(pearson_correlation)
-
-    # Should be able to do something like qc_record.save(args.outfile) in the future.
-    with open(args.outfile, "w") as fp:
-        json.dump(qc_record.to_ordered_dict(), fp)
+    qc_record.save(args.outfile)
 
 
 def load_bedmethyl(path: str) -> pd.DataFrame:
@@ -44,12 +40,16 @@ def load_bedmethyl(path: str) -> pd.DataFrame:
 
 def calculate_pearson(bedmethyl1: pd.DataFrame, bedmethyl2: pd.DataFrame) -> float:
     """
-    Filters both bedfiles for entries where coverage is GTE 10, then does a join to get
-    the positions to line up, and calculated the correlation.
+    Filters both bedfiles for entries where coverage is GTE 10, then does an inner join
+    to get the positions to line up, which takes the intersection of loci, and
+    calculates the correlation.
     """
-    bedmethyl1 = bedmethyl1.loc([bedmethyl1["coverage"] >= 10])
-    bedmethyl2 = bedmethyl2.loc([bedmethyl2["coverage"] >= 10])
-    pearson_correlation = bedmethyl1.corr(bedmethyl2, method="pearson")
+    bedmethyl1 = bedmethyl1.loc[bedmethyl1["coverage"] >= 10]
+    bedmethyl2 = bedmethyl2.loc[bedmethyl2["coverage"] >= 10]
+    merged = bedmethyl1.merge(bedmethyl2, on=["chrom", "start", "end"])
+    pearson_correlation = merged["methylation_percentage_x"].corr(
+        merged["methylation_percentage_y"], method="pearson"
+    )
     return pearson_correlation
 
 

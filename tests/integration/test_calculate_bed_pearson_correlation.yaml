@@ -1,0 +1,11 @@
+---
+  - name: test_calculate_bed_pearson_correlation
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_calculate_bed_pearson_correlation.wdl
+      tests/integration/json/test_calculate_bed_pearson_correlation.json
+    files:
+      - path: test-output/bed_pearson_correlation_qc.json
+        md5sum: 8533f920b469e98d297349a2c4f1b5aa
