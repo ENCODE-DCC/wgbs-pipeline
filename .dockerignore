@@ -4,3 +4,4 @@
 !wgbs_pipeline/*/
 !Cargo.*
 !conf/*
+requirements*.txt

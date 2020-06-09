@@ -33,7 +33,9 @@ RUN apt-get update && \
     && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir beautifulsoup4 matplotlib==3.0.2 multiprocess
+COPY requirements*.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt -r requirements-gembs.txt && \
+    rm requirements.txt
 
 # Install bsmooth.R dependencies
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://cloud.r-project.org'; options(repos = r);" > ~/.Rprofile && \
