@@ -11,7 +11,10 @@ from qc_utils import QCMetric, QCMetricRecord
 DF_COLUMN_NAMES = ("chrom", "start", "end", "coverage", "methylation_percentage")
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
+    """
+    We already integration test this in the WDL tests, no need for Python test coverage.
+    """
     parser = get_parser()
     args = parser.parse_args()
     bedmethyl1 = load_bedmethyl(args.bedmethyls[0])

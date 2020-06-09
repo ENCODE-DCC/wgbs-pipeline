@@ -8,4 +8,4 @@
       tests/integration/json/test_calculate_bed_pearson_correlation.json
     files:
       - path: test-output/bed_pearson_correlation_qc.json
-        md5sum: 8533f920b469e98d297349a2c4f1b5aa
+        md5sum: cddfd85f87898abeff6701f1c58c71f7
