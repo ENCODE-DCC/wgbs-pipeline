@@ -131,17 +131,10 @@ workflow wgbs {
         }
 
         Array[File] bedmethyls = extract.cpg_bed
-        # cross(a, a) is like combinations with replacement
-        Array[Pair[File, File]] crossed = cross(bedmethyls, bedmethyls)
-        scatter(i in range(length(crossed))) {
-            Pair[File, File] pair = crossed[i]
-            # Don't want to calculate correlations when files are the same, for instance
-            # if there is only one replicate
-            if (pair.left != pair.right) {
-                 call calculate_bed_pearson_correlation { input:
-                     bed1 = pair.left,
-                     bed2 = pair.right,
-                 }
+        if (length(bedmethyls) > 1 && length(bedmethyls) < 3) {
+            call calculate_bed_pearson_correlation { input:
+                bed1 = bedmethyls[0],
+                bed2 = bedmethyls[1],
             }
         }
     }
