@@ -33,7 +33,7 @@ workflow wgbs {
     # Don't need metadata csv to create indexes
     if (!index_only) {
         call make_metadata_csv { input:
-            sample_names = select_first([sample_names]),
+            sample_names = select_first([sample_names, range(length(select_first([fastqs])))]),
             fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
             barcode_prefix = barcode_prefix,
         }

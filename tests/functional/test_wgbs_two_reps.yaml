@@ -1,0 +1,11 @@
+---
+  - name: test_wgbs_two_reps
+    tags:
+      - functional
+    command: >-
+      tests/caper_run.sh
+      wgbs-pipeline.wdl
+      tests/functional/json/test_wgbs_two_reps.json
+    files:
+      - path: test-output/bed_pearson_correlation_qc.json
+        md5sum: cddfd85f87898abeff6701f1c58c71f7
