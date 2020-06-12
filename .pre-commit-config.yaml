@@ -51,10 +51,11 @@
       - id: flake8
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        exclude: tests\/data\/bed_pearson_correlation_qc\.json$
       - id: debug-statements
       - id: check-json
       - id: pretty-format-json
-        exclude: tests\/data\/sample.+\.json$
+        exclude: tests\/data\/.+\.json$
         args:
           - --autofix
       - id: check-yaml

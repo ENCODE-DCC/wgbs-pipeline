@@ -2,10 +2,11 @@
   - name: test_wgbs_two_reps
     tags:
       - functional
+    # When running multiple reps, we will get filename conflicts when trying to copy to
+    # relative output paths, causing Cromwell to fail the workflow. So instead we need
+    # to manually glob the files we want to check in Python and validate them there.
     command: >-
       tests/caper_run.sh
       wgbs-pipeline.wdl
       tests/functional/json/test_wgbs_two_reps.json
-    files:
-      - path: test-output/bed_pearson_correlation_qc.json
-        md5sum: cddfd85f87898abeff6701f1c58c71f7
+      --no-relative-output-paths
