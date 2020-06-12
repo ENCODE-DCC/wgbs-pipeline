@@ -2,9 +2,9 @@
   - name: test_wgbs_two_reps
     tags:
       - functional
-    # When running multiple reps, we will get filename conflicts when trying to copy to
-    # relative output paths, causing Cromwell to fail the workflow. So instead we need
-    # to manually glob the files we want to check in Python and validate them there.
+    # Float output in the QC is subject to rounding errors, need custom comparison. Due
+    # to path collisons we cannot use relative output paths for Cromwell outputs, wf
+    # will fail otherwise.
     command: >-
       tests/caper_run.sh
       wgbs-pipeline.wdl
