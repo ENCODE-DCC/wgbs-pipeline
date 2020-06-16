@@ -52,7 +52,6 @@ commands:
       - run:
           command: |
             echo "export WGBS_DOCKER_IMAGE_TAG=encodedcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
-            echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
 
 jobs:
   lint:
@@ -116,9 +115,9 @@ jobs:
           command: |
             source ${BASH_ENV}
             echo "pulling template!"
-            docker pull encodedcc/${QUAY_REPO}:template
-            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS} quay.io
-            docker build --cache-from encodedcc/${QUAY_REPO}:template -t "${TAG}" -t encodedcc/${QUAY_REPO}:template -f Dockerfile .
+            docker pull encodedcc/${CIRCLE_PROJECT_REPONAME}:template
+            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS}
+            docker build --cache-from encodedcc/${CIRCLE_PROJECT_REPONAME}:template -t "${TAG}" -t encodedcc/${CIRCLE_PROJECT_REPONAME}:template -f Dockerfile .
             docker push "${TAG}"
             docker logout
           no_output_timeout: 30m
@@ -134,9 +133,9 @@ jobs:
           command: |
             source ${BASH_ENV}
             docker pull "${TAG}"
-            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS} quay.io
-            docker tag "${TAG}" encodedcc/${QUAY_REPO}:template
-            docker push encodedcc/${QUAY_REPO}:template
+            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS}
+            docker tag "${TAG}" encodedcc/${CIRCLE_PROJECT_REPONAME}:template
+            docker push encodedcc/${CIRCLE_PROJECT_REPONAME}:template
             docker logout
           no_output_timeout: 30m
 

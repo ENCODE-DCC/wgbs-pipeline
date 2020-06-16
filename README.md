@@ -1,7 +1,6 @@
 # wgbs-pipeline
 
 [![CircleCI](https://circleci.com/gh/ENCODE-DCC/wgbs-pipeline.svg?style=svg)](https://circleci.com/gh/ENCODE-DCC/wgbs-pipeline)
-[![Docker Repository on Quay](https://quay.io/repository/encode-dcc/wgbs-pipeline/status "Docker Repository on Quay")](https://quay.io/repository/encode-dcc/wgbs-pipeline)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
