@@ -3,7 +3,7 @@
     "bootDiskSizeGb": "10",
     "cpu": "8",
     "disks": "local-disk 500 HDD",
-    "docker": "quay.io/encode-dcc/wgbs-pipeline:0.1.0",
+    "docker": "encodedcc/wgbs-pipeline:0.1.0",
     "memory": "32 GB",
     "noAddress": "false",
     "preemptible": "0",

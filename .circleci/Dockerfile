@@ -1,6 +1,6 @@
 # Defines image for running linting (R installation takes ages due to compiling libraries)
 # You should never need to use this directly.
-# Builds with docker build -t quay.io/encode-dcc/wgbs-pipeline:circleci-lint - < Dockerfile
+# Builds with docker build -t encodedcc/wgbs-pipeline:circleci-lint - < Dockerfile
 FROM circleci/python:3.7.3-stretch
 
 # Installs rust with cargo clippy and rustfmt

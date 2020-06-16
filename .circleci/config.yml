@@ -18,7 +18,7 @@ py37: &py37
 
 lint: &lint
   docker:
-    - image: quay.io/encode-dcc/wgbs-pipeline:circleci-lint
+    - image: encodedcc/wgbs-pipeline:circleci-lint
   working_directory: ~/ENCODE-DCC/wgbs-pipeline
 
 rust: &rust
@@ -29,7 +29,7 @@ rust: &rust
 make_tag: &make_tag
   name: make docker image tag
   command: |
-    echo "export TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
+    echo "export TAG=encodedcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
 
 commands:
   run_tox:
@@ -51,7 +51,7 @@ commands:
     steps:
       - run:
           command: |
-            echo "export WGBS_DOCKER_IMAGE_TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
+            echo "export WGBS_DOCKER_IMAGE_TAG=encodedcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
             echo "export QUAY_REPO=wgbs-pipeline" >> ${BASH_ENV}
 
 jobs:
@@ -116,9 +116,9 @@ jobs:
           command: |
             source ${BASH_ENV}
             echo "pulling template!"
-            docker pull quay.io/encode-dcc/${QUAY_REPO}:template
-            docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
-            docker build --cache-from quay.io/encode-dcc/${QUAY_REPO}:template -t "${TAG}" -t quay.io/encode-dcc/${QUAY_REPO}:template -f Dockerfile .
+            docker pull encodedcc/${QUAY_REPO}:template
+            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS} quay.io
+            docker build --cache-from encodedcc/${QUAY_REPO}:template -t "${TAG}" -t encodedcc/${QUAY_REPO}:template -f Dockerfile .
             docker push "${TAG}"
             docker logout
           no_output_timeout: 30m
@@ -134,9 +134,9 @@ jobs:
           command: |
             source ${BASH_ENV}
             docker pull "${TAG}"
-            docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
-            docker tag "${TAG}" quay.io/encode-dcc/${QUAY_REPO}:template
-            docker push quay.io/encode-dcc/${QUAY_REPO}:template
+            docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS} quay.io
+            docker tag "${TAG}" encodedcc/${QUAY_REPO}:template
+            docker push encodedcc/${QUAY_REPO}:template
             docker logout
           no_output_timeout: 30m
 
