@@ -74,6 +74,7 @@ RUN cargo build --release
 
 FROM main
 
+# For some reason this copy invalidates the cache, which causes R to rebuild every time
 COPY requirements*.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt -r requirements-gembs.txt && \
     rm requirements*.txt
