@@ -1,0 +1,4 @@
+{
+  "test_calculate_bed_pearson_correlation.bed1": "tests/data/encode_cpg_10e5.bed.gz",
+  "test_calculate_bed_pearson_correlation.bed2": "tests/data/encode_cpg_10e5_gt_10x_coverage.bed.gz"
+}

@@ -33,7 +33,7 @@ workflow wgbs {
     # Don't need metadata csv to create indexes
     if (!index_only) {
         call make_metadata_csv { input:
-            sample_names = select_first([sample_names]),
+            sample_names = select_first([sample_names, range(length(select_first([fastqs])))]),
             fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
             barcode_prefix = barcode_prefix,
         }
@@ -127,6 +127,14 @@ workflow wgbs {
                 reference = reference,
                 contig_sizes = contig_sizes,
                 sample_barcode = sample_barcodes[i]
+            }
+        }
+
+        Array[File] bedmethyls = extract.cpg_bed
+        if (length(bedmethyls) == 2) {
+            call calculate_bed_pearson_correlation { input:
+                bed1 = bedmethyls[0],
+                bed2 = bedmethyls[1],
             }
         }
     }
@@ -371,6 +379,25 @@ task make_coverage_bigwig {
 
     output {
         File coverage_bigwig = "coverage.bw"
+    }
+}
+
+task calculate_bed_pearson_correlation {
+    File bed1
+    File bed2
+
+    command {
+        python3 "$(which calculate_bed_pearson_correlation.py)" --bedmethyls ${bed1} ${bed2} --outfile bed_pearson_correlation_qc.json
+    }
+
+    output {
+        File bed_pearson_correlation_qc = "bed_pearson_correlation_qc.json"
+    }
+
+    runtime {
+        cpu: 1
+        disks: "local-disk 10 SSD"
+        memory: "4 GB"
     }
 }
 

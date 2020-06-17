@@ -1,0 +1,12 @@
+---
+  - name: test_wgbs_two_reps
+    tags:
+      - functional
+    # Float output in the QC is subject to rounding errors, need custom comparison. Due
+    # to path collisons we cannot use relative output paths for Cromwell outputs, wf
+    # will fail otherwise.
+    command: >-
+      tests/caper_run.sh
+      wgbs-pipeline.wdl
+      tests/functional/json/test_wgbs_two_reps.json
+      --no-relative-output-paths
