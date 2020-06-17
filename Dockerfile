@@ -33,10 +33,6 @@ RUN apt-get update && \
     && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements*.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt -r requirements-gembs.txt && \
-    rm requirements*.txt
-
 # Install bsmooth.R dependencies
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://cloud.r-project.org'; options(repos = r);" > ~/.Rprofile && \
     Rscript -e 'install.packages("BiocManager")' && \
@@ -77,6 +73,10 @@ COPY . .
 RUN cargo build --release
 
 FROM main
+
+COPY requirements*.txt ./
+RUN pip3 install --no-cache-dir -r requirements.txt -r requirements-gembs.txt && \
+    rm requirements*.txt
 
 # Add source files (Python, R)
 COPY wgbs_pipeline/*.* wgbs_pipeline/
