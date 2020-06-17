@@ -131,7 +131,7 @@ workflow wgbs {
         }
 
         Array[File] bedmethyls = extract.cpg_bed
-        if (length(bedmethyls) > 1 && length(bedmethyls) < 3) {
+        if (length(bedmethyls) == 2) {
             call calculate_bed_pearson_correlation { input:
                 bed1 = bedmethyls[0],
                 bed2 = bedmethyls[1],
