@@ -53,6 +53,14 @@ commands:
           command: |
             echo "export WGBS_DOCKER_IMAGE_TAG=encodedcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" >> ${BASH_ENV}
 
+  get_pipeline_version:
+    description: get pipeline version from __init__.py
+    steps:
+      - run:
+          command: |
+            PIPELINE_VERSION=$(python3 -c "import wgbs_pipeline;print(wgbs_pipeline.__version__)")
+            echo "export PIPELINE_VERSION=${PIPELINE_VERSION}" >> ${BASH_ENV}
+
 jobs:
   lint:
     <<: *lint
@@ -134,6 +142,7 @@ jobs:
       - setup_remote_docker:
           version: 19.03.8
       - set_environment_variables
+      - get_pipeline_version
       - run: *make_tag
       - run:
           command: |
@@ -141,6 +150,8 @@ jobs:
             docker pull "${TAG}"
             docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS}
             docker tag "${TAG}" encodedcc/${CIRCLE_PROJECT_REPONAME}:template
+            docker tag ${TAG} encodedcc/hic-pipeline:${PIPELINE_VERSION}
+            docker push encodedcc/hic-pipeline:${PIPELINE_VERSION}
             docker push encodedcc/${CIRCLE_PROJECT_REPONAME}:template
             docker logout
           no_output_timeout: 30m
