@@ -150,8 +150,8 @@ jobs:
             docker pull "${TAG}"
             docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS}
             docker tag "${TAG}" encodedcc/${CIRCLE_PROJECT_REPONAME}:template
-            docker tag ${TAG} encodedcc/hic-pipeline:${PIPELINE_VERSION}
-            docker push encodedcc/hic-pipeline:${PIPELINE_VERSION}
+            docker tag ${TAG} encodedcc/${CIRCLE_PROJECT_REPONAME}:${PIPELINE_VERSION}
+            docker push encodedcc/${CIRCLE_PROJECT_REPONAME}:${PIPELINE_VERSION}
             docker push encodedcc/${CIRCLE_PROJECT_REPONAME}:template
             docker logout
           no_output_timeout: 30m
