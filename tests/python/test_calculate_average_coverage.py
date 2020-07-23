@@ -34,6 +34,6 @@ def test_make_qc_record():
     metric_1 = ("foo", {"bar": "baz"})
     metric_2 = ("qux", {"quux": "corge"})
     result = make_qc_record([metric_1, metric_2])
-    assert result.to_ordered_dict["foo"] == {"bar": "baz"}
-    assert result["qux"] == {"quux": "corge"}
+    assert result.to_ordered_dict()["foo"] == {"bar": "baz"}
+    assert result.to_ordered_dict()["qux"] == {"quux": "corge"}
     assert isinstance(result, QCMetricRecord)
