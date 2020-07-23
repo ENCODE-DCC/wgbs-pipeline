@@ -8,8 +8,8 @@ samtools-stats `RL`, see http://www.htslib.org/doc/samtools-stats.html for detai
 """
 
 import argparse
-from io import StringIO
-from typing import Dict
+import tempfile
+from typing import Any, Dict, List, Tuple
 
 import pysam
 from qc_utils import QCMetric, QCMetricRecord
@@ -22,30 +22,53 @@ def main() -> None:  # pragma: no cover
     """
     parser = get_parser()
     args = parser.parse_args()
-    samtools_stats_stdout = pysam.stats("--threads", args.threads, args.bam)
-    samtools_stats_buffer = StringIO(samtools_stats_stdout)
-    samtools_stats = parse_samtools_stats(samtools_stats_buffer)
-    average_coverage = calculate_average_coverage(1, 2, 3)
-    qc_record = QCMetricRecord()
-    samtools_stats_metric = QCMetric("samtools_stats", samtools_stats)
-    average_coverage_metric = QCMetric("average_coverage", average_coverage)
-    qc_record.add(samtools_stats_metric)
-    qc_record.add(average_coverage_metric)
+    samtools_stats = get_samtools_stats(args.bam, args.threads)
+    genome_size = calculate_genome_size(args.chrom_sizes)
+    average_coverage = calculate_average_coverage(
+        genome_size=genome_size,
+        aligned_read_count=samtools_stats["reads mapped"],
+        read_length=samtools_stats["average length"],
+    )
+    qc_record = make_qc_record(
+        [("samtools_stats", samtools_stats), ("average_coverage", average_coverage)]
+    )
     qc_record.save(args.outfile)
 
 
-def calculate_genome_size(chrom_sizes_path: str):
-    pass
+def get_samtools_stats(bam_path: str, threads: int) -> Dict[str, Any]:
+    """
+    The buffer must be flushed first before it is read again by the parser, see
+    https://stackoverflow.com/questions/46004774/python-namedtemporaryfile-appears-empty-even-after-data-is-written
+    """
+    samtools_stats_stdout = pysam.stats("--threads", str(threads), bam_path)
+    with tempfile.NamedTemporaryFile(mode="w") as samtools_stats_file:
+        samtools_stats_file.write(samtools_stats_stdout)
+        samtools_stats_file.flush()
+        samtools_stats = parse_samtools_stats(samtools_stats_file.name)
+    return samtools_stats
 
 
-def calculate_read_length(bam_path: str):
-    pass
+def calculate_genome_size(chrom_sizes_path: str) -> int:
+    size = 0
+    with open(chrom_sizes_path) as f:
+        for line in f:
+            size += int(line.split()[1])
+    return size
 
 
 def calculate_average_coverage(
-    genome_size: int, aligned_read_counts: int, read_length: int
+    genome_size: int, aligned_read_count: int, read_length: int
 ) -> Dict[str, float]:
-    return {"average_coverage": 1.0}
+    average_coverage = (aligned_read_count * read_length) / genome_size
+    return {"average_coverage": average_coverage}
+
+
+def make_qc_record(qcs: List[Tuple[str, Dict[str, Any]]]) -> QCMetricRecord:
+    qc_record = QCMetricRecord()
+    for name, qc in qcs:
+        metric = QCMetric(name, qc)
+        qc_record.add(metric)
+    return qc_record
 
 
 def get_parser() -> argparse.ArgumentParser:
