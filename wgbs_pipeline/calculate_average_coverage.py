@@ -71,7 +71,7 @@ def make_qc_record(qcs: List[Tuple[str, Dict[str, Any]]]) -> QCMetricRecord:
     return qc_record
 
 
-def get_parser() -> argparse.ArgumentParser:
+def get_parser() -> argparse.ArgumentParser:  # pragma: nocover
     parser = argparse.ArgumentParser()
     parser.add_argument("--bam", help="Bam file to compute coverage on", required=True)
     parser.add_argument("--chrom-sizes", help="Chromosome sizes file", required=True)

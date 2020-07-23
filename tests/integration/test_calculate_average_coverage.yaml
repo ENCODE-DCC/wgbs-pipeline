@@ -8,4 +8,4 @@
       tests/integration/json/test_calculate_average_coverage.json
     files:
       - path: test-output/average_coverage_qc.json
-        md5sum: 66cc1d8b85420e4bc767b5d6ce97dacf
+        md5sum: 1f6dd50510bb8007552229b99be0e724
