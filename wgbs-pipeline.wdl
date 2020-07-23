@@ -289,6 +289,30 @@ task map {
     }
 }
 
+task calculate_average_coverage {
+    File bam
+    File chrom_sizes
+    Int ncpus
+
+    command {
+        python3 "$(which calculate_average_coverage.py)" \
+            --bam ${bam} \
+            --chrom-sizes ${chrom_sizes} \
+            --threads ${ncpus} \
+            --outfile average_coverage_qc.json
+    }
+
+    output {
+        File average_coverage_qc = "average_coverage_qc.json"
+    }
+
+    runtime {
+        cpu: "${ncpus}"
+        memory: "8 GB"
+        disks: "local-disk 500 SSD"
+    }
+}
+
 task bscaller {
     File reference
     File gemBS_json
