@@ -18,6 +18,7 @@ workflow wgbs {
 
     String barcode_prefix = "sample_"
 
+    Int samtools_stats_ncpus = 1
     Int bsmooth_num_workers = 8
     Int bsmooth_num_threads = 2
     Boolean run_bsmooth = true
@@ -94,6 +95,12 @@ workflow wgbs {
                 bam = map.bam,
                 csi = map.csi,
                 index = index,
+            }
+
+            call calculate_average_coverage { input:
+                bam = map.bam,
+                chrom_sizes = contig_sizes,
+                ncpus = samtools_stats_ncpus,
             }
 
             call extract { input:
