@@ -1,0 +1,5 @@
+{
+  "test_calculate_average_coverage.bam": "tests/data/sample_sample5.bam",
+  "test_calculate_average_coverage.chrom_sizes": "tests/data/sacCer3.contig.sizes",
+  "test_calculate_average_coverage.ncpus": 1
+}

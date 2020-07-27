@@ -73,5 +73,7 @@
         md5sum: a09ae01f70fa6d2461e37d5814ceb579
       - path: test-output/coverage.bw
         md5sum: afa224c2037829dccacea4a67b6fa84a
+      - path: test-output/average_coverage_qc.json
+        md5sum: 82ce31e21d361d52a7f19dce1988b827
       - path: test-output/bed_pearson_correlation_qc.json
         should_exist: false

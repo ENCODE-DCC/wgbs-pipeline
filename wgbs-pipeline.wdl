@@ -18,6 +18,7 @@ workflow wgbs {
 
     String barcode_prefix = "sample_"
 
+    Int samtools_stats_ncpus = 1
     Int bsmooth_num_workers = 8
     Int bsmooth_num_threads = 2
     Boolean run_bsmooth = true
@@ -94,6 +95,12 @@ workflow wgbs {
                 bam = map.bam,
                 csi = map.csi,
                 index = index,
+            }
+
+            call calculate_average_coverage { input:
+                bam = map.bam,
+                chrom_sizes = contig_sizes,
+                ncpus = samtools_stats_ncpus,
             }
 
             call extract { input:
@@ -286,6 +293,30 @@ task map {
 
     runtime {
         memory: "64 GB"
+    }
+}
+
+task calculate_average_coverage {
+    File bam
+    File chrom_sizes
+    Int ncpus
+
+    command {
+        python3 "$(which calculate_average_coverage.py)" \
+            --bam ${bam} \
+            --chrom-sizes ${chrom_sizes} \
+            --threads ${ncpus} \
+            --outfile average_coverage_qc.json
+    }
+
+    output {
+        File average_coverage_qc = "average_coverage_qc.json"
+    }
+
+    runtime {
+        cpu: "${ncpus}"
+        memory: "8 GB"
+        disks: "local-disk 500 SSD"
     }
 }
 
