@@ -8,8 +8,6 @@
 
 An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction and [Bsmooth](https://bioconductor.org/packages/release/bioc/html/bsseq.html) for smoothing of CpG methylation values.
 
-This pipeline is currently in prerelease, and as such may be unstable.
-
 ## Installation
 
 1) Git clone this pipeline.
@@ -17,7 +15,7 @@ This pipeline is currently in prerelease, and as such may be unstable.
     $ git clone https://github.com/ENCODE-DCC/wgbs-pipeline
     ```
 
-2) Install [Caper](https://github.com/ENCODE-DCC/caper), requires `java` > 1.8 and `python` > 3.4.1 . Caper is a python wrapper for [Cromwell](https://github.com/broadinstitute/cromwell).
+2) Install [Caper](https://github.com/ENCODE-DCC/caper), requires `java` >= 1.8 and `python` >= 3.6 . Caper is a python wrapper for [Cromwell](https://github.com/broadinstitute/cromwell).
     ```bash
     $ pip install caper  # use pip3 if it doesn't work
     ```
@@ -27,19 +25,22 @@ This pipeline is currently in prerelease, and as such may be unstable.
 
 ## Usage
 
+To verify your installation, you can run the following pipeline with a test data set using the following command:
+
 ```bash
-$ caper run wgbs-pipeline.wdl -i input.json -m testrun_metadata.json
+$ caper run wgbs-pipeline.wdl -i tests/functional/json/test_wgbs.json
 ```
 
-## Description of files
+For detailed usage, see [usage](docs/usage.md)
 
-The gemBS index file is a `.tar.gz` archive containing the following files produced by running gemBS index, where `${prefix}` is the name of the fasta file used to produce it (without file extension) :
-* `${prefix}.gemBS.contig_md5`
-* `${prefix}.gemBS.ref.gzi`
-* `${prefix}.BS.gem`
-* `${prefix}.gemBS.ref`
-* `${prefix}.contig.sizes`
-* `${prefix}.gemBS.ref.fai`
+## Inputs
+
+See [inputs](docs/reference.md#inputs)
+
+
+## Outputs
+
+See [outputs](docs/reference.md#outputs)
 
 ## Contributing
 
