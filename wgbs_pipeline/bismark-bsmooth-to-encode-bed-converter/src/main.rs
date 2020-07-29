@@ -1,4 +1,5 @@
 use csv::{Reader, ReaderBuilder, Writer, WriterBuilder};
+use float_cmp::approx_eq;
 use palette::rgb::Rgb;
 use palette::Hsv;
 use serde::{Deserialize, Serialize};
@@ -7,6 +8,9 @@ use std::fs::File;
 use std::io;
 use std::{cmp, fmt};
 use structopt::StructOpt;
+
+const CONSECUTIVE_SAME_CONSIDERED_BSMOOTH_FAILURE: u8 = 100;
+const BSMOOTH_FAILURE_SIGNAL_VALUE: f64 = 0.5;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::from_args();
@@ -23,6 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         bismark_reader,
         smoothed_methylation_reader,
         &mut encode_writer,
+        CONSECUTIVE_SAME_CONSIDERED_BSMOOTH_FAILURE,
     )?;
 
     Ok(())
@@ -34,16 +39,30 @@ fn process<R: io::Read, W: io::Write>(
     mut bismark_reader: Reader<R>,
     mut smoothed_methylation_reader: Reader<R>,
     encode_writer: &mut Writer<W>,
+    consecutive_same_considered_fail: u8,
 ) -> Result<(), io::Error> {
     let records = bismark_reader.deserialize::<Row>();
     let smoothed_methylation_records =
         smoothed_methylation_reader.deserialize::<SmoothedMethylationRow>();
 
+    let mut prev_was_constant_count = 0;
     for (i, smoothed_methylation_record) in records.zip(smoothed_methylation_records) {
         let mut record = i?;
         match smoothed_methylation_record?.smoothed_methylation_percentage {
             SmoothedMethylationPercentage::Valid(valid) => {
-                record.smoothed_methylation_percentage = valid * 100.
+                record.smoothed_methylation_percentage = valid * 100_f64;
+                if approx_eq!(f64, valid, BSMOOTH_FAILURE_SIGNAL_VALUE, ulps = 2) {
+                    prev_was_constant_count += 1;
+                    if prev_was_constant_count >= consecutive_same_considered_fail {
+                        panic!(
+                            "Bsmooth output contained {} consecutive {:.1}s which is considered invalid, terminating",
+                            consecutive_same_considered_fail,
+                            BSMOOTH_FAILURE_SIGNAL_VALUE,
+                        );
+                    }
+                } else {
+                    prev_was_constant_count = 0;
+                }
             }
             SmoothedMethylationPercentage::Nan(_) => continue,
         };
@@ -237,18 +256,34 @@ mod tests {
                             chr1\t10650\t10651\t1.0\t4\t0\n\
                             ";
         let bsmooth_data = "\
-        0.356\n
-        NA\n
+        0.356\n\
+        NA\n\
         ";
         let bismark_rdr = get_reader(bismark_data.as_bytes());
         let bsmooth_rdr = get_reader(bsmooth_data.as_bytes());
         let mut wtr = get_writer(vec![]);
-        process(bismark_rdr, bsmooth_rdr, &mut wtr)?;
+        process(bismark_rdr, bsmooth_rdr, &mut wtr, 3)?;
         let result = String::from_utf8(wtr.into_inner()?)?;
         assert_eq!(
             result,
             "chr1\t10649\t10650\t.\t4\t.\t10649\t10650\t219,255,0\t4\t35.6\n"
         );
         Ok(())
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Bsmooth output contained 2 consecutive 0.5s which is considered invalid, terminating"
+    )]
+    fn test_process_repeated_bsmooth_value_panics() {
+        let bismark_data = "\
+                            chr1\t10649\t10650\t1.0\t4\t0\n\
+                            chr1\t10650\t10651\t1.0\t4\t0\n\
+                            ";
+        let bsmooth_data = "0.5\n0.5\n";
+        let bismark_rdr = get_reader(bismark_data.as_bytes());
+        let bsmooth_rdr = get_reader(bsmooth_data.as_bytes());
+        let mut wtr = get_writer(vec![]);
+        let _ = process(bismark_rdr, bsmooth_rdr, &mut wtr, 2);
     }
 }
