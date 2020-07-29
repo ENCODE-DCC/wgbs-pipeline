@@ -1,6 +1,6 @@
 # Defines image for running linting (R installation takes ages due to compiling libraries)
 # You should never need to use this directly.
-# Builds with docker build -t encodedcc/wgbs-pipeline:circleci-lint - < Dockerfile
+# Builds with docker build -t encodedcc/wgbs-pipeline:circleci-lint - < .circleci/Dockerfile
 FROM circleci/python:3.7.3-stretch
 
 # Installs rust with cargo clippy and rustfmt
@@ -14,4 +14,4 @@ RUN sudo apt-get install -y r-base && \
     sudo Rscript -e 'install.packages("git2r", repos = "http://cran.us.r-project.org")'
 
 # Install shellcheck
-RUN curl -s https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz | sudo tar xJ && sudo mv shellcheck-stable/shellcheck /usr/local/bin
+RUN curl -Ls https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz | sudo tar xJ && sudo mv shellcheck-stable/shellcheck /usr/local/bin
