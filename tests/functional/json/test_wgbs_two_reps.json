@@ -15,7 +15,6 @@
       ]
     ]
   ],
-  "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
   "wgbs.indexed_contig_sizes": "tests/data/sacCer3.contig.sizes",
   "wgbs.indexed_reference": "tests/data/indexes.tar.gz",
   "wgbs.reference": "tests/data/sacCer3.fa.gz",

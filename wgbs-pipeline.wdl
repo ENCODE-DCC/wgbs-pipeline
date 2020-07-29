@@ -14,7 +14,7 @@ workflow wgbs {
     Int num_gembs_threads = 8
     Int num_gembs_jobs = 3
     String? underconversion_sequence_name
-    String? include_conf_file
+    String include_conf_file = "/software/conf/IHEC_standard.conf"
 
     String barcode_prefix = "sample_"
 

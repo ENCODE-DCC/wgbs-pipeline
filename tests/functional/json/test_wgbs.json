@@ -9,7 +9,6 @@
       ]
     ]
   ],
-  "wgbs.include_conf_file": "/software/conf/IHEC_standard.conf",
   "wgbs.reference": "tests/data/sacCer3.fa.gz",
   "wgbs.run_bsmooth": false,
   "wgbs.sample_names": [
