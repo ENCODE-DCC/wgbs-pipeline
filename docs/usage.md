@@ -2,12 +2,12 @@
 
 ## Contents
 
-[Introduction](usage.md#introduction)
-[Installation](usage.md#installation)
-[Running Workflows](usage.md#running-workflows)
-[Inspecting Outputs](usage.md#inspecting-outputs)
-[Supported Platforms](usage.md#inspecting-outputs)
-[Using Singularity](usage.md#using-singularity)
+* [Introduction](usage.md#introduction)
+* [Installation](usage.md#installation)
+* [Running Workflows](usage.md#running-workflows)
+* [Inspecting Outputs](usage.md#inspecting-outputs)
+* [Supported Platforms](usage.md#inspecting-outputs)
+* [Using Singularity](usage.md#using-singularity)
 
 ## Introduction
 
