@@ -1,3 +1,5 @@
+# ENCODE WGBS Pipeline Reference
+
 ## Table of Contents
 
 * [Inputs](reference.md#inputs)
@@ -89,16 +91,16 @@ This will generate a combined contig sizes for the reference and extra reference
 
 The pipeline produces more outputs than listed here, only the most useful ones are listed here.
 
-### Task `wgbs.index`
+#### Task `wgbs.index`
 
 * `bam`: a `BAM` file containing mapping results for the replicate, with all libraries for that replicate merged together.
 * `csi`: a `BAM` index in `csi` format for the above `BAM`, useful for visualization and subsetting, among other purposes. See [specifications](http://samtools.github.io/hts-specs/CSIv1.pdf) for details.
 
-### Task `wgbs.calculate_average_coverage`
+#### Task `wgbs.calculate_average_coverage`
 
 * `average_coverage_qc`: a `JSON` file containing the average coverage of its input BAM file and `samtools stats` quality metrics. Average coverage is defined as `(aligned read counts * read length ) / total genome size`, where read length and aligned read counts are taken from the `samtools stats` output and `total genome size` is the sum of chromosome sizes in the `index_contig_sizes` file.
 
-### Task `wgbs.extract`
+#### Task `wgbs.extract`
 
 Unless otherwise specified, `bigBed` files are in ENCODE `bedMethyl` (`bed9+2`) format, see [ENCODE standards](https://www.encodeproject.org/data-standards/wgbs/) for details. One of each of these files is produced per replicate.
 
@@ -112,20 +114,20 @@ Unless otherwise specified, `bigBed` files are in ENCODE `bedMethyl` (`bed9+2`) 
 * `cpg_bed`: a `bed` file containing the methylation at reference CpG sites
 * `cpg_txt`: a `gemBS`-style `bed` file containing the methylation at genotyped CpG sites (i.e. sites that could confidently be called by `gemBS` as CpGs). For details on this format, see the [gemBS documentation](http://statgen.cnag.cat/GEMBS/UserGuide/_build/html/pipelineExtract.html#gembs-style-output-files)
 
-### Task `wgbs.make_coverage_bigwig`
+#### Task `wgbs.make_coverage_bigwig`
 
 * `coverage_bigwig`: a `bigWig` file containing the coverage genome-wide, one file per replicate.
 
-### Task `wgbs.calculate_bed_pearson_correlation`
+#### Task `wgbs.calculate_bed_pearson_correlation`
 
 * `bed_pearson_correlation_qc`: a `JSON` file containing the Pearson correlation between replicates of methylation percentage at reference CpG sites with 10 or more reads. Note that this file is only produced when there are exactly two replicates.
 
-### Task `wgbs.bsmooth`
+#### Task `wgbs.bsmooth`
 
 * `smoothed_cpg_bed`: a `bed` file in ENCODE `bedMethyl` format containing the smoothed methylation percentage at **genotyped** CpG sites for the input replicate, as calculated using `Bsmooth` from the [bsseq R package](https://www.bioconductor.org/packages/release/bioc/html/bsseq.html)
 * `smoothed_cpg_bigbed`: the above `bed` file converted to `bigBed` format
 
-### Task `wgbs.qc_report`
+#### Task `wgbs.qc_report`
 
 * `portal_map_qc_json`: a `JSON` file containing mapping quality metrics for the replicate. These values are scraped out of the `gemBS` HTML QC reports. See the [ENCODE schema](https://www.encodeproject.org/profiles/gembs_alignment_quality_metric) for details on which metrics are provided. Further descriptions of the metrics can be found in the [gemBS documentation](http://statgen.cnag.cat/GEMBS/UserGuide/_build/html/qualityControl.html)
 * `map_qc_insert_size_plot_png`: a `PNG` file containing a plot of insert size distribution across reads
