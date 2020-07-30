@@ -10,22 +10,24 @@ An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome
 
 ## Installation
 
-1) Git clone this pipeline.
+1. Git clone this pipeline.
     ```bash
     $ git clone https://github.com/ENCODE-DCC/wgbs-pipeline
     ```
 
-2) Install [Caper](https://github.com/ENCODE-DCC/caper), requires `java` >= 1.8 and `python` >= 3.6 . Caper is a python wrapper for [Cromwell](https://github.com/broadinstitute/cromwell).
+2. Install [Caper](https://github.com/ENCODE-DCC/caper), requires `java` >= 1.8 and `python` >= 3.6 . Caper is a python wrapper for [Cromwell](https://github.com/broadinstitute/cromwell).
     ```bash
     $ pip install caper  # use pip3 if it doesn't work
     ```
 
-3) Follow [Caper's README](https://github.com/ENCODE-DCC/caper) carefully to configure it for your platform (local, cloud, cluster, etc.)
-    > **IMPORTANT**: Configure your Caper configuration file `~/.caper/default.conf` correctly for your platform.
+3. Follow [Caper's README](https://github.com/ENCODE-DCC/caper) carefully to configure it for your platform (local, cloud, cluster, etc.)
+> **IMPORTANT**: Configure your Caper configuration file `~/.caper/default.conf` correctly for your platform.
 
 ## Usage
 
-To verify your installation, you can run the following pipeline with a test data set using the following command:
+To verify your installation, you can run the following pipeline with a test data set by invoking the following command from the root of the cloned repository.
+
+> Note: this will incur some cost when running in cloud environments.
 
 ```bash
 $ caper run wgbs-pipeline.wdl -i tests/functional/json/test_wgbs.json
