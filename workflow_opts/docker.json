@@ -1,7 +1,0 @@
-{
-  "default_runtime_attributes": {
-    "cpu": "8",
-    "docker": "encodedcc/wgbs-pipeline:0.1.0",
-    "memory": "32 GB"
-  }
-}
