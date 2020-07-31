@@ -227,6 +227,12 @@ task prepare {
     output {
         File gemBS_json = "gemBS.json"
     }
+
+    runtime {
+        cpu: 8
+        disks: "local-disk 500 HDD"
+        memory: "32 GB"
+    }
 }
 
 task index {
@@ -262,6 +268,8 @@ task index {
     }
 
     runtime {
+        cpu: 8
+        disks: "local-disk 500 HDD"
         memory: "64 GB"
     }
 }
@@ -292,6 +300,8 @@ task map {
     }
 
     runtime {
+        cpu: 8
+        disks: "local-disk 500 HDD"
         memory: "64 GB"
     }
 }
@@ -316,7 +326,7 @@ task calculate_average_coverage {
     runtime {
         cpu: "${ncpus}"
         memory: "8 GB"
-        disks: "local-disk 500 SSD"
+        disks: "local-disk 200 SSD"
     }
 }
 
@@ -343,6 +353,12 @@ task bscaller {
         File bcf = glob("calls/**/*.bcf")[0]
         File bcf_csi = glob("calls/**/*.bcf.csi")[0]
         File bcf_md5 = glob("calls/**/*.bcf.md5")[0]
+    }
+
+    runtime {
+        cpu: 8
+        disks: "local-disk 500 HDD"
+        memory: "32 GB"
     }
 }
 
@@ -388,6 +404,7 @@ task extract {
     }
 
     runtime {
+        cpu: 8
         disks: "local-disk 500 SSD"
         memory: "96 GB"
     }
@@ -411,6 +428,12 @@ task make_coverage_bigwig {
     output {
         File coverage_bigwig = "coverage.bw"
     }
+
+    runtime {
+        cpu: 4
+        disks: "local-disk 50 SSD"
+        memory: "8 GB"
+    }
 }
 
 task calculate_bed_pearson_correlation {
@@ -427,7 +450,7 @@ task calculate_bed_pearson_correlation {
 
     runtime {
         cpu: 1
-        disks: "local-disk 10 SSD"
+        disks: "local-disk 50 SSD"
         memory: "4 GB"
     }
 }
@@ -485,5 +508,11 @@ task qc_report {
         File portal_map_qc_json = "gembs_map_qc.json"
         File map_qc_insert_size_plot_png = "mapping_reports/mapping/${sample_barcode}.isize.png"
         File map_qc_mapq_plot_png = "mapping_reports/mapping/${sample_barcode}.mapq.png"
+    }
+
+    runtime {
+        cpu: 1
+        disks: "local-disk 50 HDD"
+        memory: "4 GB"
     }
 }
