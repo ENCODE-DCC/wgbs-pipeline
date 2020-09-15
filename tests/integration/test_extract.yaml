@@ -29,3 +29,13 @@
         md5sum: 6809ee8479439454aa502ae11f48d91c
       - path: test-output/glob-664ff83c3881df2363da923f006b098b/sample_sample5_non_cpg.txt.gz.tbi
         md5sum: 6cdebb4ad2ea184ca4783acb350ae038
+  - name: test_extract_different_chrom_sizes_name
+    tags:
+      - integration
+    command: >-
+      tests/caper_run.sh
+      tests/integration/wdl/test_extract.wdl
+      tests/integration/json/test_extract_different_chrom_sizes_name.json
+    files:
+      - path: test-output/glob-0b0236659b9524643e6454061959b28c/sample_sample5_pos.bw
+        md5sum: c30bc10a258ca4f1fe67f115c4c2db10
