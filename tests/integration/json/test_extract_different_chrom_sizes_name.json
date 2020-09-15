@@ -1,0 +1,8 @@
+{
+  "test_extract.bcf": "tests/data/sample_sample5.bcf",
+  "test_extract.bcf_csi": "tests/data/sample_sample5.bcf.csi",
+  "test_extract.contig_sizes": "tests/data/saccer_chrom_sizes.tsv",
+  "test_extract.gemBS_json": "tests/data/gemBS.json",
+  "test_extract.reference": "tests/data/sacCer3.fa.gz",
+  "test_extract.sample_barcode": "sample_sample5"
+}

@@ -16,6 +16,7 @@ RUN apt-get update && \
     build-essential \
     git \
     gsl-bin \
+    jq \
     lbzip2 \
     libbz2-dev \
     libcurl4-openssl-dev \
