@@ -1,5 +1,5 @@
-#CAPER docker encodedcc/wgbs-pipeline:0.1.0
-#CAPER singularity docker://encodedcc/wgbs-pipeline:0.1.0
+#CAPER docker encodedcc/wgbs-pipeline:1.0.0
+#CAPER singularity docker://encodedcc/wgbs-pipeline:1.0.0
 #CROO out_def https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json
 
 workflow wgbs {
