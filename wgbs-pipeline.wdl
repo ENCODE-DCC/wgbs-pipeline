@@ -374,8 +374,15 @@ task extract {
 
     command {
         set -euo pipefail
+        CHROM_SIZES_FILENAME=$(jq -r '.config.DEFAULT.reference |
+            split("/")[-1] |
+            rtrimstr(".gz") |
+            rtrimstr(".fa") |
+            rtrimstr(".fasta") +
+            ".contig.sizes"' \
+            ${gemBS_json})
         mkdir reference && ln ${reference} reference
-        mkdir indexes && ln ${contig_sizes} indexes
+        mkdir indexes && mv ${contig_sizes} indexes/"$CHROM_SIZES_FILENAME"
         mkdir -p calls/${sample_barcode}
         mkdir -p extract/${sample_barcode}
         ln ${bcf} calls/${sample_barcode}
