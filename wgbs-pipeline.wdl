@@ -458,7 +458,7 @@ task calculate_bed_pearson_correlation {
     runtime {
         cpu: 1
         disks: "local-disk 50 SSD"
-        memory: "4 GB"
+        memory: "8 GB"
     }
 }
 
