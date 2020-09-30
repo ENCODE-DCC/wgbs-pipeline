@@ -21,6 +21,12 @@
         md5sum: 31a69396b7084520c04bd80f2cabfd59
       - path: test-output/glob-f31cca1fcab505e10c2fe5ff003b211a/sample_sample5_cpg.bed.gz
         md5sum: 67193e21cc34b76d12efba1a19df6644
+      - path: test-output/glob-628ba0e53e46e56a922182fdf74ce1bf/sample_sample5_cpg_no_header.bed.gz
+        md5sum: 0d0a985906aedd14ccf28902296973f7
+      - path: test-output/glob-c21212b9b574c316b4e3d490c453bd11/sample_sample5_chg_no_header.bed.gz
+        md5sum: f4b4e36743ac0cc97b74ff5ae314e1f1
+      - path: test-output/glob-dbc0dd928cb6f1c5110fcb3356cc659b/sample_sample5_chh_no_header.bed.gz
+        md5sum: cfcdba96e174270df46fd81d355de2b7
       - path: test-output/glob-b76cddd256e1197e0b726acc7184afc4/sample_sample5_cpg.txt.gz
         md5sum: fccd9c9c5b4fea80890abd536fd76a35
       - path: test-output/glob-24ceb385eea2ca53f1e6c4a1438ccd21/sample_sample5_cpg.txt.gz.tbi
