@@ -393,6 +393,14 @@ task extract {
             ${if defined(phred_threshold) then ("-q " + phred_threshold) else ""} \
             ${if defined(min_inform) then ("-l " + min_inform) else ""} \
             -B --ignore-db --ignore-dep
+
+        # UCSC validation code does not work with BED track definition line.
+        for i in extract/**/*.bed.gz; do
+            FILENAME=$(basename "$i" .bed.gz)
+            gzip -dck "$i" |
+                tail -n +2 |
+                gzip -n > "$FILENAME"_no_header.bed.gz
+        done
     }
 
     output {
@@ -404,6 +412,9 @@ task extract {
         File chg_bed = glob("extract/**/*_chg.bed.gz")[0]
         File chh_bed = glob("extract/**/*_chh.bed.gz")[0]
         File cpg_bed = glob("extract/**/*_cpg.bed.gz")[0]
+        File chg_bed_no_header = glob("*_chg_no_header.bed.gz")[0]
+        File chh_bed_no_header = glob("*_chh_no_header.bed.gz")[0]
+        File cpg_bed_no_header = glob("*_cpg_no_header.bed.gz")[0]
         File cpg_txt = glob("extract/**/*_cpg.txt.gz")[0]  # gemBS-style output bed file
         File cpg_txt_tbi = glob("extract/**/*_cpg.txt.gz.tbi")[0]
         File non_cpg_txt = glob("extract/**/*_non_cpg.txt.gz")[0]
