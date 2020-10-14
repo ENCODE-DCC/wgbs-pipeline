@@ -1,6 +1,5 @@
 workflow wgbs {
     meta {
-        author: "Paul Sud"
         version: "1.1.0"
         caper_docker: "encodedcc/wgbs-pipeline:1.1.0"
         caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.0"
