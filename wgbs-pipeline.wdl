@@ -1,8 +1,11 @@
-#CAPER docker encodedcc/wgbs-pipeline:1.0.0
-#CAPER singularity docker://encodedcc/wgbs-pipeline:1.0.0
-#CROO out_def https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json
-
 workflow wgbs {
+    meta {
+        version: "1.1.0"
+        caper_docker: "encodedcc/wgbs-pipeline:1.1.0"
+        caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.0"
+        croo_out_def: "https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json"
+    }
+
     File reference
     File? indexed_reference
     File? indexed_contig_sizes
