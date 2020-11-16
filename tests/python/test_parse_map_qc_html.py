@@ -59,6 +59,37 @@ def test_parse_map_qc_html():
     )
 
 
+def test_parse_map_qc_html_single_ended(single_ended_map_qc_html):
+    """
+    Single ended data is missing pair information. Need to use pytest.approx here due to
+    floating point comparisons
+    """
+    qc = parse_map_qc_html(single_ended_map_qc_html)
+    assert qc == pytest.approx(
+        {
+            "bisulfite_reads_c2t": 427911721,
+            "bisulfite_reads_g2a": 410279399,
+            "conversion_rate": 0.993987188263205,
+            "general_reads": 834427445,
+            "pct_bisulfite_reads_c2t": 0.3791,
+            "pct_bisulfite_reads_g2a": 0.3635,
+            "pct_general_reads": 0.7392,
+            "pct_reads_in_control_sequences": 0.0,
+            "pct_reads_over_conversion_control": 0.0,
+            "pct_reads_under_conversion_control": 0.0033,
+            "pct_sequenced_reads": 1.0,
+            "pct_unique_fragments": 0.7465999999999999,
+            "pct_unmapped_reads": 0.25739999999999996,
+            "reads_in_control_sequences": 0,
+            "reads_over_conversion_control": 0,
+            "reads_under_conversion_control": 3763675,
+            "sequenced_reads": 1128751544,
+            "unique_fragments": 625822824,
+            "unmapped_reads": 290560424,
+        }
+    )
+
+
 def test_string_from_tag():
     tag = BeautifulSoup("<title> Foo </title>", "html.parser")
     result = string_from_tag(tag)
@@ -83,12 +114,18 @@ def test_qc_key_from_tag():
     assert result == "mapped_reads"
 
 
-def test_find_table():
-    soup = BeautifulSoup(HTML_TABLE, "html.parser")
+def test_find_table(html_table):
+    soup = BeautifulSoup(html_table, "html.parser")
     table = find_table(soup, name="Mapping Stats (Reads)")
     assert table[0].td.string == " Sequenced Reads "
     assert "\n" not in table
     assert all(i.th is None for i in table)
+
+
+def test_find_table_not_found_returns_none(html_table):
+    soup = BeautifulSoup(html_table, "html.parser")
+    table = find_table(soup, name="foo")
+    assert table is None
 
 
 @pytest.mark.parametrize(
@@ -179,21 +216,133 @@ HTML_DOC = """
 """
 
 
-HTML_TABLE = """
-<HTML>
- <HEAD>
- </HEAD>
- <BODY>
-<H1 id="section"> Mapping Stats (Reads) </H1>
-  <TABLE id="hor-zebra">
-   <TR>
-    <TH scope="col">Concept</TH> <TH scope="col">Total Reads</TH> <TH scope="col">%</TH>
-    <TH scope="col">Pair One Reads</TH> <TH scope="col">%</TH> <TH scope="col">Pair Two Reads</TH> <TH scope="col">%</TH>
-   </TR>
-   <TR class="odd">
-   <TD> Sequenced Reads </TD> <TD> 400000 </TD> <TD> 100.00 % </TD> <TD> 200000 </TD> <TD> 100.00 % </TD> <TD> 200000 </TD> <TD> 100.00 % </TD>
-   </TR>
- </TABLE>
- </BODY>
-</HTML>
-"""
+@pytest.fixture
+def html_table():
+    table = """
+    <HTML>
+    <HEAD>
+    </HEAD>
+    <BODY>
+    <H1 id="section"> Mapping Stats (Reads) </H1>
+    <TABLE id="hor-zebra">
+    <TR>
+        <TH scope="col">Concept</TH> <TH scope="col">Total Reads</TH> <TH scope="col">%</TH>
+        <TH scope="col">Pair One Reads</TH> <TH scope="col">%</TH> <TH scope="col">Pair Two Reads</TH> <TH scope="col">%</TH>
+    </TR>
+    <TR class="odd">
+    <TD> Sequenced Reads </TD> <TD> 400000 </TD> <TD> 100.00 % </TD> <TD> 200000 </TD> <TD> 100.00 % </TD> <TD> 200000 </TD> <TD> 100.00 % </TD>
+    </TR>
+    </TABLE>
+    </BODY>
+    </HTML>
+    """
+
+    return table
+
+
+@pytest.fixture
+def single_ended_map_qc_html():
+    html = """
+    <HTML>
+    <HEAD>
+    <STYLE TYPE="text/css">
+    <!--
+    @import url("style.css");
+    -->
+    </STYLE>
+    </HEAD>
+    <BODY>
+
+    <P id='path'> /ENCODE/sample_0 </P>
+
+    <a class="link" href="ENCODE.html"><B>BACK</B></a> <br>
+    <H1 id="title"> <U> SAMPLE sample_0 </U> </H1>
+    <BR><BR><BR>
+    <H1 id="section"> Mapping Stats (Reads) </H1>
+    <TABLE id="hor-zebra">
+    <TR>
+        <TH scope="col">Concept</TH> <TH scope="col">Total Reads</TH> <TH scope="col">%</TH>
+    </TR>
+    <TR class="odd">
+    <TD> Sequenced Reads </TD> <TD> 1128751544 </TD> <TD> 100.00 %</TD>
+    </TR>
+    <TR>
+    <TD> General Reads </TD> <TD> 834427445 </TD> <TD> 73.92 %</TD>
+    </TR>
+    <TR class="odd">
+    <TD> Reads in Control sequences </TD> <TD> 0 </TD> <TD> 0.00 %</TD>
+    </TR>
+    <TR>
+    <TD> Reads under conversion control  </TD> <TD> 3763675 </TD> <TD> 0.33 %</TD>
+    </TR>
+    <TR class="odd">
+    <TD> Reads over conversion control </TD> <TD> 0 </TD> <TD> 0.00 %</TD>
+    </TR>
+    <TR>
+    <TD> Unmapped reads </TD> <TD> 290560424 </TD> <TD> 25.74 %</TD>
+    </TR>
+    <TR class="odd">
+    <TD> Bisulfite_reads C2T </TD> <TD> 427911721 </TD> <TD> 37.91 %</TD>
+    </TR>
+    <TR>
+    <TD> Bisulfite_reads G2A </TD> <TD> 410279399 </TD> <TD> 36.35 %</TD>
+    </TR>
+    </TABLE>
+    <BR><BR><BR>
+    <H1 id="section"> Uniqueness (Fragments) </H1>
+    <TABLE id="green">
+    <TR>
+        <TH scope="col">Concept</TH> <TH scope="col">Value</TH>
+    </TR>
+    <TR>   <TD> Unique Fragments </TD> <TD> 625822824 </TD>
+    </TR>  <TR class="odd">   <TD> Average Unique </TD> <TD> 74.66 % </TD>
+    </TR>
+    </TABLE>
+    <BR><BR><BR>
+    <H1 id="section"> Mapping Stats (Bases) </H1>
+    <TABLE id="hor-zebra">
+    <TR>
+        <TH scope="col">Concept</TH> <TH scope="col">Total Bases</TH> <TH scope="col">%</TH>
+    </TR>
+    <TR class="odd">
+    <TD> Base Counts Overall A </TD> <TD> 28551057960 </TD> <TD> 24.97 %</TD>
+    </TR>
+    <TR>
+    <TD> Base Counts Overall C </TD> <TD> 1795515556 </TD> <TD> 1.57 %</TD>
+    </TR>
+    <TR class="odd">
+    <TD> Base Counts Overall G </TD> <TD> 26644100723 </TD> <TD> 23.30 %</TD>
+    </TR>
+    <TR>
+    <TD> Base Counts Overall T </TD> <TD> 44170064692 </TD> <TD> 38.63 %</TD>
+    </TR>
+    <TR class="odd">
+    <TD> Base Counts Overall N </TD> <TD> 13191351907 </TD> <TD> 11.54 %</TD>
+    </TR>
+    </TABLE>
+    <BR><BR><BR>
+    <H1 id="section"> Bisulfite Conversion Rate </H1>
+    <TABLE id="hor-zebra">
+    <TR>
+        <TH scope="col">Bisulfite Conversion Type</TH> <TH scope="col">Conversion Rate</TH>
+    </TR>
+    <TR>   <TD> Conversion Rate </TD> <TD> 0.993987188263205 </TD>
+    </TR>  <TR class="odd">   <TD> Over Conversion Rate </TD> <TD> NA </TD>
+    </TR>
+    </TABLE>
+    <BR><BR><BR>
+    <H1 id="section"> Mapping Quality </H1>
+    <TABLE id="hor-zebra">
+    <TR class="odd"> <TH scope="col"> Mapping Quality Histogram</TH> </TR>
+    <TR> <TD> <img src="sample_0.mapq.png" alt="sample_0.mapq.png"> </TD> </TR>
+    </TABLE>
+    <BR><BR><BR>
+    <H1 id="section"> Mapping Lanes Reports </H1>
+    <TABLE id="hor-zebra">
+    <TR> <TH scope="col"> LANE REPORTS </TH> </TR>
+    <TR class="odd"> <TD> <a class="link" href="0.html"> 0 </TD> </TR>
+    </TABLE>
+    </BODY>
+    </HTML>
+    """
+    return html
