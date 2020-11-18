@@ -527,7 +527,7 @@ task qc_report {
     output {
         Array[File] map_html_assets = glob("mapping_reports/mapping/*")
         File portal_map_qc_json = "gembs_map_qc.json"
-        File map_qc_insert_size_plot_png = "mapping_reports/mapping/${sample_barcode}.isize.png"
+        File? map_qc_insert_size_plot_png = "mapping_reports/mapping/${sample_barcode}.isize.png"
         File map_qc_mapq_plot_png = "mapping_reports/mapping/${sample_barcode}.mapq.png"
     }
 
