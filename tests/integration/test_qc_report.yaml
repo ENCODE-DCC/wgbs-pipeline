@@ -9,7 +9,7 @@
     files:
       - path: test-output/gembs_map_qc.json
         md5sum: 26b5238ab7bb5b195d1cf8127767261c
-      - path: test-output/mapping_reports/mapping/sample_sample5.isize.png
+      - path: test-output/glob-01c50e0d907afd3784fc7a24aa80a75e/sample_sample5.isize.png
         md5sum: d707e203b77c8806a75d269426279ca0
       - path: test-output/mapping_reports/mapping/sample_sample5.mapq.png
         md5sum: 49837be15f24f23c59c50241cf504614
