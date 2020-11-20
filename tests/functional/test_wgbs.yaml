@@ -55,7 +55,7 @@
         md5sum: 6cdebb4ad2ea184ca4783acb350ae038
       - path: test-output/gembs_map_qc.json
         md5sum: 26b5238ab7bb5b195d1cf8127767261c
-      - path: test-output/mapping_reports/mapping/sample_sample5.isize.png
+      - path: test-output/glob-65c481a690a62b639d918bb70927f25e/sample_sample5.isize.png
         md5sum: d707e203b77c8806a75d269426279ca0
       - path: test-output/mapping_reports/mapping/sample_sample5.mapq.png
         md5sum: 49837be15f24f23c59c50241cf504614
