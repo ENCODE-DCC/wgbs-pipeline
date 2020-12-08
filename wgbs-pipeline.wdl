@@ -21,7 +21,6 @@ workflow wgbs {
 
     String barcode_prefix = "sample_"
 
-    Int samtools_stats_ncpus = 1
     Int bsmooth_num_workers = 8
     Int bsmooth_num_threads = 2
     Boolean run_bsmooth = true
@@ -34,12 +33,53 @@ workflow wgbs {
     Int? gembs_extract_phred_threshold
     Int? gembs_extract_min_inform
 
+    # Per task resource parameters
+    Int? bscaller_disk_size_gb
+    Int? bscaller_num_cpus
+    Int? bscaller_ram_gb
+    Int? bsmooth_disk_size_gb
+    Int? bsmooth_num_cpus
+    Int? bsmooth_ram_gb
+    Int? calculate_average_coverage_disk_size_gb
+    Int? calculate_average_coverage_num_cpus
+    Int? calculate_average_coverage_ram_gb
+    Int? calculate_bed_pearson_correlation_disk_size_gb
+    Int? calculate_bed_pearson_correlation_num_cpus
+    Int? calculate_bed_pearson_correlation_ram_gb
+    Int? extract_disk_size_gb
+    Int? extract_num_cpus
+    Int? extract_ram_gb
+    Int? index_disk_size_gb
+    Int? index_num_cpus
+    Int? index_ram_gb
+    Int? make_conf_disk_size_gb
+    Int? make_conf_num_cpus
+    Int? make_conf_ram_gb
+    Int? make_coverage_bigwig_disk_size_gb
+    Int? make_coverage_bigwig_num_cpus
+    Int? make_coverage_bigwig_ram_gb
+    Int? make_metadata_csv_disk_size_gb
+    Int? make_metadata_csv_num_cpus
+    Int? make_metadata_csv_ram_gb
+    Int? map_disk_size_gb
+    Int? map_num_cpus
+    Int? map_ram_gb
+    Int? prepare_disk_size_gb
+    Int? prepare_num_cpus
+    Int? prepare_ram_gb
+    Int? qc_report_disk_size_gb
+    Int? qc_report_num_cpus
+    Int? qc_report_ram_gb
+
     # Don't need metadata csv to create indexes
     if (!index_only) {
         call make_metadata_csv { input:
             sample_names = select_first([sample_names, range(length(select_first([fastqs])))]),
             fastqs = write_json(fastqs),  # don't need the file contents, so avoid localizing
             barcode_prefix = barcode_prefix,
+            num_cpus = make_metadata_csv_num_cpus,
+            ram_gb = make_metadata_csv_ram_gb,
+            disk_size_gb = make_metadata_csv_disk_size_gb,
         }
     }
 
@@ -50,14 +90,20 @@ workflow wgbs {
         extra_reference = extra_reference,
         include_file = include_conf_file,
         underconversion_sequence_name = underconversion_sequence_name,
-        benchmark_mode = benchmark_mode
+        benchmark_mode = benchmark_mode,
+        num_cpus = make_conf_num_cpus,
+        ram_gb = make_conf_ram_gb,
+        disk_size_gb = make_conf_disk_size_gb,
     }
 
     if (!defined(indexed_reference)) {
         call index as index_reference { input:
             configuration_file = make_conf.gembs_conf,
             reference = reference,
-            extra_reference = extra_reference
+            extra_reference = extra_reference,
+            num_cpus = index_num_cpus,
+            ram_gb = index_ram_gb,
+            disk_size_gb = index_disk_size_gb,
         }
     }
 
@@ -70,7 +116,10 @@ workflow wgbs {
             metadata_file = select_first([make_metadata_csv.metadata_csv]),
             reference = reference,
             index = index,
-            extra_reference = extra_reference
+            extra_reference = extra_reference,
+            num_cpus = prepare_num_cpus,
+            ram_gb = prepare_ram_gb,
+            disk_size_gb = prepare_disk_size_gb,
         }
     }
 
@@ -87,7 +136,10 @@ workflow wgbs {
                 sample_name = sample_names_[i],
                 index = index,
                 reference = reference,
-                gemBS_json = gemBS_json
+                gemBS_json = gemBS_json,
+                num_cpus = map_num_cpus,
+                ram_gb = map_ram_gb,
+                disk_size_gb = map_disk_size_gb,
             }
 
             call bscaller { input:
@@ -98,12 +150,17 @@ workflow wgbs {
                 bam = map.bam,
                 csi = map.csi,
                 index = index,
+                num_cpus = bscaller_num_cpus,
+                ram_gb = bscaller_ram_gb,
+                disk_size_gb = bscaller_disk_size_gb,
             }
 
             call calculate_average_coverage { input:
                 bam = map.bam,
                 chrom_sizes = contig_sizes,
-                ncpus = samtools_stats_ncpus,
+                num_cpus = calculate_average_coverage_num_cpus,
+                ram_gb = calculate_average_coverage_ram_gb,
+                disk_size_gb = calculate_average_coverage_disk_size_gb,
             }
 
             call extract { input:
@@ -115,6 +172,9 @@ workflow wgbs {
                 contig_sizes = contig_sizes,
                 phred_threshold = gembs_extract_phred_threshold,
                 min_inform = gembs_extract_min_inform,
+                num_cpus = extract_num_cpus,
+                ram_gb = extract_ram_gb,
+                disk_size_gb = extract_disk_size_gb,
             }
 
             if (run_bsmooth) {
@@ -122,13 +182,19 @@ workflow wgbs {
                     gembs_cpg_bed = extract.cpg_txt,
                     chrom_sizes = contig_sizes,
                     num_workers = bsmooth_num_workers,
-                    num_threads = bsmooth_num_threads
+                    num_threads = bsmooth_num_threads,
+                    num_cpus = bsmooth_num_cpus,
+                    ram_gb = bsmooth_ram_gb,
+                    disk_size_gb = bsmooth_disk_size_gb,
                 }
             }
 
             call make_coverage_bigwig { input:
                 encode_bed = extract.cpg_bed,
                 chrom_sizes = contig_sizes,
+                num_cpus = make_coverage_bigwig_num_cpus,
+                ram_gb = make_coverage_bigwig_ram_gb,
+                disk_size_gb = make_coverage_bigwig_disk_size_gb,
             }
 
             call qc_report { input:
@@ -136,7 +202,10 @@ workflow wgbs {
                 gemBS_json = gemBS_json,
                 reference = reference,
                 contig_sizes = contig_sizes,
-                sample_barcode = sample_barcodes[i]
+                sample_barcode = sample_barcodes[i],
+                num_cpus = qc_report_num_cpus,
+                ram_gb = qc_report_ram_gb,
+                disk_size_gb = qc_report_disk_size_gb,
             }
         }
 
@@ -145,6 +214,9 @@ workflow wgbs {
             call calculate_bed_pearson_correlation { input:
                 bed1 = bedmethyls[0],
                 bed2 = bedmethyls[1],
+                num_cpus = calculate_bed_pearson_correlation_num_cpus,
+                ram_gb = calculate_bed_pearson_correlation_ram_gb,
+                disk_size_gb = calculate_bed_pearson_correlation_disk_size_gb,
             }
         }
     }
@@ -154,6 +226,9 @@ task make_metadata_csv {
     Array[String] sample_names
     File fastqs
     String barcode_prefix
+    Int? num_cpus = 1
+    Int? ram_gb = 2
+    Int? disk_size_gb = 10
 
     command {
         set -euo pipefail
@@ -169,9 +244,9 @@ task make_metadata_csv {
     }
 
     runtime {
-        cpu: 1
-        memory: "2 GB"
-        disks: "local-disk 10 SSD"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
@@ -183,6 +258,9 @@ task make_conf {
     File extra_reference
     String? include_file
     String? underconversion_sequence_name
+    Int? num_cpus = 1
+    Int? ram_gb = 2
+    Int? disk_size_gb = 10
 
     command {
         set -euo pipefail
@@ -202,9 +280,9 @@ task make_conf {
     }
 
     runtime {
-        cpu: 1
-        memory: "2 GB"
-        disks: "local-disk 10 SSD"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
@@ -214,6 +292,9 @@ task prepare {
     File index
     String reference
     String extra_reference
+    Int? num_cpus = 8
+    Int? ram_gb = 32
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -232,9 +313,9 @@ task prepare {
     }
 
     runtime {
-        cpu: 8
-        disks: "local-disk 500 HDD"
-        memory: "32 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} HDD"
     }
 }
 
@@ -242,6 +323,9 @@ task index {
     File configuration_file
     File reference
     File extra_reference
+    Int? num_cpus = 8
+    Int? ram_gb = 64
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -271,9 +355,9 @@ task index {
     }
 
     runtime {
-        cpu: 8
-        disks: "local-disk 500 HDD"
-        memory: "64 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} HDD"
     }
 }
 
@@ -284,6 +368,9 @@ task map {
     Array[File] fastqs
     String sample_barcode
     String sample_name
+    Int? num_cpus = 8
+    Int? ram_gb = 64
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -303,22 +390,24 @@ task map {
     }
 
     runtime {
-        cpu: 8
-        disks: "local-disk 500 HDD"
-        memory: "64 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} HDD"
     }
 }
 
 task calculate_average_coverage {
     File bam
     File chrom_sizes
-    Int ncpus
+    Int? num_cpus = 1
+    Int? ram_gb = 8
+    Int? disk_size_gb = 200
 
     command {
         python3 "$(which calculate_average_coverage.py)" \
             --bam ${bam} \
             --chrom-sizes ${chrom_sizes} \
-            --threads ${ncpus} \
+            --threads ${num_cpus} \
             --outfile average_coverage_qc.json
     }
 
@@ -327,9 +416,9 @@ task calculate_average_coverage {
     }
 
     runtime {
-        cpu: "${ncpus}"
-        memory: "8 GB"
-        disks: "local-disk 200 SSD"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
@@ -341,6 +430,9 @@ task bscaller {
     File index
     String sample_barcode
     String sample_name
+    Int? num_cpus = 8
+    Int? ram_gb = 32
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -359,9 +451,9 @@ task bscaller {
     }
 
     runtime {
-        cpu: 8
-        disks: "local-disk 500 HDD"
-        memory: "32 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} HDD"
     }
 }
 
@@ -374,6 +466,9 @@ task extract {
     String sample_barcode
     Int? phred_threshold
     Int? min_inform
+    Int? num_cpus = 8
+    Int? ram_gb = 96
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -425,15 +520,18 @@ task extract {
     }
 
     runtime {
-        cpu: 8
-        disks: "local-disk 500 SSD"
-        memory: "96 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
 task make_coverage_bigwig {
     File encode_bed
     File chrom_sizes
+    Int? num_cpus = 4
+    Int? ram_gb = 8
+    Int? disk_size_gb = 50
 
     command {
         set -euo pipefail
@@ -451,15 +549,18 @@ task make_coverage_bigwig {
     }
 
     runtime {
-        cpu: 4
-        disks: "local-disk 50 SSD"
-        memory: "8 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
 task calculate_bed_pearson_correlation {
     File bed1
     File bed2
+    Int? num_cpus = 1
+    Int? ram_gb = 8
+    Int? disk_size_gb = 50
 
     command {
         python3 "$(which calculate_bed_pearson_correlation.py)" --bedmethyls ${bed1} ${bed2} --outfile bed_pearson_correlation_qc.json
@@ -470,9 +571,9 @@ task calculate_bed_pearson_correlation {
     }
 
     runtime {
-        cpu: 1
-        disks: "local-disk 50 SSD"
-        memory: "8 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
@@ -481,6 +582,9 @@ task bsmooth {
     File chrom_sizes
     Int num_workers
     Int num_threads
+    Int? num_cpus = 16
+    Int? ram_gb = 128
+    Int? disk_size_gb = 500
 
     command {
         set -euo pipefail
@@ -499,9 +603,9 @@ task bsmooth {
     }
 
     runtime {
-        cpu: 16
-        disks: "local-disk 500 SSD"
-        memory: "128 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} SSD"
     }
 }
 
@@ -511,6 +615,9 @@ task qc_report {
     File gemBS_json
     File contig_sizes
     String sample_barcode
+    Int? num_cpus = 1
+    Int? ram_gb = 4
+    Int? disk_size_gb = 50
 
     command {
         set -euo pipefail
@@ -532,8 +639,8 @@ task qc_report {
     }
 
     runtime {
-        cpu: 1
-        disks: "local-disk 50 HDD"
-        memory: "4 GB"
+        cpu: "${num_cpus}"
+        memory: "${ram_gb} GB"
+        disks: "local-disk ${disk_size_gb} HDD"
     }
 }

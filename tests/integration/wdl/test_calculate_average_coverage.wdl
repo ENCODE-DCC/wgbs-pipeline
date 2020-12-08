@@ -3,11 +3,11 @@ import "../../../wgbs-pipeline.wdl" as wgbs
 workflow test_calculate_average_coverage {
     File bam
     File chrom_sizes
-    Int ncpus
+    Int num_cpus
 
     call wgbs.calculate_average_coverage { input:
         bam = bam,
         chrom_sizes = chrom_sizes,
-        ncpus = ncpus,
+        num_cpus = num_cpus,
     }
 }
