@@ -87,6 +87,16 @@ This will generate a combined contig sizes for the reference and extra reference
 
 `wgbs.indexed_contig_sizes` is a chromosome (chrom) sizes-style file, which is simply a two-column `tsv` where the rows contain the chromosome name and size, in that order. This file is produced by this pipeline during index generation from the input reference `fasta` files.
 
+Every task also has customizable resources (number of cpus, RAM, and disk size). There
+are too many to list individually here, but they all take the same form in the input
+JSON file: `"wgbs.[TASK_NAME]_[RESOURCE]": [INTEGER]`, where `RESOURCE` is one of
+`num_cpus`, `ram_gb`, and `disk_size_gb`. As an example, if you need to increase RAM to
+80 GB for the `map` task then in the input JSON you would put the following line:
+
+```json
+"wgbs.map_ram_gb": 80
+```
+
 ## Outputs
 
 The pipeline produces more outputs than listed here, only the most useful ones are listed here.
