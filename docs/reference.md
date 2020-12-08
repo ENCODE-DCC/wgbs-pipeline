@@ -89,7 +89,7 @@ This will generate a combined contig sizes for the reference and extra reference
 
 Every task also has customizable resources (number of cpus, RAM, and disk size). There
 are too many to list individually here, but they all take the same form in the input
-JSON file: `wgbs.[TASK_NAME]_[RESOURCE] = [INTEGER]`, where `RESOURCE` is one of
+JSON file: `"wgbs.[TASK_NAME]_[RESOURCE]": [INTEGER]`, where `RESOURCE` is one of
 `num_cpus`, `ram_gb`, and `disk_size_gb`. As an example, if you need to increase RAM to
 80 GB for the `map` task then in the input JSON you would put the following line:
 
