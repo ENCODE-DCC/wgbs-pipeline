@@ -5,6 +5,9 @@ LABEL maintainer.email "encode-help@lists.stanford.edu"
 
 # hash -r gets python3 symlink to work
 RUN apt-get update && \
+    apt-get install -y software-properties-common apt-transport-https && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update && \
     apt-get install -y \
     autoconf \
     build-essential \
