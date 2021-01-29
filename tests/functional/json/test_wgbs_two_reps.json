@@ -18,6 +18,5 @@
   "wgbs.indexed_contig_sizes": "tests/data/sacCer3.contig.sizes",
   "wgbs.indexed_reference": "tests/data/indexes.tar.gz",
   "wgbs.reference": "tests/data/sacCer3.fa.gz",
-  "wgbs.run_bsmooth": false,
   "wgbs.underconversion_sequence_name": "NC_001416.1"
 }

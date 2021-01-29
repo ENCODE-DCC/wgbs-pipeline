@@ -7,21 +7,6 @@
       "table": "Calls/Replicate ${i+1}/Methylation and Variant Calls"
     }
   },
-  "wgbs.bsmooth": {
-    "smoothed_cpg_bed": {
-      "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"Smoothed CpG bed\"]",
-      "path": "bsmooth/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "Smoothing/Replicate ${i+1}/Smoothed CpG bed"
-    },
-    "smoothed_cpg_bigbed": {
-      "node": "[shape=oval style=\"filled\" fillcolor=lightyellow fontsize=6 margin=0 label=\"Smoothed CpG bigBed\"]",
-      "path": "bsmooth/rep${i+1}/${basename}",
-      "subgraph": "cluster_rep${i+1}",
-      "table": "Smoothing/Replicate ${i+1}/Smoothed CpG bigBed",
-      "ucsc_track": "track type=bigBed name=\"Smoothed CpG bigBed\" priority=100 itemRgb=On visibility=dense"
-    }
-  },
   "wgbs.extract": {
     "chg_bb": {
       "node": "[shape=box style=\"filled, rounded\" fillcolor=lightyellow label=\"CHG bigBed\"]",

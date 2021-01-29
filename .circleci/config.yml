@@ -16,16 +16,6 @@ py37: &py37
     - image: circleci/python:3.7.4-stretch
   working_directory: ~/ENCODE-DCC/wgbs-pipeline
 
-lint: &lint
-  docker:
-    - image: encodedcc/wgbs-pipeline:circleci-lint
-  working_directory: ~/ENCODE-DCC/wgbs-pipeline
-
-rust: &rust
-  docker:
-    - image: circleci/rust:1.40.0-stretch
-  working_directory: ~/ENCODE-DCC/wgbs-pipeline
-
 make_tag: &make_tag
   name: make docker image tag
   command: |
@@ -61,12 +51,18 @@ commands:
             PIPELINE_VERSION=$(python3 -c "import wgbs_pipeline;print(wgbs_pipeline.__version__)")
             echo "export PIPELINE_VERSION=${PIPELINE_VERSION}" >> ${BASH_ENV}
 
+  install_shellcheck:
+    description: Install shellcheck by downloading the binary, don't want to apt-get update
+    steps:
+      - run: curl -Ls https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz | tar xJ && sudo mv shellcheck-stable/shellcheck
+          /usr/local/bin
+
 jobs:
   lint:
-    <<: *lint
+    <<: *py37
     steps:
       - checkout
-      - run: cat "${HOME}/.cargo/env" >> ${BASH_ENV}
+      - install_shellcheck
       - run_tox:
           toxenv: lint
   test_py37:
@@ -81,11 +77,6 @@ jobs:
       - checkout
       - run_tox:
           toxenv: coverage-report
-  test_rust:
-    <<: *rust
-    steps:
-      - checkout
-      - run: cargo test
   test_wdl:
     <<: *machine_defaults
     description: Generic testing protocol for wdl tasks
@@ -168,10 +159,6 @@ workflows:
           requires:
             - build
             - lint
-      - test_rust:
-          requires:
-            - build
-            - lint
       - test_wdl:
           name: test_wdl_unit
           tag: unit
@@ -201,7 +188,6 @@ workflows:
             - lint
             - coverage-report
             - test_py37
-            - test_rust
             - test_wdl_unit
             - test_wdl_integration
             - test_wdl_functional

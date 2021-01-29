@@ -10,7 +10,6 @@
     ]
   ],
   "wgbs.reference": "tests/data/sacCer3.fa.gz",
-  "wgbs.run_bsmooth": false,
   "wgbs.sample_names": [
     "sample5"
   ],
