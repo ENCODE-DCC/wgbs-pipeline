@@ -110,7 +110,7 @@ jobs:
       - set_environment_variables
       - run: *make_tag
       - run:
-          name: build image using multistage build caching
+          name: build image
           command: |
             source ${BASH_ENV}
             echo "pulling template!"
