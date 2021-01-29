@@ -106,8 +106,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 19.03.8
+      - setup_remote_docker
       - set_environment_variables
       - run: *make_tag
       - run:
@@ -117,7 +116,7 @@ jobs:
             echo "pulling template!"
             docker pull encodedcc/${CIRCLE_PROJECT_REPONAME}:template
             docker login -u=${DOCKERHUB_USER} -p=${DOCKERHUB_PASS}
-            DOCKER_BUILDKIT=1 docker build --build-arg BUILDKIT_INLINE_CACHE=1 . \
+            docker build . \
               -f Dockerfile \
               --cache-from encodedcc/${CIRCLE_PROJECT_REPONAME}:template \
               -t "${TAG}" \
