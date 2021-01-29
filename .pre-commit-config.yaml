@@ -27,19 +27,6 @@
     hooks:
       - id: mypy
 
-  - repo: https://github.com/lorenzwalthert/pre-commit-hooks
-    rev: v0.0.0.9027
-    hooks:
-      - id: style-files
-      - id: lintr
-
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: master
-    hooks:
-      - id: fmt
-      - id: cargo-check
-      - id: clippy
-
   - repo: git://github.com/detailyang/pre-commit-shell
     sha: v1.0.6
     hooks:

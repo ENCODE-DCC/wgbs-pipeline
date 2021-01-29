@@ -27,6 +27,4 @@ venv/
 pip-wheel-metadata
 /test_*
 
-# Rust build directory
-target
 /wgbs/

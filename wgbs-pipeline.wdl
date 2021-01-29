@@ -21,10 +21,6 @@ workflow wgbs {
 
     String barcode_prefix = "sample_"
 
-    Int bsmooth_num_workers = 8
-    Int bsmooth_num_threads = 2
-    Boolean run_bsmooth = true
-
     # Flag to only generate index tarball
     Boolean index_only = false
     Boolean benchmark_mode = false
@@ -37,9 +33,6 @@ workflow wgbs {
     Int? bscaller_disk_size_gb
     Int? bscaller_num_cpus
     Int? bscaller_ram_gb
-    Int? bsmooth_disk_size_gb
-    Int? bsmooth_num_cpus
-    Int? bsmooth_ram_gb
     Int? calculate_average_coverage_disk_size_gb
     Int? calculate_average_coverage_num_cpus
     Int? calculate_average_coverage_ram_gb
@@ -175,18 +168,6 @@ workflow wgbs {
                 num_cpus = extract_num_cpus,
                 ram_gb = extract_ram_gb,
                 disk_size_gb = extract_disk_size_gb,
-            }
-
-            if (run_bsmooth) {
-                call bsmooth { input:
-                    gembs_cpg_bed = extract.cpg_txt,
-                    chrom_sizes = contig_sizes,
-                    num_workers = bsmooth_num_workers,
-                    num_threads = bsmooth_num_threads,
-                    num_cpus = bsmooth_num_cpus,
-                    ram_gb = bsmooth_ram_gb,
-                    disk_size_gb = bsmooth_disk_size_gb,
-                }
             }
 
             call make_coverage_bigwig { input:
@@ -568,38 +549,6 @@ task calculate_bed_pearson_correlation {
 
     output {
         File bed_pearson_correlation_qc = "bed_pearson_correlation_qc.json"
-    }
-
-    runtime {
-        cpu: "${num_cpus}"
-        memory: "${ram_gb} GB"
-        disks: "local-disk ${disk_size_gb} SSD"
-    }
-}
-
-task bsmooth {
-    File gembs_cpg_bed
-    File chrom_sizes
-    Int num_workers
-    Int num_threads
-    Int? num_cpus = 16
-    Int? ram_gb = 128
-    Int? disk_size_gb = 500
-
-    command {
-        set -euo pipefail
-        gzip -cdf ${gembs_cpg_bed} > gembs_cpg.bed
-        gembs-to-bismark-bed-converter gembs_cpg.bed converted_bismark.bed
-        export HDF5_USE_FILE_LOCKING=FALSE
-        Rscript $(which bsmooth.R) -i converted_bismark.bed -o smoothed.tsv -w ${num_workers} -t ${num_threads}
-        bismark-bsmooth-to-encode-bed-converter converted_bismark.bed smoothed.tsv smoothed_encode.bed
-        bedToBigBed smoothed_encode.bed ${chrom_sizes} smoothed_encode.bb -type=bed9+2 -tab
-        gzip -n smoothed_encode.bed
-    }
-
-    output {
-        File smoothed_cpg_bed = "smoothed_encode.bed.gz"
-        File smoothed_cpg_bigbed = "smoothed_encode.bb"
     }
 
     runtime {

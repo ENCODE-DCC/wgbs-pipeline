@@ -6,7 +6,7 @@
 
 ## Overview
 
-An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction and [Bsmooth](https://bioconductor.org/packages/release/bioc/html/bsseq.html) for smoothing of CpG methylation values.
+An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction.
 
 ## Installation
 

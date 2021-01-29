@@ -132,11 +132,6 @@ Unless otherwise specified, `bigBed` files are in ENCODE `bedMethyl` (`bed9+2`) 
 
 * `bed_pearson_correlation_qc`: a `JSON` file containing the Pearson correlation between replicates of methylation percentage at reference CpG sites with 10 or more reads. Note that this file is only produced when there are exactly two replicates.
 
-#### Task `wgbs.bsmooth`
-
-* `smoothed_cpg_bed`: a `bed` file in ENCODE `bedMethyl` format containing the smoothed methylation percentage at **genotyped** CpG sites for the input replicate, as calculated using `Bsmooth` from the [bsseq R package](https://www.bioconductor.org/packages/release/bioc/html/bsseq.html)
-* `smoothed_cpg_bigbed`: the above `bed` file converted to `bigBed` format
-
 #### Task `wgbs.qc_report`
 
 * `portal_map_qc_json`: a `JSON` file containing mapping quality metrics for the replicate. These values are scraped out of the `gemBS` HTML QC reports. See the [ENCODE schema](https://www.encodeproject.org/profiles/gembs_alignment_quality_metric) for details on which metrics are provided. Further descriptions of the metrics can be found in the [gemBS documentation](http://statgen.cnag.cat/GEMBS/UserGuide/_build/html/qualityControl.html)
