@@ -6,7 +6,7 @@
 
 ## Overview
 
-An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction.
+An [ENCODE](https://www.encodeproject.org/) pipeline for processing whole-genome bisulfite sequencing (WGBS) and reduced representation bisulfite sequencing (RRBS) data using [gemBS](https://github.com/heathsc/gemBS) for alignment and methylation extraction.
 
 ## Installation
 
