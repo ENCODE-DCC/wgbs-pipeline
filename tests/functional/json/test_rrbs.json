@@ -8,7 +8,7 @@
       ]
     ]
   ],
-  "wgbs.mode": "rrbs",
+  "wgbs.pipeline_type": "rrbs",
   "wgbs.reference": "tests/data/sacCer3.fa.gz",
   "wgbs.sample_names": [
     "sample5"
