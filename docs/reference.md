@@ -38,7 +38,6 @@ A input JSON to run the full pipeline, including building `gemBS` indexes, will 
 
 To process RRBS data, add `"wgbs.pipeline_type": "rrbs"` to your input JSON.
 
-
 If you plan on running the pipeline multiple times it is recommended to create the `gemBS` index file once, then use that as input to the runs instead of the raw sequence `fasta` files. To build the references, your input should look like the following:
 
 ```json
