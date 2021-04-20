@@ -51,7 +51,7 @@ class StubArgs:
             does_not_raise(),
         ),
         (["-r", "ref.fa.gz", "-e", "extra_ref.fa.gz"], does_not_raise()),
-        (["-r", "ref.fa.gz"], pytest.raises(SystemExit)),
+        (["-r", "ref.fa.gz"], does_not_raise()),
         (["-e", "extra.fa.gz"], pytest.raises(SystemExit)),
     ],
 )
@@ -130,6 +130,30 @@ def test_make_conf(
     assert len(output) == expected_num_rows
     for row_index, expected_value in assertions:
         assert output[row_index] == expected_value
+
+
+def test_make_conf_no_extra_reference(mocker):
+    mock_args = mocker.Mock(
+        reference="/foo/bar.baz",
+        extra_reference=None,
+        benchmark_mode=False,
+        include_file=None,
+        num_threads=8,
+        num_jobs=3,
+    )
+    result = make_conf(mock_args)
+    assert result == [
+        "reference = reference/bar.baz",
+        "index_dir = indexes",
+        "base = .",
+        "sequence_dir = ${base}/fastq/@SAMPLE",
+        "bam_dir = ${base}/mapping/@BARCODE",
+        "bcf_dir = ${base}/calls/@BARCODE",
+        "extract_dir = ${base}/extract/@BARCODE",
+        "report_dir = ${base}/report",
+        "threads = 8",
+        "jobs = 3",
+    ]
 
 
 def test_extract_underconversion_sequence(mocker):
