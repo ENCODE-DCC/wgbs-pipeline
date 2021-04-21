@@ -20,32 +20,35 @@ def make_conf(args: argparse.Namespace) -> List[str]:
     If a name for an underconversion sequence is not provided, it is assumed that the
     name of the first contig in the extra reference is the name to use.
     """
-    conf = [
-        f"reference = reference/{Path(args.reference).name}",
-        f"extra_references = reference/{Path(args.extra_reference).name}",
-        "index_dir = indexes",
-        "base = .",
-        "sequence_dir = ${base}/fastq/@SAMPLE",
-        "bam_dir = ${base}/mapping/@BARCODE",
-        "bcf_dir = ${base}/calls/@BARCODE",
-        "extract_dir = ${base}/extract/@BARCODE",
-        "report_dir = ${base}/report",
-        f"threads = {args.num_threads}",
-        f"jobs = {args.num_jobs}",
-    ]
+    conf = [f"reference = reference/{Path(args.reference).name}"]
+    if args.extra_reference is not None:
+        conf.append(f"extra_references = reference/{Path(args.extra_reference).name}")
+    conf.extend(
+        [
+            "index_dir = indexes",
+            "base = .",
+            "sequence_dir = ${base}/fastq/@SAMPLE",
+            "bam_dir = ${base}/mapping/@BARCODE",
+            "bcf_dir = ${base}/calls/@BARCODE",
+            "extract_dir = ${base}/extract/@BARCODE",
+            "report_dir = ${base}/report",
+            f"threads = {args.num_threads}",
+            f"jobs = {args.num_jobs}",
+        ]
+    )
 
     if args.benchmark_mode:
         conf.append("benchmark_mode = true")
 
-    conf.append("[mapping]")
-
-    if args.underconversion_sequence:
-        underconversion_sequence = args.underconversion_sequence
-    else:
-        underconversion_sequence = extract_underconversion_sequence(
-            args.extra_reference
-        )
-    conf.append(f"underconversion_sequence = {underconversion_sequence}")
+    if args.extra_reference is not None:
+        conf.append("[mapping]")
+        if args.underconversion_sequence:
+            underconversion_sequence = args.underconversion_sequence
+        else:
+            underconversion_sequence = extract_underconversion_sequence(
+                args.extra_reference
+            )
+        conf.append(f"underconversion_sequence = {underconversion_sequence}")
 
     if args.include_file:
         conf.append(f"include {args.include_file}")
@@ -76,7 +79,6 @@ def get_parser() -> argparse.ArgumentParser:
         "-e",
         "--extra-reference",
         help="File name of extra reference for control sequence",
-        required=True,
     )
     parser.add_argument(
         "-r", "--reference", help="File name of reference fasta", required=True

@@ -9,7 +9,7 @@ workflow wgbs {
     File reference
     File? indexed_reference
     File? indexed_contig_sizes
-    File extra_reference
+    File? extra_reference
     # biological replicate[technical replicate[one (single ended) or two paired fastqs]]]
     Array[Array[Array[File]]]? fastqs
     Array[String]? sample_names
@@ -17,7 +17,8 @@ workflow wgbs {
     Int num_gembs_threads = 8
     Int num_gembs_jobs = 3
     String? underconversion_sequence_name
-    String include_conf_file = "/software/conf/IHEC_standard.conf"
+    String pipeline_type = "wgbs"
+    String include_conf_file = if pipeline_type=="wgbs" then "/software/conf/IHEC_standard.conf" else "/software/conf/IHEC_RRBS.conf"
 
     String barcode_prefix = "sample_"
 
@@ -109,7 +110,7 @@ workflow wgbs {
             metadata_file = select_first([make_metadata_csv.metadata_csv]),
             reference = reference,
             index = index,
-            extra_reference = extra_reference,
+            extra_reference = select_first([extra_reference, reference]),
             num_cpus = prepare_num_cpus,
             ram_gb = prepare_ram_gb,
             disk_size_gb = prepare_disk_size_gb,
@@ -236,7 +237,7 @@ task make_conf {
     Int num_threads
     Int num_jobs
     String reference
-    File extra_reference
+    File? extra_reference
     String? include_file
     String? underconversion_sequence_name
     Int? num_cpus = 1
@@ -249,7 +250,7 @@ task make_conf {
             -t "${num_threads}" \
             -j "${num_jobs}" \
             -r "${reference}" \
-            -e "${extra_reference}" \
+            ${if defined(extra_reference) then ("-e " + extra_reference) else ""} \
             ${if defined(underconversion_sequence_name) then ("-u " + underconversion_sequence_name) else ""} \
             ${if defined(include_file) then ("-i " + include_file) else ""} \
             ${if benchmark_mode then ("--benchmark-mode") else ""} \
@@ -303,7 +304,7 @@ task prepare {
 task index {
     File configuration_file
     File reference
-    File extra_reference
+    File? extra_reference
     Int? num_cpus = 8
     Int? ram_gb = 64
     Int? disk_size_gb = 500
@@ -311,7 +312,8 @@ task index {
     command {
         set -euo pipefail
         mkdir reference
-        ln -s ${reference} reference && ln -s ${extra_reference} reference
+        ln -s ${reference} reference
+        ${if defined(extra_reference) then ("ln -s " + extra_reference + " reference") else ""}
         # We need a gemBS JSON to create the index, and we need a metadata csv to create
         # the gemBS JSON. Create a dummy one, we don't use the config later so it
         # doesn't matter.
