@@ -89,6 +89,10 @@ This will generate a combined contig sizes for the reference and extra reference
 
 `wgbs.indexed_contig_sizes` is a chromosome (chrom) sizes-style file, which is simply a two-column `tsv` where the rows contain the chromosome name and size, in that order. This file is produced by this pipeline during index generation from the input reference `fasta` files.
 
+`wgbs.map_sort_threads` is the number of threads to use for `samtools sort` when running `gemBS` `map` command
+
+`wgbs.map_sort_memory` is the max memory to use per thread for `samtools sort` when running `gemBS` `map` command. It is a number followed by a K, M, or G suffix to indicate the units, e.g. `1G` for 1 gigabyte or `800M` for 800 megabytes.
+
 Every task also has customizable resources (number of cpus, RAM, and disk size). There
 are too many to list individually here, but they all take the same form in the input
 JSON file: `"wgbs.[TASK_NAME]_[RESOURCE]": [INTEGER]`, where `RESOURCE` is one of
