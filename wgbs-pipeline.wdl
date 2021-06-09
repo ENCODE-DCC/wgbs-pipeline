@@ -58,6 +58,8 @@ workflow wgbs {
     Int? map_disk_size_gb
     Int? map_num_cpus
     Int? map_ram_gb
+    String? map_sort_memory
+    Int? map_sort_threads
     Int? prepare_disk_size_gb
     Int? prepare_num_cpus
     Int? prepare_ram_gb
@@ -134,6 +136,8 @@ workflow wgbs {
                 num_cpus = map_num_cpus,
                 ram_gb = map_ram_gb,
                 disk_size_gb = map_disk_size_gb,
+                sort_threads = map_sort_threads,
+                sort_memory = map_sort_memory,
             }
 
             call bscaller { input:
@@ -354,6 +358,8 @@ task map {
     Int? num_cpus = 8
     Int? ram_gb = 64
     Int? disk_size_gb = 500
+    Int? sort_threads
+    String? sort_memory
 
     command {
         set -euo pipefail
@@ -362,7 +368,13 @@ task map {
         mkdir -p fastq/${sample_name}
         cat ${write_lines(fastqs)} | xargs -I % ln % fastq/${sample_name}
         mkdir -p mapping/${sample_barcode}
-        gemBS -j ${gemBS_json} map -b ${sample_barcode} --ignore-db
+        gemBS \
+            -j ${gemBS_json} \
+            map \
+            -b ${sample_barcode} \
+            ${if defined(sort_threads) then ("--sort-threads " + sort_threads) else ""} \
+            ${if defined(sort_memory) then ("--sort-memory " + sort_memory) else ""} \
+            --ignore-db
     }
 
     output {
