@@ -1,8 +1,8 @@
 workflow wgbs {
     meta {
-        version: "1.1.6"
-        caper_docker: "encodedcc/wgbs-pipeline:1.1.6"
-        caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.6"
+        version: "1.1.7"
+        caper_docker: "encodedcc/wgbs-pipeline:1.1.7"
+        caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.7"
         croo_out_def: "https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json"
     }
 
@@ -554,7 +554,7 @@ task calculate_bed_pearson_correlation {
     File bed1
     File bed2
     Int? num_cpus = 1
-    Int? ram_gb = 8
+    Int? ram_gb = 16
     Int? disk_size_gb = 50
 
     command {
