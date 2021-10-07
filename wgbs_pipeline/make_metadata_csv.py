@@ -31,13 +31,9 @@ def process(args) -> List[List[str]]:
         header = CSV_FIELDS
     to_write = [header]
     for sample_name, biological_replicate in zip(args.sample_names, files):
-        constant_output = [
-            "{}{}".format(args.barcode_prefix, sample_name),
-            sample_name,
-            sample_name,
-        ]
-        for technical_replicate in biological_replicate:
-            output = constant_output + technical_replicate
+        constant_output = ["{}{}".format(args.barcode_prefix, sample_name), sample_name]
+        for i, technical_replicate in enumerate(biological_replicate):
+            output = constant_output + [str(i)] + technical_replicate
             to_write.append(output)
     return to_write
 

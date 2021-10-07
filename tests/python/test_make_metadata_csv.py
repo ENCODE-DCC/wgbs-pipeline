@@ -40,7 +40,7 @@ def test_parser(args, condition, num_names):
             does_not_raise(),
             [
                 ["Barcode", "Name", "Dataset", "File"],
-                ["sample_foo", "foo", "foo", "f1.fastq.gz"],
+                ["sample_foo", "foo", "0", "f1.fastq.gz"],
             ],
         ),
         (
@@ -49,7 +49,7 @@ def test_parser(args, condition, num_names):
             does_not_raise(),
             [
                 ["Barcode", "Name", "Dataset", "File1", "File2"],
-                ["sample_bar", "bar", "bar", "f1.fastq.gz", "f2.fastq.gz"],
+                ["sample_bar", "bar", "0", "f1.fastq.gz", "f2.fastq.gz"],
             ],
         ),
         (
@@ -58,8 +58,8 @@ def test_parser(args, condition, num_names):
             does_not_raise(),
             [
                 ["Barcode", "Name", "Dataset", "File1", "File2"],
-                ["sample_baz", "baz", "baz", "f1.fastq.gz", "f2.fastq.gz"],
-                ["sample_baz", "baz", "baz", "f3.fastq.gz", "f4.fastq.gz"],
+                ["sample_baz", "baz", "0", "f1.fastq.gz", "f2.fastq.gz"],
+                ["sample_baz", "baz", "1", "f3.fastq.gz", "f4.fastq.gz"],
             ],
         ),
         (
@@ -68,8 +68,8 @@ def test_parser(args, condition, num_names):
             does_not_raise(),
             [
                 ["Barcode", "Name", "Dataset", "File1", "File2"],
-                ["sample_baz", "baz", "baz", "f1.fastq.gz", "f2.fastq.gz"],
-                ["sample_qux", "qux", "qux", "f3.fastq.gz", "f4.fastq.gz"],
+                ["sample_baz", "baz", "0", "f1.fastq.gz", "f2.fastq.gz"],
+                ["sample_qux", "qux", "0", "f3.fastq.gz", "f4.fastq.gz"],
             ],
         ),
         (
