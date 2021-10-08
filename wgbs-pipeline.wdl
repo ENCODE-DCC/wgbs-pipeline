@@ -1,8 +1,8 @@
 workflow wgbs {
     meta {
-        version: "1.1.7"
-        caper_docker: "encodedcc/wgbs-pipeline:1.1.7"
-        caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.7"
+        version: "1.1.8"
+        caper_docker: "encodedcc/wgbs-pipeline:1.1.8"
+        caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.8"
         croo_out_def: "https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json"
     }
 
