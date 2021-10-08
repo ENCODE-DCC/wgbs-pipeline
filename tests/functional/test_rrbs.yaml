@@ -20,7 +20,7 @@
         md5sum: 0497066e3880c6932cf6bde815c42c40
       - path: test-output/glob-c8599c0b9048b55a8d5cfaad52995a94/sample_sample5.bam
         md5sum: 8976efc0e5d3f51bf65e6e0493afeeb6
-      - path: test-output/glob-c0e92e4e9fb050e7e70bb645748b45dd/sample5.json
+      - path: test-output/glob-c0e92e4e9fb050e7e70bb645748b45dd/0.json
         md5sum: 043a3f07cc800fcbfb2186e449fcb413
       - path: test-output/glob-0b0236659b9524643e6454061959b28c/sample_sample5_pos.bw
         md5sum: bd67706599694f3c8984c38ff7589eb3
@@ -48,13 +48,13 @@
         md5sum: 3ed99b9be0131e9f7cc7d70f74194669
       - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/ENCODE.html
         md5sum: b2ad3be0fa1ab6dd1252172a79b33b9c
-      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.html
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/0.html
         md5sum: 54032ceac4315e9a74ef605831d37e47
       - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample_sample5.html
         md5sum: ff5c58abb18ba97df3788ea5acb710ca
-      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.isize.png
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/0.isize.png
         md5sum: 329d748b732e27a0996956b288ad1071
-      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/sample5.mapq.png
+      - path: test-output/glob-1aeed469ae5d1e8d7cbca51e8758b781/0.mapq.png
         md5sum: ec55f587784b6475607874f9837911ee
       - path: test-output/coverage.bw
         md5sum: 6b1da64b55ae1102b364903b3fea5289
