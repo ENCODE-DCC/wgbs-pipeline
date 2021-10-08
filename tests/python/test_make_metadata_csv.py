@@ -69,7 +69,7 @@ def test_parser(args, condition, num_names):
             [
                 ["Barcode", "Name", "Dataset", "File1", "File2"],
                 ["sample_baz", "baz", "0", "f1.fastq.gz", "f2.fastq.gz"],
-                ["sample_qux", "qux", "0", "f3.fastq.gz", "f4.fastq.gz"],
+                ["sample_qux", "qux", "1", "f3.fastq.gz", "f4.fastq.gz"],
             ],
         ),
         (

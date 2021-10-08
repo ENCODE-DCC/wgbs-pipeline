@@ -30,10 +30,12 @@ def process(args) -> List[List[str]]:
     else:
         header = CSV_FIELDS
     to_write = [header]
+    technical_replicate_number = 0
     for sample_name, biological_replicate in zip(args.sample_names, files):
         constant_output = ["{}{}".format(args.barcode_prefix, sample_name), sample_name]
-        for i, technical_replicate in enumerate(biological_replicate):
-            output = constant_output + [str(i)] + technical_replicate
+        for technical_replicate in biological_replicate:
+            output = constant_output + [str(technical_replicate_number)] + technical_replicate
+            technical_replicate_number += 1
             to_write.append(output)
     return to_write
 
