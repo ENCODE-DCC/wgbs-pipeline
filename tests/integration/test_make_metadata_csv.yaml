@@ -8,4 +8,4 @@
       tests/integration/json/test_make_metadata_csv.json
     files:
       - path: test-output/gembs_metadata.csv
-        md5sum: e9477e376ed923c35f35ba1468c7c2ca
+        md5sum: dbe4a978bd403fd908865190b9c85cf8
