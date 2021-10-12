@@ -7,20 +7,8 @@
   "wgbs.fastqs": [
     [
       [
-        "https://www.encodeproject.org/files/ENCFF168MGO/@@download/ENCFF168MGO.fastq.gz",
-        "https://www.encodeproject.org/files/ENCFF662TVJ/@@download/ENCFF662TVJ.fastq.gz"
-      ],
-      [
-        "https://www.encodeproject.org/files/ENCFF297EXT/@@download/ENCFF297EXT.fastq.gz",
-        "https://www.encodeproject.org/files/ENCFF639WWY/@@download/ENCFF639WWY.fastq.gz"
-      ],
-      [
         "https://www.encodeproject.org/files/ENCFF455JJQ/@@download/ENCFF455JJQ.fastq.gz",
         "https://www.encodeproject.org/files/ENCFF964SYK/@@download/ENCFF964SYK.fastq.gz"
-      ],
-      [
-        "https://www.encodeproject.org/files/ENCFF620UIS/@@download/ENCFF620UIS.fastq.gz",
-        "https://www.encodeproject.org/files/ENCFF720URD/@@download/ENCFF720URD.fastq.gz"
       ],
       [
         "https://www.encodeproject.org/files/ENCFF873DXH/@@download/ENCFF873DXH.fastq.gz",
