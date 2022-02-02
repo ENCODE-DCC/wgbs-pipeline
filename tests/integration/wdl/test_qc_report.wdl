@@ -6,12 +6,14 @@ workflow test_qc_report {
     File gemBS_json
     File contig_sizes
     String sample_barcode
+    String docker
 
     call wgbs.qc_report { input:
         reference = reference,
         gemBS_json = gemBS_json,
         contig_sizes = contig_sizes,
         map_qc_json = map_qc_json,
-        sample_barcode = sample_barcode
+        sample_barcode = sample_barcode,
+        docker = docker,
     }
 }

@@ -8,6 +8,7 @@ workflow test_make_conf {
     Boolean benchmark_mode = false
     String? include_file
     String? underconversion_sequence_name
+    String docker
 
     call wgbs.make_conf { input:
         num_threads = num_threads,
@@ -16,6 +17,7 @@ workflow test_make_conf {
         extra_reference = extra_reference,
         include_file = include_file,
         underconversion_sequence_name = underconversion_sequence_name,
-        benchmark_mode = benchmark_mode
+        benchmark_mode = benchmark_mode,
+        docker = docker,
     }
 }

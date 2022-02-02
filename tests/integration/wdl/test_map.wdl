@@ -7,6 +7,7 @@ workflow test_map {
     Array[File] fastqs
     String sample_name
     String sample_barcode = "sample_sample5"
+    String docker
 
     call wgbs.map { input:
         reference = reference,
@@ -14,6 +15,7 @@ workflow test_map {
         gemBS_json = gemBS_json,
         fastqs = fastqs,
         sample_barcode = sample_barcode,
-        sample_name = sample_name
+        sample_name = sample_name,
+        docker = docker,
     }
 }

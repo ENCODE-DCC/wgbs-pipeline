@@ -8,6 +8,7 @@ workflow test_bscaller {
     File index
     String sample_name
     String sample_barcode
+    String docker
 
     call wgbs.bscaller { input:
         reference = reference,
@@ -16,6 +17,7 @@ workflow test_bscaller {
         csi = csi,
         index = index,
         sample_barcode = sample_barcode,
-        sample_name = sample_name
+        sample_name = sample_name,
+        docker = docker,
     }
 }

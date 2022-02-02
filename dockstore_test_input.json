@@ -1,0 +1,17 @@
+{
+  "wgbs.benchmark_mode": true,
+  "wgbs.extra_reference": "https://storage.googleapis.com/dockstore_test_input/wgbs-pipeline/conversion_control.fa.gz",
+  "wgbs.fastqs": [
+    [
+      [
+        "https://storage.googleapis.com/dockstore_test_input/wgbs-pipeline/sample5_data_1_200000.fastq.gz",
+        "https://storage.googleapis.com/dockstore_test_input/wgbs-pipeline/sample5_data_2_200000.fastq.gz"
+      ]
+    ]
+  ],
+  "wgbs.reference": "https://storage.googleapis.com/dockstore_test_input/wgbs-pipeline/sacCer3.fa.gz",
+  "wgbs.sample_names": [
+    "sample5"
+  ],
+  "wgbs.underconversion_sequence_name": "NC_001416.1"
+}
