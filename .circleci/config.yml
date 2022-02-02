@@ -58,11 +58,11 @@ commands:
           /usr/local/bin
 
   add_docker_to_inputs:
-    description: Add runtime environment to input JSONs
+    description: Add docker to input JSONs
     steps:
       - run:
           command: |
-            for i in tests/functional/json/*.json; do
+            for i in tests/unit/json/*.json tests/integration/json/*.json tests/functional/json/*.json; do
               python tests/add_docker_to_input.py $i $WGBS_DOCKER_IMAGE_TAG
             done
 
