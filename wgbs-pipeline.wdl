@@ -4,6 +4,7 @@ workflow wgbs {
         caper_docker: "encodedcc/wgbs-pipeline:1.1.7"
         caper_singularity: "docker://encodedcc/wgbs-pipeline:1.1.7"
         croo_out_def: "https://raw.githubusercontent.com/ENCODE-DCC/wgbs-pipeline/dev/croo_out_def.json"
+        description: "ENCODE WGBS pipeline, see https://github.com/ENCODE-DCC/wgbs-pipeline for details."
     }
 
     File reference
@@ -67,6 +68,9 @@ workflow wgbs {
     Int? qc_report_num_cpus
     Int? qc_report_ram_gb
 
+    String docker = "encodedcc/wgbs-pipeline:1.1.7"
+    String singularity = "docker://encodedcc/wgbs-pipeline:1.1.7"
+
     # Don't need metadata csv to create indexes
     if (!index_only) {
         call make_metadata_csv { input:
@@ -76,6 +80,8 @@ workflow wgbs {
             num_cpus = make_metadata_csv_num_cpus,
             ram_gb = make_metadata_csv_ram_gb,
             disk_size_gb = make_metadata_csv_disk_size_gb,
+            docker = docker,
+            singularity = singularity,
         }
     }
 
@@ -90,6 +96,8 @@ workflow wgbs {
         num_cpus = make_conf_num_cpus,
         ram_gb = make_conf_ram_gb,
         disk_size_gb = make_conf_disk_size_gb,
+        docker = docker,
+        singularity = singularity,
     }
 
     if (!defined(indexed_reference)) {
@@ -100,6 +108,8 @@ workflow wgbs {
             num_cpus = index_num_cpus,
             ram_gb = index_ram_gb,
             disk_size_gb = index_disk_size_gb,
+            docker = docker,
+            singularity = singularity,
         }
     }
 
@@ -116,6 +126,8 @@ workflow wgbs {
             num_cpus = prepare_num_cpus,
             ram_gb = prepare_ram_gb,
             disk_size_gb = prepare_disk_size_gb,
+            docker = docker,
+            singularity = singularity,
         }
     }
 
@@ -138,6 +150,8 @@ workflow wgbs {
                 disk_size_gb = map_disk_size_gb,
                 sort_threads = map_sort_threads,
                 sort_memory = map_sort_memory,
+                docker = docker,
+                singularity = singularity,
             }
 
             call bscaller { input:
@@ -151,6 +165,8 @@ workflow wgbs {
                 num_cpus = bscaller_num_cpus,
                 ram_gb = bscaller_ram_gb,
                 disk_size_gb = bscaller_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
 
             call calculate_average_coverage { input:
@@ -159,6 +175,8 @@ workflow wgbs {
                 num_cpus = calculate_average_coverage_num_cpus,
                 ram_gb = calculate_average_coverage_ram_gb,
                 disk_size_gb = calculate_average_coverage_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
 
             call extract { input:
@@ -173,6 +191,8 @@ workflow wgbs {
                 num_cpus = extract_num_cpus,
                 ram_gb = extract_ram_gb,
                 disk_size_gb = extract_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
 
             call make_coverage_bigwig { input:
@@ -181,6 +201,8 @@ workflow wgbs {
                 num_cpus = make_coverage_bigwig_num_cpus,
                 ram_gb = make_coverage_bigwig_ram_gb,
                 disk_size_gb = make_coverage_bigwig_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
 
             call qc_report { input:
@@ -192,6 +214,8 @@ workflow wgbs {
                 num_cpus = qc_report_num_cpus,
                 ram_gb = qc_report_ram_gb,
                 disk_size_gb = qc_report_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
         }
 
@@ -203,6 +227,8 @@ workflow wgbs {
                 num_cpus = calculate_bed_pearson_correlation_num_cpus,
                 ram_gb = calculate_bed_pearson_correlation_ram_gb,
                 disk_size_gb = calculate_bed_pearson_correlation_disk_size_gb,
+                docker = docker,
+                singularity = singularity,
             }
         }
     }
@@ -215,6 +241,8 @@ task make_metadata_csv {
     Int? num_cpus = 1
     Int? ram_gb = 2
     Int? disk_size_gb = 10
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -233,6 +261,8 @@ task make_metadata_csv {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -247,6 +277,8 @@ task make_conf {
     Int? num_cpus = 1
     Int? ram_gb = 2
     Int? disk_size_gb = 10
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -269,6 +301,8 @@ task make_conf {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -281,6 +315,8 @@ task prepare {
     Int? num_cpus = 8
     Int? ram_gb = 32
     Int? disk_size_gb = 500
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -302,6 +338,8 @@ task prepare {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} HDD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -312,6 +350,8 @@ task index {
     Int? num_cpus = 8
     Int? ram_gb = 64
     Int? disk_size_gb = 500
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -345,6 +385,8 @@ task index {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} HDD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -360,6 +402,8 @@ task map {
     Int? disk_size_gb = 500
     Int? sort_threads
     String? sort_memory
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -388,6 +432,8 @@ task map {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} HDD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -397,6 +443,8 @@ task calculate_average_coverage {
     Int? num_cpus = 1
     Int? ram_gb = 8
     Int? disk_size_gb = 200
+    String docker
+    String singularity = ""
 
     command {
         python3 "$(which calculate_average_coverage.py)" \
@@ -414,6 +462,8 @@ task calculate_average_coverage {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -428,6 +478,8 @@ task bscaller {
     Int? num_cpus = 8
     Int? ram_gb = 32
     Int? disk_size_gb = 500
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -449,6 +501,8 @@ task bscaller {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} HDD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -464,6 +518,8 @@ task extract {
     Int? num_cpus = 8
     Int? ram_gb = 96
     Int? disk_size_gb = 500
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -518,6 +574,8 @@ task extract {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -527,6 +585,8 @@ task make_coverage_bigwig {
     Int? num_cpus = 4
     Int? ram_gb = 8
     Int? disk_size_gb = 50
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -547,6 +607,8 @@ task make_coverage_bigwig {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -556,6 +618,8 @@ task calculate_bed_pearson_correlation {
     Int? num_cpus = 1
     Int? ram_gb = 16
     Int? disk_size_gb = 50
+    String docker
+    String singularity = ""
 
     command {
         python3 "$(which calculate_bed_pearson_correlation.py)" --bedmethyls ${bed1} ${bed2} --outfile bed_pearson_correlation_qc.json
@@ -569,6 +633,8 @@ task calculate_bed_pearson_correlation {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} SSD"
+        docker: docker
+        singularity: singularity
     }
 }
 
@@ -581,6 +647,8 @@ task qc_report {
     Int? num_cpus = 1
     Int? ram_gb = 4
     Int? disk_size_gb = 50
+    String docker
+    String singularity = ""
 
     command {
         set -euo pipefail
@@ -605,5 +673,7 @@ task qc_report {
         cpu: "${num_cpus}"
         memory: "${ram_gb} GB"
         disks: "local-disk ${disk_size_gb} HDD"
+        docker: docker
+        singularity: singularity
     }
 }

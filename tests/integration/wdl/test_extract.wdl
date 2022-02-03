@@ -7,6 +7,7 @@ workflow test_extract {
     File bcf
     File bcf_csi
     String sample_barcode
+    String docker
 
     call wgbs.extract { input:
         reference = reference,
@@ -15,5 +16,6 @@ workflow test_extract {
         bcf = bcf,
         bcf_csi = bcf_csi,
         sample_barcode = sample_barcode,
+        docker = docker,
     }
 }

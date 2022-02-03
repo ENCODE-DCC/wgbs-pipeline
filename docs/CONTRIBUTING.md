@@ -23,4 +23,4 @@ $ tox
 ## Useful Tips
 
 * To build Docker images manually, run `docker build . -f Dockerfile -t MY_REPO:MY_TAG`
-* You can run individual WDL tests manually with `tests/wdl/test.sh tests/wdl/test_task/test_TASK_NAME.wdl tests/wdl/test_task/test_TASK_NAME_input.json DOCKER_IMAGE`. This will invoke `caper` for you.
+* You can run individual WDL tests manually with `tests/wdl/test.sh tests/wdl/test_task/test_TASK_NAME.wdl tests/wdl/test_task/test_TASK_NAME_input.json. This will invoke `caper` for you. Note you will need to first update the input JSON with `docker` input.

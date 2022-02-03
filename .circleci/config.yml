@@ -57,6 +57,15 @@ commands:
       - run: curl -Ls https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz | tar xJ && sudo mv shellcheck-stable/shellcheck
           /usr/local/bin
 
+  add_docker_to_inputs:
+    description: Add docker to input JSONs
+    steps:
+      - run:
+          command: |
+            for i in tests/unit/json/*.json tests/integration/json/*.json tests/functional/json/*.json; do
+              python tests/add_docker_to_input.py $i $WGBS_DOCKER_IMAGE_TAG
+            done
+
 jobs:
   lint:
     <<: *py37
@@ -95,6 +104,7 @@ jobs:
     steps:
       - checkout
       - set_environment_variables
+      - add_docker_to_inputs
       - run:
           name: Run pytest-workflow WDL tests using tox
           command: |
