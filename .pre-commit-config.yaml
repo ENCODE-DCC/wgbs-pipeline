@@ -1,4 +1,5 @@
 ---
+repos:
   - repo: https://github.com/psf/black
     rev: 19.3b0
     hooks:
@@ -17,7 +18,7 @@
         language_version: python3.7
 
   - repo: git://github.com/detailyang/pre-commit-shell
-    sha: v1.0.6
+    rev: v1.0.6
     hooks:
       - id: shell-lint
         args: [--severity=warning]
@@ -28,7 +29,7 @@
       - id: mypy
 
   - repo: git://github.com/detailyang/pre-commit-shell
-    sha: v1.0.6
+    rev: v1.0.6
     hooks:
       - id: shell-lint
 
